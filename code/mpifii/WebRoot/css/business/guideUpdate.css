@@ -1,0 +1,61 @@
+
+#pop_page .jiantou{
+	left: 376px;
+}
+#pop_page .yingyong{
+	width: 595px;
+	height: 140px;
+	margin:0 auto;
+	margin-bottom: 39px;
+}
+#pop_page .yingyong li{
+	width: 60px;
+	height: 134px;
+	margin-right: 29px;
+	position: relative;
+	float: left;
+}
+#pop_page .yingyong li .pic{
+	width: 60px;
+	height: 60px;
+}
+#pop_page .yingyong li p{
+	font-size:14px;
+	font-weight: normal;
+	text-align: center;
+}
+#pop_page .yizhuang{
+	width: 45px;
+	height: 43px;
+	background:url(../../images/business/zhuang/yizhuang.png) no-repeat;
+	position: absolute;
+	top:0;
+	right: 0;
+}
+#pop_page .step3 {
+	width: 290px;
+	margin:0 auto;
+	height: 50px;
+}
+#pop_page .step3 span{
+	display: block;
+	float: left;
+	width: 137px;
+	height: 35px;
+	border:1px solid #0284e4;
+	border-radius: 2px;
+	margin-right: 10px;
+	font-size: 16px;
+	color: #fff;
+	font-weight: bold;
+	background: #1a9aff;
+	font-family: "宋体";
+	font-size: 16px;
+	text-align: center;
+	line-height: 35px;
+	font-weight: bold;
+	cursor: pointer;
+}
+#pop_page .step3 span:nth-child(2){
+	margin-right: 0;
+}

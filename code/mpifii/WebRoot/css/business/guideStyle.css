@@ -1,0 +1,85 @@
+
+.xiangdao .jiantou{
+	width: 20px;
+	height: 20px;
+	position: absolute;
+	top:-15px;
+	left: 50px;
+	background:url(../../images/business/jiantou.png) no-repeat;
+	overflow: hidden;
+}
+.xiangdao .next{
+	width: 137px;
+	height: 35px;
+	border:1px solid #0284e4;
+	border-radius: 2px;
+	background: #1a9aff;
+	font-family: "宋体";
+	font-size: 16px;
+	text-align: center;
+	line-height: 35px;
+	color:#fff;
+	margin:0 auto;
+	font-weight: bold;
+	cursor: pointer;
+}
+.xiangdao .style{
+	width: 550px;
+	height: 238px;
+	margin:0 auto;
+	overflow: hidden;
+}
+.xiangdao  .style li{
+	width: 118px;
+	height: 238px;
+	margin-right: 18px;
+	float: left;
+}
+.xiangdao .style li p{
+	height:40px;
+	width: 100%;
+	line-height: 40px;
+	font-size: 20px;
+	text-align: center;
+	color: #344477;
+}
+.zhuang{
+	width: 60px;
+	height: 24px;
+	border:1px solid #b4c0ce;
+	border-radius: 2px;
+	margin:0 auto;
+	font-family: "宋体";
+	font-size: 12px;
+	color: #8a8a8a;
+	text-align: center;
+	line-height: 24px;
+	cursor: pointer;
+}
+.xiangdao  .style li:last-child{
+	margin-right: 0
+}
+.style .pic{
+	width: 118px;
+	height: 152px;
+	overflow: hidden;
+}
+.leftbutton{
+	width: 30px;
+	height: 40px;
+	position: absolute;
+	top:35%;
+	left: 5px;
+	cursor: pointer;
+	background: url(../../images/business/guide/style/leftbutton.png) no-repeat;
+}
+.rightbutton{
+	width: 30px;
+	height: 40px;
+	position: absolute;
+	top:35%;
+	right: 0;
+	background: url(../../images/business/guide/style/rightbutton.png) no-repeat;
+	cursor: pointer;
+}
+/*选择样式结束*/

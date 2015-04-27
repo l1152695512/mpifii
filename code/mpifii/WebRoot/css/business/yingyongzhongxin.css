@@ -1,0 +1,91 @@
+.application{
+	width: 920px;
+	height: 600px;
+	margin:0 auto;
+}
+.application h5{
+	font-size: 24px;
+	color: #444d5e;
+	height:66px;
+	line-height: 66px;
+	font-family: "微软雅黑";
+	font-weight: normal;
+}
+.left .yingyong{
+	width: 611px;
+	height: 500px;
+	border-right:1px dashed #6b6666;
+}
+
+.left .yingyong .dayizhuang{
+	width: 110px;
+	height: 49px;
+	background: url(../../images/business/app/dayizhuang.png) no-repeat 0 0;
+	position: absolute;
+	top:2px;
+	right:2px;
+	z-index: 7;
+}
+.right .yingyong .dayizhuang{
+	width: 110px;
+	height: 49px;
+	background: url(../../images/business/app/dayizhuang.png) no-repeat 0 0;
+	position: absolute;
+	top:2px;
+	right:2px;
+	z-index: 7;
+}
+
+.yingyong li{
+	width: 115px;
+	text-align: center;
+	float:left;
+	margin-right:37px;
+	margin-bottom: 25px;
+	position: relative;
+}
+
+.yingyong li .pic{
+	width: 115px;
+	height: 115px;
+	overflow: hidden;
+
+}
+.yingyong li p{
+	width: 100%;
+	height: 37px;
+	color: #5b646f;
+	font-size: 16px;
+	font-family: "宋体";
+	font-weight: bold;
+	line-height: 37px;
+}
+.yingyong li .anzhuang{
+	width: 52px;
+	height: 26px;
+	border:1px solid #b4c0ce;
+	border-radius: 3px;
+	text-align: center;
+	cursor: pointer;
+	margin:0 auto;
+	float: left;
+	margin-right: 3px;
+}
+.yingyong li .oneJuzhong{
+	width: 52px;
+	height: 26px;
+	border:1px solid #b4c0ce;
+	border-radius: 3px;
+	text-align: center;
+	cursor: pointer;
+	margin:0 auto;
+}
+
+/*基础应用完成*/
+.right{
+	width: 273px !important;
+	padding-left:35px;
+}
+.canyin li:nth-child(2n+2){
+	margin-right: 0 !important;
+}

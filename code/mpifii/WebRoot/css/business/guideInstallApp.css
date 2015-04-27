@@ -1,0 +1,103 @@
+#guide_install_app .guide_app_title{
+	height: 36px;
+	line-height: 36px;
+	width: 595px;
+	margin:0 auto;
+	font-size: 18px;
+	color: #344477;
+	font-family: "微软雅黑";
+}
+#guide_install_app .jiantou{
+	left: 218px;
+}
+#guide_install_app .yingyong{
+	width: 595px;
+	height: 134px;
+	margin:0 auto;
+}
+#guide_install_app .yingyong li{
+	width: 60px;
+	height: 134px;
+	margin-right: 29px;
+	position: relative;
+	float: left;
+}
+#guide_install_app .close{
+	top: 7px;
+}
+#guide_install_app .yingyong li .pic{
+	width: 60px;
+	height: 60px;
+}
+#guide_install_app .yingyong li p{
+	font-size:14px;
+	font-weight: normal;
+	text-align: center;
+}
+#guide_install_app .yizhuang{
+	width: 45px;
+	height: 43px;
+	background:url(../../images/business/yizhuang.png) no-repeat;
+	position: absolute;
+	top:0;
+	right: 0;
+}
+#guide_install_app .yingyong li:nth-child(7n+7){
+	margin:0;
+}
+#guide_install_app .bz{
+	width: 320px;
+	height: 45px;
+	margin:0 auto;
+	color: #444;
+	font-size: 16px;
+	text-align: center;
+
+}
+#guide_install_app .buzhou .xia{
+	width: 137px;
+	height: 33px;
+	background:#41aaff;
+	margin-right: 15px;
+	line-height: 35px;
+	border-radius: 2px;
+
+}
+#guide_install_app .buzhou .prev{
+	width: 137px;
+	height: 33px;
+	margin-right: 15px;
+	line-height: 35px;
+	background:#41aaff;
+	border-radius: 2px;
+}
+#guide_install_app .buzhou .next:nth-child(2){
+	margin-right: 0;
+}
+#guide_install_app .step3 {
+	width: 290px;
+	margin:0 auto;
+	height: 50px;
+}
+#guide_install_app .step3 span{
+	display: block;
+	float: left;
+	width: 137px;
+	height: 35px;
+	border:1px solid #0284e4;
+	border-radius: 2px;
+	margin-right: 10px;
+	font-size: 16px;
+	color: #fff;
+	font-weight: bold;
+	background: #1a9aff;
+	font-family: "宋体";
+	font-size: 16px;
+	text-align: center;
+	line-height: 35px;
+	font-weight: bold;
+	cursor: pointer;
+}
+#guide_install_app .step3 span:nth-child(2){
+	margin-right: 0;
+}
