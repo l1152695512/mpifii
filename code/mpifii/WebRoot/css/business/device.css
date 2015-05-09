@@ -1,0 +1,83 @@
+/*device设备信息开始*/
+.device{
+	width: 920px;
+	margin:0 auto;
+	margin-bottom:35px;
+}
+.smallTitle{
+	width: 97%;
+	height: 68px;
+}
+.smallTitle>p{
+	color: #444d5e;
+	font-size:22px;
+	line-height: 68px;
+}
+.smallTitle>div{
+	line-height: 68px;
+	color: #122546;
+}
+.content li{
+	float:left;
+	margin-right:35px;
+	width: 200px;
+	height: 155px;
+	overflow: hidden;
+}
+.content li:nth-child(4n+4){
+	margin-right:0;
+}
+
+.dianMing{
+	width: 100%;
+	height:106px;
+	background: #586cad;
+}
+.dianMingOut{
+	background: #717171;
+}
+
+.dianMing h4{
+	height:58px;
+	line-height: 58px;
+	font-size: 20px;
+	color: #fff;
+	text-align: center;
+	font-weight: normal;
+	border-bottom:1px dashed #96a1c8;
+	background: url(../../images/business/wifi.png) no-repeat 5px center;
+}
+.dianMingOut>h4{
+	border-bottom: 1px dashed #C1C1C1;
+}
+.dianMing h5{
+	height:50px;
+	line-height: 50px;
+	font-size: 16px;
+	color: #fff;
+	text-align: center;
+	font-weight: normal;
+}
+.linkNumb{
+	width: 198px;
+	height: 42px;
+	line-height: 42px;
+	text-indent: 2em;
+	border-left:1px solid #afc2d8;
+	border-right:1px solid #afc2d8;
+	border-top:2px solid #495d9c;
+	border-bottom:4px solid #afc2d8;
+	border-radius: 5px;
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+	background:url(../../images/business/person.png) no-repeat 5px center;
+	position: relative;
+}
+.linkNumbOut{
+	color: #7090b3 !important;
+}
+.linkNumb span:nth-child(2){
+	position: absolute;
+	right:5px;
+}
+/*device 设备信息结束*/

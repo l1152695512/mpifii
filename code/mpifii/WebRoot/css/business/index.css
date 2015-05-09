@@ -1,0 +1,50 @@
+
+.title{
+	width: 100%;
+	border-top:1px solid #c4c9d7;
+}
+ .title h3{
+	width: 920px;
+	height:78px;
+	color: #444d5e;
+	font-size:28px;
+	font-weight: normal;
+	line-height: 78px;
+	margin:0 auto;
+}/*标题信息*/
+
+/*应用中心*/
+
+/*向导指引 样式弹出框遮罩层 .yangshiBox*/
+#yangshiBox{
+	width: 100%;
+	background:black;
+	position: absolute;
+	top:0;
+	opacity: 0.6;
+	z-index: 10;
+}
+
+.xiangdao{
+	position: absolute;
+	top:725px;
+	left: 38%;
+	width: 653px;
+	padding-bottom: 31px;
+	padding-top:54px;
+	background: #fff;
+	border:1px solid #666;
+	z-index: 11;
+}
+.xiangdao .close{
+	width: 35px;
+	height: 35px;
+	position: absolute;
+	top:15px;
+	right: 15px;
+	background:url(../../images/business/close.png) no-repeat;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+
