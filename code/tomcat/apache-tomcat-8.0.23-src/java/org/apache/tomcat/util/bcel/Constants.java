@@ -90,5 +90,4 @@ public interface Constants {
     "CONSTANT_Methodref", "CONSTANT_InterfaceMethodref",
     "CONSTANT_NameAndType", "", "", "CONSTANT_MethodHandle",
     "CONSTANT_MethodType", "", "CONSTANT_InvokeDynamic" };
-
 }

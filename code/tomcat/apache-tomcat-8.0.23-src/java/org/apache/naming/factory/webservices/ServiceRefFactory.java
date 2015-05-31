@@ -5,15 +5,15 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ */ 
 package org.apache.naming.factory.webservices;
 
 import java.lang.reflect.InvocationTargetException;
@@ -53,14 +53,32 @@ import org.apache.naming.ServiceRef;
 
 /**
  * Object factory for Web Services.
- *
+ * 
  * @author Fabien Carrion
  */
-public class ServiceRefFactory implements ObjectFactory {
+
+public class ServiceRefFactory
+    implements ObjectFactory {
+
+
+    // ----------------------------------------------------------- Constructors
+
+
+    // -------------------------------------------------------------- Constants
+
+
+    // ----------------------------------------------------- Instance Variables
+
+
+    // --------------------------------------------------------- Public Methods
+
+
+    // -------------------------------------------------- ObjectFactory Methods
+
 
     /**
-     * Create a new serviceref instance.
-     *
+     * Crete a new serviceref instance.
+     * 
      * @param obj The reference object describing the webservice
      */
     @Override
@@ -72,7 +90,7 @@ public class ServiceRefFactory implements ObjectFactory {
             Reference ref = (Reference) obj;
 
             // ClassLoader
-            ClassLoader tcl =
+            ClassLoader tcl = 
                 Thread.currentThread().getContextClassLoader();
             if (tcl == null)
                 tcl = this.getClass().getClassLoader();
@@ -92,7 +110,8 @@ public class ServiceRefFactory implements ObjectFactory {
                 wsdlRefAddr = (String) tmp.getContent();
 
             // PortComponent
-            Hashtable<String,QName> portComponentRef = new Hashtable<>();
+            Hashtable<String,QName> portComponentRef =
+                new Hashtable<String,QName>();
 
             // Create QName object
             QName serviceQname = null;
@@ -176,7 +195,7 @@ public class ServiceRefFactory implements ObjectFactory {
                     Definition def = reader.readWSDL((new URL(wsdlRefAddr)).toExternalForm());
 
                     javax.wsdl.Service wsdlservice = def.getService(serviceQname);
-                    @SuppressWarnings("unchecked")
+                    @SuppressWarnings("unchecked") // Can't change the API
                     Map<String,?> ports = wsdlservice.getPorts();
                     Method m = serviceInterfaceClass.getMethod("setEndpointAddress",
                             new Class[] { java.lang.String.class,
@@ -243,7 +262,7 @@ public class ServiceRefFactory implements ObjectFactory {
             if (((ServiceRef) ref).getHandlersSize() > 0) {
 
                 HandlerRegistry handlerRegistry = service.getHandlerRegistry();
-                ArrayList<String> soaproles = new ArrayList<>();
+                ArrayList<String> soaproles = new ArrayList<String>();
 
                 while (((ServiceRef) ref).getHandlersSize() > 0) {
                     HandlerRef handlerRef = ((ServiceRef) ref).getHandler();
@@ -262,9 +281,9 @@ public class ServiceRefFactory implements ObjectFactory {
 
                     // Load all datas relative to the handler : SOAPHeaders, config init element,
                     // portNames to be set on
-                    ArrayList<QName> headers = new ArrayList<>();
-                    Hashtable<String,String> config = new Hashtable<>();
-                    ArrayList<String> portNames = new ArrayList<>();
+                    ArrayList<QName> headers = new ArrayList<QName>();
+                    Hashtable<String,String> config = new Hashtable<String,String>();
+                    ArrayList<String> portNames = new ArrayList<String>();
                     for (int i = 0; i < handlerRef.size(); i++)
                         if (HandlerRef.HANDLER_LOCALPART.equals(handlerRef.get(i).getType())) {
                             String localpart = "";
@@ -328,7 +347,7 @@ public class ServiceRefFactory implements ObjectFactory {
      */
     private String getSOAPLocation(Port port) {
         String endpoint = null;
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked") // Can't change the API
         List<ExtensibilityElement> extensions = port.getExtensibilityElements();
         for (Iterator<ExtensibilityElement> i = extensions.iterator();
                 i.hasNext();) {
@@ -345,7 +364,7 @@ public class ServiceRefFactory implements ObjectFactory {
     private void initHandlerChain(QName portName, HandlerRegistry handlerRegistry,
             HandlerInfo handlerInfo, ArrayList<String> soaprolesToAdd) {
         HandlerChain handlerChain = (HandlerChain) handlerRegistry.getHandlerChain(portName);
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked") // Can't change the API
         Iterator<Handler> iter = handlerChain.iterator();
         while (iter.hasNext()) {
             Handler handler = iter.next();

@@ -43,7 +43,7 @@ public class SecurityListener implements LifecycleListener {
     /**
      * The list of operating system users not permitted to run Tomcat.
      */
-    private final Set<String> checkedOsUsers = new HashSet<>();
+    private Set<String> checkedOsUsers = new HashSet<String>();
 
     /**
      * The minimum umask that must be configured for the operating system user
@@ -171,7 +171,7 @@ public class SecurityListener implements LifecycleListener {
             }
         }
         if (umask == null) {
-            if (Constants.CRLF.equals(System.lineSeparator())) {
+            if (Constants.CRLF.equals(Constants.LINE_SEP)) {
                 // Probably running on Windows so no umask
                 if (log.isDebugEnabled()) {
                     log.debug(sm.getString("SecurityListener.checkUmaskSkip"));

@@ -16,7 +16,6 @@
  */
 package org.apache.catalina.authenticator;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,15 +32,16 @@ import org.junit.Test;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.Session;
+import org.apache.catalina.deploy.LoginConfig;
+import org.apache.catalina.deploy.SecurityCollection;
+import org.apache.catalina.deploy.SecurityConstraint;
 import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.startup.TesterServletEncodeUrl;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
+import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.codec.binary.Base64;
-import org.apache.tomcat.util.descriptor.web.LoginConfig;
-import org.apache.tomcat.util.descriptor.web.SecurityCollection;
-import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 
 /**
  * Test BasicAuthenticator and NonLoginAuthenticator when a
@@ -99,8 +99,9 @@ public class TestSSOnonLoginAndBasicAuthenticator extends TomcatBaseTest {
 
     // now compute some delays - beware of the units!
     private static final int EXTRA_DELAY_SECS = 5;
-    private static final int TIMEOUT_WAIT_SECS =  EXTRA_DELAY_SECS +
-            (MANAGER_SCAN_INTERVAL_SECS * MANAGER_EXPIRE_SESSIONS_FAST) * 5;
+    private static final long REASONABLE_MSECS_TO_EXPIRY =
+            (((MANAGER_SCAN_INTERVAL_SECS * MANAGER_EXPIRE_SESSIONS_FAST)
+                    + EXTRA_DELAY_SECS) * 1000);
 
     private static final String CLIENT_AUTH_HEADER = "authorization";
     private static final String SERVER_AUTH_HEADER = "WWW-Authenticate";
@@ -166,7 +167,7 @@ public class TestSSOnonLoginAndBasicAuthenticator extends TomcatBaseTest {
      * Wait until the SSO session times-out, then try to re-access
      * the resource. This should be rejected with SC_FORBIDDEN 401 status.
      *
-     * Note: this test should run for ~10 seconds.
+     * Note: this test will run for slightly more than 1 minute.
      */
     @Test
     public void testBasicAccessAndSessionTimeout() throws Exception {
@@ -309,7 +310,7 @@ public class TestSSOnonLoginAndBasicAuthenticator extends TomcatBaseTest {
      *
      * (see bugfix https://bz.apache.org/bugzilla/show_bug.cgi?id=52303)
      *
-     * Note: this test should run for ~20 seconds.
+     * Note: this test will run for slightly more than 3 minutes.
      */
     @Test
     public void testBasicExpiredAcceptProtectedWithCookies() throws Exception {
@@ -351,8 +352,10 @@ public class TestSSOnonLoginAndBasicAuthenticator extends TomcatBaseTest {
     public void doTestNonLogin(String uri, boolean useCookie,
             int expectedRC) throws Exception {
 
-        Map<String,List<String>> reqHeaders = new HashMap<>();
-        Map<String,List<String>> respHeaders = new HashMap<>();
+        Map<String,List<String>> reqHeaders =
+                new HashMap<String,List<String>>();
+        Map<String,List<String>> respHeaders =
+                new HashMap<String,List<String>>();
 
         if (useCookie && (cookies != null)) {
             reqHeaders.put(CLIENT_COOKIE_HEADER + ":", cookies);
@@ -375,15 +378,15 @@ public class TestSSOnonLoginAndBasicAuthenticator extends TomcatBaseTest {
             TestSSOnonLoginAndBasicAuthenticator.BasicCredentials credentials,
             boolean useCookie, int expectedRC) throws Exception {
 
-        Map<String,List<String>> reqHeaders = new HashMap<>();
-        Map<String,List<String>> respHeaders = new HashMap<>();
+        Map<String,List<String>> reqHeaders = new HashMap<String,List<String>>();
+        Map<String,List<String>> respHeaders = new HashMap<String,List<String>>();
 
         if (useCookie && (cookies != null)) {
             reqHeaders.put(CLIENT_COOKIE_HEADER + ":", cookies);
         }
         else {
             if (credentials != null) {
-                List<String> auth = new ArrayList<>();
+                List<String> auth = new ArrayList<String>();
                 auth.add(credentials.getCredentials());
                 reqHeaders.put(CLIENT_AUTH_HEADER, auth);
             }
@@ -600,27 +603,13 @@ public class TestSSOnonLoginAndBasicAuthenticator extends TomcatBaseTest {
                 // leave it to be expired by the manager
             }
         }
-
-
         try {
-            Thread.sleep(EXTRA_DELAY_SECS * 1000);
+            Thread.sleep(REASONABLE_MSECS_TO_EXPIRY);
         } catch (InterruptedException ie) {
             // ignored
         }
 
-        // Paranoid verification that active sessions have now gone
-        int count = 0;
-        sessions = manager.findSessions();
-        while (sessions.length != 0 && count < TIMEOUT_WAIT_SECS) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                // Ignore
-            }
-            sessions = manager.findSessions();
-            count++;
-        }
-
+        // paranoid verification that active sessions have now gone
         sessions = manager.findSessions();
         assertTrue(sessions.length == 0);
     }
@@ -657,7 +646,7 @@ public class TestSSOnonLoginAndBasicAuthenticator extends TomcatBaseTest {
             password = aPassword;
             String userCredentials = username + ":" + password;
             byte[] credentialsBytes =
-                    userCredentials.getBytes(StandardCharsets.ISO_8859_1);
+                    userCredentials.getBytes(B2CConverter.ISO_8859_1);
             String base64auth = Base64.encodeBase64String(credentialsBytes);
             credentials= method + " " + base64auth;
         }

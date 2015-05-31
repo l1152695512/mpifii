@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,10 +28,7 @@ package org.apache.catalina.util;
  * method with the appropriate saved offset values.
  *
  * @author Craig R. McClanahan
- *
- * @deprecated Unused. Will be removed in Tomcat 9 onwards.
  */
-@Deprecated
 public final class StringParser {
 
 
@@ -115,7 +112,19 @@ public final class StringParser {
      * Return the length of the string we are parsing.
      */
     public int getLength() {
-        return length;
+
+        return (this.length);
+
+    }
+
+
+    /**
+     * Return the String we are currently parsing.
+     */
+    public String getString() {
+
+        return (this.string);
+
     }
 
 
@@ -136,6 +145,7 @@ public final class StringParser {
             chars = new char[0];
         }
         reset();
+
     }
 
 
@@ -150,6 +160,24 @@ public final class StringParser {
 
         if (index < length)
             index++;
+
+    }
+
+
+    /**
+     * Extract and return a substring that starts at the specified position,
+     * and extends to the end of the string being parsed.  If this is not
+     * possible, a zero-length string is returned.
+     *
+     * @param start Starting index, zero relative, inclusive
+     */
+    public String extract(int start) {
+
+        if ((start < 0) || (start >= length))
+            return ("");
+        else
+            return (string.substring(start));
+
     }
 
 
@@ -189,10 +217,106 @@ public final class StringParser {
 
 
     /**
+     * Return the index of the next occurrence of a non-whitespace character,
+     * or the index of the character after the last position of the string
+     * if no more non-whitespace characters are found.  The current
+     * parsing position is updated to the returned value.
+     */
+    public int findText() {
+
+        while ((index < length) && isWhite(chars[index]))
+            index++;
+        return (index);
+
+    }
+
+
+    /**
+     * Return the index of the next occurrence of a whitespace character,
+     * or the index of the character after the last position of the string
+     * if no more whitespace characters are found.  The current parsing
+     * position is updated to the returned value.
+     */
+    public int findWhite() {
+
+        while ((index < length) && !isWhite(chars[index]))
+            index++;
+        return (index);
+
+    }
+
+
+    /**
      * Reset the current state of the parser to the beginning of the
      * current string being parsed.
      */
     public void reset() {
+
         index = 0;
+
     }
+
+
+    /**
+     * Advance the current parsing position while it is pointing at the
+     * specified character, or until it moves past the end of the string.
+     * Return the final value.
+     *
+     * @param ch Character to be skipped
+     */
+    public int skipChar(char ch) {
+
+        while ((index < length) && (ch == chars[index]))
+            index++;
+        return (index);
+
+    }
+
+
+    /**
+     * Advance the current parsing position while it is pointing at a
+     * non-whitespace character, or until it moves past the end of the string.
+     * Return the final value.
+     */
+    public int skipText() {
+
+        while ((index < length) && !isWhite(chars[index]))
+            index++;
+        return (index);
+
+    }
+
+
+    /**
+     * Advance the current parsing position while it is pointing at a
+     * whitespace character, or until it moves past the end of the string.
+     * Return the final value.
+     */
+    public int skipWhite() {
+
+        while ((index < length) && isWhite(chars[index]))
+            index++;
+        return (index);
+
+    }
+
+
+    // ------------------------------------------------------ Protected Methods
+
+
+    /**
+     * Is the specified character considered to be whitespace?
+     *
+     * @param ch Character to be checked
+     */
+    protected boolean isWhite(char ch) {
+
+        if ((ch == ' ') || (ch == '\t') || (ch == '\r') || (ch == '\n'))
+            return (true);
+        else
+            return (false);
+
+    }
+
+
 }

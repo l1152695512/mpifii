@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -79,14 +79,10 @@
     </property>
 
     <property name="org.apache.el.parser. COERCE_TO_ZERO">
-      <p>If <code>true</code>, when coercing <code>null</code>s to objects of
-      type Number, Character or Boolean the result will be <code>0</code> for
-      Number and Character types and <code>false</code> for Boolean as required
-      by the EL 2.2 and earlier specifications. If this property is
-      <code>false</code> the result of the coercion will be <code>null</code> as
-      required by the EL 3.0 specification.</p>
-      <p>If not specified, the default value of <code>false</code> will be
-      used.</p>
+      <p>If <code>true</code>, when coercing expressions to numbers
+      <code>""</code> and <code>null</code> will be coerced to zero as required
+      by the specification.</p>
+      <p>If not specified, the default value of <code>true</code> will be used.</p>
     </property>
 
     <property name="org.apache.el.parser. SKIP_IDENTIFIER_CHECK">
@@ -275,7 +271,7 @@
 </section>
 
 
-<section name="Specifications">
+<section name="Specification">
 
   <properties>
 
@@ -292,9 +288,6 @@
       <li><code>org.apache.tomcat.util.http.<br/>ServerCookie.FWD_SLASH_IS_SEPARATOR</code></li>
       <li><code>org.apache.tomcat.util.http.<br/>ServerCookie.PRESERVE_COOKIE_HEADER</code></li>
       <li><code>org.apache.tomcat.util.http.<br/>ServerCookie.STRICT_NAMING</code></li>
-      <li>The <code>URIEncoding</code> attribute of any
-          <a href="http.html">HTTP connector</a> or
-          <a href="ajp.html">AJP connector</a> element.</li>
       <li>The <code>resourceOnlyServlets</code> attribute of any
           <a href="context.html">Context</a> element.</li>
       <li>The <code>tldValidation</code> attribute of any
@@ -346,57 +339,29 @@
       else the default value will be <code>false</code>.</p>
     </property>
 
-    <property name="org.apache.tomcat.websocket. STRICT_SPEC_COMPLIANCE">
-      <p>The default value of this system property is <code>false</code>.</p>
-      <p>If this is <code>true</code> the default values will be changed for:</p>
-      <ul>
-        <li><code>org.apache.tomcat.websocket.server#isEnforceNoAddAfterHandshake</code>
-        (default changes from <code>false</code> to <code>true</code>)</li>
-      </ul>
-
-    </property>
-
     <property
     name="org.apache.tomcat.util.http. ServerCookie.ALLOW_EQUALS_IN_VALUE">
-      <p>Deprecated. This will be removed in Tomcat 9. Specify the
-      <code>allowEqualsInValue</code> attribute on the
-      <a href="cookie-processor.html">org.apache.tomcat.util.http.LegacyCookieProcessor</a>
-      instead.</p>
-      <p>This sets the default value for <code>allowEqualsInValue</code>
-      attribute on the
-      <code>org.apache.tomcat.util.http.LegacyCookieProcessor</code>.
-      If this is <code>true</code> Tomcat will allow '<code>=</code>'
+      <p>If this is <code>true</code> Tomcat will allow '<code>=</code>'
       characters when parsing unquoted cookie values. If <code>false</code>,
       cookie values containing '<code>=</code>' will be terminated when the
       '<code>=</code>' is encountered and the remainder of the cookie value will
       be dropped.</p>
-      <p>If not specified, the default specification compliant value of
+      <p>If not specified, the default value specification compliant value of
       <code>false</code> will be used.</p>
     </property>
 
     <property
     name="org.apache.tomcat.util.http. ServerCookie.ALLOW_HTTP_SEPARATORS_IN_V0">
-      <p>Deprecated. This will be removed in Tomcat 9. Specify the
-      <code>allowHttpSepsInV0</code> attribute on the
-      <a href="cookie-processor.html">org.apache.tomcat.util.http.LegacyCookieProcessor</a>
-      instead.</p>
-      <p>This sets the default value for <code>allowHttpSepsInV0</code>
-      attribute on the
-      <code>org.apache.tomcat.util.http.LegacyCookieProcessor</code>.
-      If this is <code>true</code> Tomcat will allow HTTP separators in
+      <p>If this is <code>true</code> Tomcat will allow HTTP separators in
       cookie names and values.</p>
       <p>If not specified, the default specification compliant value of
       <code>false</code> will be used.</p>
     </property>
 
     <property name="org.apache.tomcat.util.http. ServerCookie.ALLOW_NAME_ONLY">
-      <p>Deprecated. This will be removed in Tomcat 9. Specify the
-      <code>allowNameOnly</code> attribute on the
-      <a href="cookie-processor.html">org.apache.tomcat.util.http.LegacyCookieProcessor</a>
-      instead.</p>
-      <p>If this is <code>false</code> then the requirements of the cookie specifications
-      that cookies must have values will be enforced and cookies consisting only
-      of a name but no value will be ignored.</p>
+      <p>If this is <code>false</code> then the requirements of the cookie
+      specifications that cookies must have values will be enforced and cookies
+      consisting only of a name but no value will be ignored.</p>
       <p>If not specified, the default specification compliant value of
       <code>false</code> will be used.</p>
     </property>
@@ -426,10 +391,6 @@
     </property>
 
     <property name="org.apache.tomcat.util.http. ServerCookie.PRESERVE_COOKIE_HEADER">
-      <p>Deprecated. This will be removed in Tomcat 9. Specify the
-      <code>preserveCookieHeader</code> attribute on the
-      <a href="cookie-processor.html">org.apache.tomcat.util.http.LegacyCookieProcessor</a>
-      instead.</p>
       <p>If this is <code>true</code> Tomcat will ensure that cookie
       processing does not modify cookie header returned by
       <code>HttpServletRequest.getHeader()</code>.</p>
@@ -579,26 +540,34 @@
 <section name="JAR Scanning">
 
   <properties>
-    <property name="tomcat.util.scan. StandardJarScanFilter.jarsToSkip">
-      <p>A list of comma-separated file name patters that is used as the default
-         value for <code>pluggabilitySkip</code> and <code>tldSkip</code>
-         attributes of the standard
-         <a href="jar-scan-filter.html">JarScanFilter</a> implementation.</p>
-      <p>The coded default empty, however the system property is set in
-         a default Tomcat installation via the
+    <property name="tomcat.util.scan. DefaultJarScanner.jarsToSkip">
+      <p>The comma-separated list of file name patterns of JARs that Tomcat will
+         not scan for configuration information when using the
+         <a href="jar-scanner.html">JarScanner</a> functionality. The file name
+         pattern syntax is described in
+         <a href="jar-scanner.html">JarScanner</a> documentation. Note that
+         there are additional system properties that enable JARs to be excluded
+         from specific scans rather than all scans.</p>
+      <p>The coded default is that no JARs are skipped however the system
+         property is set in a default Tomcat installation via the
          <code>$CATALINA_BASE/conf/catalina.properties</code> file.</p>
     </property>
 
-    <property name="tomcat.util.scan. StandardJarScanFilter.jarsToScan">
-      <p>A list of comma-separated file name patters that is used as the default
-         value for <code>pluggabilityScan</code> and <code>tldScan</code>
-         attributes of the standard
-         <a href="jar-scan-filter.html">JarScanFilter</a> implementation.</p>
-      <p>The coded default empty, however the system property is set in
-         a default Tomcat installation via the
+    <property name="org.apache.catalina.startup. ContextConfig.jarsToSkip">
+      <p>The comma-separated list of additional filenames of JARs that Tomcat
+         will not scan for Servlet 3.0 pluggability features.</p>
+      <p>The coded default is that no JARs are skipped however the system
+         property is set in a default Tomcat installation via the
          <code>$CATALINA_BASE/conf/catalina.properties</code> file.</p>
     </property>
 
+    <property name="org.apache.catalina.startup. TldConfig.jarsToSkip">
+      <p>The comma-separated list of additional filenames of JARs that Tomcat
+         will not scan for TLDs.</p>
+      <p>The coded default is that no JARs are skipped however the system
+         property is set in a default Tomcat installation via the
+         <code>$CATALINA_BASE/conf/catalina.properties</code> file.</p>
+    </property>
   </properties>
 
 </section>
@@ -666,7 +635,7 @@
     <property name="javax.sql.DataSource.Factory">
       <p>The class name of the factory to use to create resources of type
       <code>javax.sql.DataSource</code>. If not specified the default of
-      <code>org.apache.tomcat.dbcp.dbcp2.BasicDataSourceFactory</code> is used
+      <code>org.apache.tomcat.dbcp.dbcp.BasicDataSourceFactory</code> is used
       which is a package renamed (to avoid conflictions) copy of
       <a href="http://commons.apache.org/dbcp">Apache Commons DBCP</a>.</p>
     </property>
@@ -734,12 +703,6 @@
     <property name="org.apache.catalina.startup. RealmRuleSet.MAX_NESTED_REALM_LEVELS">
       <p>The CombinedRealm allows nested Realms. This property controls the
       maximum permitted number of levels of nesting.</p>
-      <p>If not specified, the default value of <code>3</code> will be used.</p>
-    </property>
-
-    <property name="org.apache.catalina.startup. CredentialHandlerRuleSet.MAX_NESTED_LEVELS">
-      <p>The NestedCredentialHandler allows nested CredentialHandlers. This
-      property controls the maximum permitted number of levels of nesting.</p>
       <p>If not specified, the default value of <code>3</code> will be used.</p>
     </property>
 

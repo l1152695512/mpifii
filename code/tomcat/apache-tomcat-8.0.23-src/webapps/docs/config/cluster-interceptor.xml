@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -112,7 +112,7 @@
        The dispatcher will trigger on this value only, as it is predefined by Tribes.
        The other attributes are inherited from its base class <code>org.apache.catalina.tribes.group.interceptors.MessageDispatchInterceptor</code>.
      </attribute>
-     <attribute name="maxThreads" required="false">
+          <attribute name="maxThreads" required="false">
        The maximum number of threads in this pool, default is 10.
      </attribute>
      <attribute name="maxSpareThreads" required="false">

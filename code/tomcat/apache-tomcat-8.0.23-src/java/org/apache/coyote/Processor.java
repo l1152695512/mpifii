@@ -14,14 +14,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.coyote;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.concurrent.Executor;
 
-import javax.servlet.http.HttpUpgradeHandler;
-
+import org.apache.coyote.http11.upgrade.servlet31.HttpUpgradeHandler;
 import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.SSLSupport;
 import org.apache.tomcat.util.net.SocketStatus;
@@ -41,9 +40,20 @@ public interface Processor<S> {
     SocketState asyncDispatch(SocketStatus status);
     SocketState asyncPostProcess();
 
+    /**
+     * @deprecated  Will be removed in Tomcat 8.0.x.
+     */
+    @Deprecated
+    org.apache.coyote.http11.upgrade.UpgradeInbound getUpgradeInbound();
+    /**
+     * @deprecated  Will be removed in Tomcat 8.0.x.
+     */
+    @Deprecated
+    SocketState upgradeDispatch() throws IOException;
+
     HttpUpgradeHandler getHttpUpgradeHandler();
     SocketState upgradeDispatch(SocketStatus status) throws IOException;
-
+    
     void errorDispatch();
 
     boolean isComet();
@@ -55,10 +65,4 @@ public interface Processor<S> {
     void recycle(boolean socketClosing);
 
     void setSslSupport(SSLSupport sslSupport);
-
-    /**
-     * Allows retrieving additional input during the upgrade process
-     * @return leftover bytes
-     */
-    ByteBuffer getLeftoverInput();
 }

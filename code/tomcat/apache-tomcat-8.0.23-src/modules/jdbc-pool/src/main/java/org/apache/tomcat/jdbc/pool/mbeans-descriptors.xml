@@ -229,7 +229,7 @@
                   type="java.lang.String"
              writeable="false"/>
 
-    <attribute    name="jmxEnabled"
+<attribute    name="jmxEnabled"
            description="Register the pool with JMX or not"
                   type="java.lang.Boolean"
                     is="true"

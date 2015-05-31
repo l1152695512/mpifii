@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,23 +29,24 @@ import javax.servlet.jsp.el.VariableResolver;
 public final class ExpressionEvaluatorImpl extends ExpressionEvaluator {
 
     private final ExpressionFactory factory;
-
+    
     public ExpressionEvaluatorImpl(ExpressionFactory factory) {
         this.factory = factory;
     }
 
     @Override
     public Expression parseExpression(String expression,
-            @SuppressWarnings("rawtypes") Class expectedType,
+            @SuppressWarnings("rawtypes") // API does not use generics
+            Class expectedType,
             FunctionMapper fMapper) throws ELException {
         try {
             ELContextImpl ctx =
-                new ELContextImpl(ELContextImpl.getDefaultResolver(factory));
+                new ELContextImpl(ELContextImpl.getDefaultResolver());
             if (fMapper != null) {
                 ctx.setFunctionMapper(new FunctionMapperImpl(fMapper));
             }
             ValueExpression ve = this.factory.createValueExpression(ctx, expression, expectedType);
-            return new ExpressionImpl(ve, factory);
+            return new ExpressionImpl(ve);
         } catch (javax.el.ELException e) {
             throw new ELParseException(e.getMessage());
         }
@@ -53,7 +54,8 @@ public final class ExpressionEvaluatorImpl extends ExpressionEvaluator {
 
     @Override
     public Object evaluate(String expression,
-            @SuppressWarnings("rawtypes") Class expectedType,
+            @SuppressWarnings("rawtypes") // API does not use generics
+            Class expectedType,
             VariableResolver vResolver, FunctionMapper fMapper)
             throws ELException {
         return this.parseExpression(expression, expectedType, fMapper).evaluate(vResolver);

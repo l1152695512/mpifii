@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,12 +27,12 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.catalina.DistributedManager;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Session;
 import org.apache.catalina.Store;
-import org.apache.catalina.StoreManager;
 import org.apache.catalina.security.SecurityUtil;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -46,9 +46,10 @@ import org.apache.juli.logging.LogFactory;
  * <code>stop()</code> methods of this class at the correct times.
  *
  * @author Craig R. McClanahan
+ * @author Jean-Francois Arcand
  */
 public abstract class PersistentManagerBase extends ManagerBase
-        implements StoreManager {
+        implements DistributedManager {
 
     private static final Log log = LogFactory.getLog(PersistentManagerBase.class);
 
@@ -65,15 +66,15 @@ public abstract class PersistentManagerBase extends ManagerBase
         public Void run() throws Exception{
            store.clear();
            return null;
-        }
-    }
-
+        }                       
+    }   
+     
     private class PrivilegedStoreRemove
         implements PrivilegedExceptionAction<Void> {
 
-        private String id;
-
-        PrivilegedStoreRemove(String id) {
+        private String id;    
+            
+        PrivilegedStoreRemove(String id) {     
             this.id = id;
         }
 
@@ -81,30 +82,30 @@ public abstract class PersistentManagerBase extends ManagerBase
         public Void run() throws Exception{
            store.remove(id);
            return null;
-        }
-    }
-
+        }                       
+    }   
+     
     private class PrivilegedStoreLoad
         implements PrivilegedExceptionAction<Session> {
 
-        private String id;
-
-        PrivilegedStoreLoad(String id) {
+        private String id;    
+            
+        PrivilegedStoreLoad(String id) {     
             this.id = id;
         }
 
         @Override
         public Session run() throws Exception{
            return store.load(id);
-        }
-    }
-
+        }                       
+    }   
+          
     private class PrivilegedStoreSave
         implements PrivilegedExceptionAction<Void> {
 
-        private Session session;
-
-        PrivilegedStoreSave(Session session) {
+        private Session session;    
+            
+        PrivilegedStoreSave(Session session) {     
             this.session = session;
         }
 
@@ -112,9 +113,9 @@ public abstract class PersistentManagerBase extends ManagerBase
         public Void run() throws Exception{
            store.save(session);
            return null;
-        }
-    }
-
+        }                       
+    }   
+     
     private class PrivilegedStoreKeys
         implements PrivilegedExceptionAction<String[]> {
 
@@ -125,15 +126,22 @@ public abstract class PersistentManagerBase extends ManagerBase
         @Override
         public String[] run() throws Exception{
            return store.keys();
-        }
+        }                       
     }
 
     // ----------------------------------------------------- Instance Variables
 
+
+    /**
+     * The descriptive information about this implementation.
+     */
+    private static final String info = "PersistentManagerBase/1.1";
+
+
     /**
      * The descriptive name of this Manager implementation (for logging).
      */
-    private static final String name = "PersistentManagerBase";
+    private static String name = "PersistentManagerBase";
 
     /**
      * Key of the note of a session in which the timestamp of last backup is stored.
@@ -180,7 +188,8 @@ public abstract class PersistentManagerBase extends ManagerBase
     /**
      * Sessions currently being swapped in and the associated locks
      */
-    private final Map<String,Object> sessionSwapInLocks = new HashMap<>();
+    private final Map<String,Object> sessionSwapInLocks =
+        new HashMap<String,Object>();
 
 
     // ------------------------------------------------------------- Properties
@@ -290,6 +299,19 @@ public abstract class PersistentManagerBase extends ManagerBase
 
 
     /**
+     * Return descriptive information about this Manager implementation and
+     * the corresponding version number, in the format
+     * <code>&lt;description&gt;/&lt;version&gt;</code>.
+     */
+    @Override
+    public String getInfo() {
+
+        return (info);
+
+    }
+
+
+    /**
      * Return true, if the session id is loaded in memory
      * otherwise false is returned
      *
@@ -334,7 +356,6 @@ public abstract class PersistentManagerBase extends ManagerBase
      * Return the Store object which manages persistent Session
      * storage for this Manager.
      */
-    @Override
     public Store getStore() {
 
         return (this.store);
@@ -387,7 +408,7 @@ public abstract class PersistentManagerBase extends ManagerBase
         if (store == null)
             return;
 
-        try {
+        try {     
             if (SecurityUtil.isPackageProtectionEnabled()){
                 try{
                     AccessController.doPrivileged(new PrivilegedStoreClear());
@@ -411,7 +432,7 @@ public abstract class PersistentManagerBase extends ManagerBase
      */
     @Override
     public void processExpires() {
-
+        
         long timeNow = System.currentTimeMillis();
         Session sessions[] = findSessions();
         int expireHere = 0 ;
@@ -427,12 +448,12 @@ public abstract class PersistentManagerBase extends ManagerBase
         if ((getStore() != null) && (getStore() instanceof StoreBase)) {
             ((StoreBase) getStore()).processExpires();
         }
-
+        
         long timeEnd = System.currentTimeMillis();
         if(log.isDebugEnabled())
              log.debug("End expire sessions " + getName() + " processingTime " + (timeEnd - timeNow) + " expired sessions: " + expireHere);
         processingTime += (timeEnd - timeNow);
-
+         
     }
 
 
@@ -498,7 +519,6 @@ public abstract class PersistentManagerBase extends ManagerBase
      *
      * @param session Session to be removed
      */
-    @Override
     public void removeSuper(Session session) {
         super.remove(session, false);
     }
@@ -575,13 +595,13 @@ public abstract class PersistentManagerBase extends ManagerBase
         }
     }
 
-
+    
     /**
      * Remove this Session from the active Sessions for this Manager,
      * and from the Store.
      *
      * @param id Session's id to be removed
-     */
+     */    
     protected void removeSession(String id){
         try {
             if (SecurityUtil.isPackageProtectionEnabled()){
@@ -594,10 +614,10 @@ public abstract class PersistentManagerBase extends ManagerBase
                 }
             } else {
                  store.remove(id);
-            }
+            }               
         } catch (IOException e) {
             log.error("Exception removing session  " + e.getMessage(), e);
-        }
+        }        
     }
 
     /**
@@ -650,7 +670,7 @@ public abstract class PersistentManagerBase extends ManagerBase
 
     @Override
     public Set<String> getSessionIdsFull() {
-        Set<String> sessionIds = new HashSet<>();
+        Set<String> sessionIds = new HashSet<String>();
         // In memory session ID list
         sessionIds.addAll(sessions.keySet());
         // Store session ID list
@@ -816,7 +836,7 @@ public abstract class PersistentManagerBase extends ManagerBase
                 }
             } else {
                  store.save(session);
-            }
+            }   
         } catch (IOException e) {
             log.error(sm.getString
                 ("persistentManager.serializeError", session.getIdInternal(), e));
@@ -861,7 +881,7 @@ public abstract class PersistentManagerBase extends ManagerBase
             log.debug("Stopping");
 
         setState(LifecycleState.STOPPING);
-
+        
         if (getStore() != null && saveOnRestart) {
             unload();
         } else {
@@ -895,6 +915,7 @@ public abstract class PersistentManagerBase extends ManagerBase
             return;
 
         Session sessions[] = findSessions();
+        long timeNow = System.currentTimeMillis();
 
         // Swap out all sessions idle longer than maxIdleSwap
         if (maxIdleSwap >= 0) {
@@ -903,7 +924,12 @@ public abstract class PersistentManagerBase extends ManagerBase
                 synchronized (session) {
                     if (!session.isValid())
                         continue;
-                    int timeIdle = (int) (session.getIdleTimeInternal() / 1000L);
+                    int timeIdle;
+                    if (StandardSession.LAST_ACCESS_AT_START) {
+                        timeIdle = (int) ((timeNow - session.getLastAccessedTimeInternal()) / 1000L);
+                    } else {
+                        timeIdle = (int) ((timeNow - session.getThisAccessedTimeInternal()) / 1000L);
+                    }
                     if (timeIdle >= maxIdleSwap && timeIdle >= minIdleSwap) {
                         if (session.accessCount != null &&
                                 session.accessCount.get() > 0) {
@@ -948,11 +974,17 @@ public abstract class PersistentManagerBase extends ManagerBase
                  Integer.valueOf(sessions.length)));
 
         int toswap = sessions.length - getMaxActiveSessions();
+        long timeNow = System.currentTimeMillis();
 
         for (int i = 0; i < sessions.length && toswap > 0; i++) {
             StandardSession session =  (StandardSession) sessions[i];
             synchronized (session) {
-                int timeIdle = (int) (session.getIdleTimeInternal() / 1000L);
+                int timeIdle;
+                if (StandardSession.LAST_ACCESS_AT_START) {
+                    timeIdle = (int) ((timeNow - session.getLastAccessedTimeInternal()) / 1000L);
+                } else {
+                    timeIdle = (int) ((timeNow - session.getThisAccessedTimeInternal()) / 1000L);
+                }
                 if (timeIdle >= minIdleSwap) {
                     if (session.accessCount != null &&
                             session.accessCount.get() > 0) {
@@ -986,6 +1018,7 @@ public abstract class PersistentManagerBase extends ManagerBase
             return;
 
         Session sessions[] = findSessions();
+        long timeNow = System.currentTimeMillis();
 
         // Back up all sessions idle longer than maxIdleBackup
         if (maxIdleBackup >= 0) {
@@ -1000,14 +1033,19 @@ public abstract class PersistentManagerBase extends ManagerBase
                     if (persistedLastAccessedTime != null &&
                             lastAccessedTime == persistedLastAccessedTime.longValue())
                         continue;
-                    int timeIdle = (int) (session.getIdleTimeInternal() / 1000L);
+                    int timeIdle;
+                    if (StandardSession.LAST_ACCESS_AT_START) {
+                        timeIdle = (int) ((timeNow - session.getLastAccessedTimeInternal()) / 1000L);
+                    } else {
+                        timeIdle = (int) ((timeNow - session.getThisAccessedTimeInternal()) / 1000L);
+                    }
                     if (timeIdle >= maxIdleBackup) {
                         if (log.isDebugEnabled())
                             log.debug(sm.getString
                                 ("persistentManager.backupMaxIdle",
                                 session.getIdInternal(),
                                 Integer.valueOf(timeIdle)));
-
+    
                         try {
                             writeSession(session);
                         } catch (IOException e) {

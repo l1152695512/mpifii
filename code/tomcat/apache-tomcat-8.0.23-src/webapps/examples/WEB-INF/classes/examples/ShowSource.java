@@ -45,29 +45,30 @@ public class ShowSource extends TagSupport {
             (jspFile.toUpperCase(Locale.ENGLISH).indexOf("/META-INF/") != 0))
             throw new JspTagException("Invalid JSP file " + jspFile);
 
-        try (InputStream in
-            = pageContext.getServletContext().getResourceAsStream(jspFile)) {
+        InputStream in = pageContext.getServletContext().getResourceAsStream(
+                jspFile);
+        if (in == null)
+            throw new JspTagException("Unable to find JSP file: " + jspFile);
 
-            if (in == null)
-                throw new JspTagException("Unable to find JSP file: " + jspFile);
-
+        try {
             JspWriter out = pageContext.getOut();
-
+            out.println("<body>");
+            out.println("<pre>");
+            for (int ch = in.read(); ch != -1; ch = in.read())
+                if (ch == '<')
+                    out.print("&lt;");
+                else
+                    out.print((char) ch);
+            out.println("</pre>");
+            out.println("</body>");
+        } catch (IOException ex) {
+            throw new JspTagException("IOException: " + ex.toString());
+        } finally {
             try {
-                out.println("<body>");
-                out.println("<pre>");
-                for (int ch = in.read(); ch != -1; ch = in.read())
-                    if (ch == '<')
-                        out.print("&lt;");
-                    else
-                        out.print((char) ch);
-                out.println("</pre>");
-                out.println("</body>");
-            } catch (IOException ex) {
-                throw new JspTagException("IOException: " + ex.toString());
+                in.close();
+            } catch (IOException e) {
+                throw new JspTagException("Can't close inputstream: ", e);
             }
-        } catch (IOException ex2) {
-            throw new JspTagException("IOException: " + ex2.toString());
         }
         return super.doEndTag();
     }

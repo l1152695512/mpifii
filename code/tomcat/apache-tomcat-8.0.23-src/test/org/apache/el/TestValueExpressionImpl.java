@@ -40,7 +40,7 @@ public class TestValueExpressionImpl {
     @Test
     public void testGetValueReference() {
         ExpressionFactory factory = ExpressionFactory.newInstance();
-        ELContext context = new ELContextImpl(factory);
+        ELContext context = new ELContextImpl();
 
         TesterBeanB beanB = new TesterBeanB();
         beanB.setName("Tomcat");
@@ -66,7 +66,7 @@ public class TestValueExpressionImpl {
     @Test
     public void testGetValueReferenceVariable() {
         ExpressionFactory factory = ExpressionFactory.newInstance();
-        ELContext context = new ELContextImpl(factory);
+        ELContext context = new ELContextImpl();
 
         TesterBeanB beanB = new TesterBeanB();
         beanB.setName("Tomcat");
@@ -94,7 +94,7 @@ public class TestValueExpressionImpl {
     @Test
     public void testBug49345() {
         ExpressionFactory factory = ExpressionFactory.newInstance();
-        ELContext context = new ELContextImpl(factory);
+        ELContext context = new ELContextImpl();
 
         TesterBeanA beanA = new TesterBeanA();
         TesterBeanB beanB = new TesterBeanB();
@@ -123,7 +123,7 @@ public class TestValueExpressionImpl {
     @Test
     public void testBug50105() {
         ExpressionFactory factory = ExpressionFactory.newInstance();
-        ELContext context = new ELContextImpl(factory);
+        ELContext context = new ELContextImpl();
 
         TesterEnum testEnum = TesterEnum.APPLE;
 
@@ -146,12 +146,12 @@ public class TestValueExpressionImpl {
     @Test
     public void testBug51177ObjectMap() {
         ExpressionFactory factory = ExpressionFactory.newInstance();
-        ELContext context = new ELContextImpl(factory);
+        ELContext context = new ELContextImpl();
 
         Object o1 = "String value";
         Object o2 = Integer.valueOf(32);
 
-        Map<Object,Object> map = new HashMap<>();
+        Map<Object,Object> map = new HashMap<Object,Object>();
         map.put("key1", o1);
         map.put("key2", o2);
 
@@ -173,12 +173,12 @@ public class TestValueExpressionImpl {
     @Test
     public void testBug51177ObjectList() {
         ExpressionFactory factory = ExpressionFactory.newInstance();
-        ELContext context = new ELContextImpl(factory);
+        ELContext context = new ELContextImpl();
 
         Object o1 = "String value";
         Object o2 = Integer.valueOf(32);
 
-        List<Object> list = new ArrayList<>();
+        List<Object> list = new ArrayList<Object>();
         list.add(0, o1);
         list.add(1, o2);
 
@@ -198,13 +198,13 @@ public class TestValueExpressionImpl {
     }
 
 
-    /*
+    /**
      * Test returning an empty list as a bean property.
      */
     @Test
     public void testBug51544Bean() throws Exception {
         ExpressionFactory factory = ExpressionFactory.newInstance();
-        ELContext context = new ELContextImpl(factory);
+        ELContext context = new ELContextImpl();
 
         TesterBeanA beanA = new TesterBeanA();
         beanA.setValList(Collections.emptyList());
@@ -221,13 +221,13 @@ public class TestValueExpressionImpl {
     }
 
 
-    /*
+    /**
      * Test using list directly as variable.
      */
     @Test
     public void testBug51544Direct() throws Exception {
         ExpressionFactory factory = ExpressionFactory.newInstance();
-        ELContext context = new ELContextImpl(factory);
+        ELContext context = new ELContextImpl();
 
         List<?> list = Collections.emptyList();
 
@@ -240,30 +240,5 @@ public class TestValueExpressionImpl {
 
         Integer result = (Integer) ve.getValue(context);
         assertEquals(Integer.valueOf(0), result);
-    }
-
-
-    @Test
-    public void testBug56522SetNullValue() {
-        ExpressionFactory factory = ExpressionFactory.newInstance();
-        ELContext context = new ELContextImpl(factory);
-
-        TesterBeanB beanB = new TesterBeanB();
-        beanB.setName("Tomcat");
-        ValueExpression var =
-            factory.createValueExpression(beanB, TesterBeanB.class);
-        context.getVariableMapper().setVariable("beanB", var);
-
-        ValueExpression ve = factory.createValueExpression(
-                context, "${beanB.name}", String.class);
-
-        // First check the basics work
-        String result = (String) ve.getValue(context);
-        assertEquals("Tomcat", result);
-
-        // Now set the value to null
-        ve.setValue(context, null);
-
-        assertEquals("", beanB.getName());
     }
 }

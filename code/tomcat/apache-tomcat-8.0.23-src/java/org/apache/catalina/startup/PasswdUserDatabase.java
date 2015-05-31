@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import java.util.Hashtable;
 
 
 /**
- * Concrete implementation of the <code>UserDatabase</code> interface
+ * Concrete implementation of the <strong>UserDatabase</code> interface
  * that processes the <code>/etc/passwd</code> file on a Unix system.
  *
  * @author Craig R. McClanahan
@@ -61,7 +61,7 @@ public final class PasswdUserDatabase
     /**
      * The set of home directories for all defined users, keyed by username.
      */
-    private final Hashtable<String,String> homes = new Hashtable<>();
+    private Hashtable<String,String> homes = new Hashtable<String,String>();
 
 
     /**

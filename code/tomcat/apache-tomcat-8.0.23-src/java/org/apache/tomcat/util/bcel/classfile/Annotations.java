@@ -22,14 +22,14 @@ import java.io.IOException;
 
 /**
  * base class for annotations
- *
+ * 
  * @author  <A HREF="mailto:dbrosius@qis.net">D. Brosius</A>
  * @since 6.0
  */
 public class Annotations {
 
     private final AnnotationEntry[] annotation_table;
-
+    
     /**
      * @param file Input stream
      * @param constant_pool Array of constants

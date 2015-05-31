@@ -28,7 +28,6 @@ import static org.junit.Assert.fail;
 import org.junit.Assume;
 import org.junit.Test;
 
-import org.apache.catalina.Context;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
@@ -36,7 +35,6 @@ import org.apache.coyote.ProtocolHandler;
 import org.apache.coyote.http11.AbstractHttp11JsseProtocol;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.net.jsse.TesterBug50640SslImpl;
-import org.apache.tomcat.websocket.server.WsContextListener;
 
 /**
  * The keys and certificates used in this file are all available in svn and were
@@ -53,8 +51,6 @@ public class TestCustomSsl extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
         Connector connector = tomcat.getConnector();
 
-        Assume.assumeFalse("This test is only for JSSE based SSL connectors",
-                connector.getProtocolHandlerClassName().contains("Apr"));
 
         connector.setProperty("sslImplementationName",
                 "org.apache.tomcat.util.net.jsse.TesterBug50640SslImpl");
@@ -72,9 +68,7 @@ public class TestCustomSsl extends TomcatBaseTest {
         connector.setProperty("SSLEnabled", "true");
 
         File appDir = new File(getBuildDirectory(), "webapps/examples");
-        Context ctxt  = tomcat.addWebapp(
-                null, "/examples", appDir.getAbsolutePath());
-        ctxt.addApplicationListener(WsContextListener.class.getName());
+        tomcat.addWebapp(null, "/examples", appDir.getAbsolutePath());
 
         tomcat.start();
         ByteChunk res = getUrl("https://localhost:" + getPort() +
@@ -95,10 +89,15 @@ public class TestCustomSsl extends TomcatBaseTest {
     private void doTestCustomTrustManager(boolean serverTrustAll)
             throws Exception {
 
+        if (!TesterSupport.RFC_5746_SUPPORTED) {
+            // Make sure SSL renegotiation is not disabled in the JVM
+            System.setProperty("sun.security.ssl.allowUnsafeRenegotiation",
+                    "true");
+        }
+
         Tomcat tomcat = getTomcatInstance();
 
-        Assume.assumeTrue("SSL renegotiation has to be supported for this test",
-                TesterSupport.isRenegotiationSupported(getTomcatInstance()));
+        Assume.assumeTrue(TesterSupport.isRenegotiationSupported(getTomcatInstance()));
 
         TesterSupport.configureClientCertContext(tomcat);
 

@@ -34,7 +34,7 @@ import org.apache.tomcat.util.res.StringManager;
 public class HttpMessages {
 
     private static final Map<Locale,HttpMessages> instances =
-            new ConcurrentHashMap<>();
+            new ConcurrentHashMap<Locale, HttpMessages>();
 
     private static final HttpMessages DEFAULT = new HttpMessages(
             StringManager.getManager("org.apache.tomcat.util.http.res",

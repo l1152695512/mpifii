@@ -18,7 +18,7 @@ package org.apache.catalina.valves;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.security.NoSuchProviderException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
@@ -64,48 +64,12 @@ public class SSLValve extends ValveBase {
 
     private static final Log log = LogFactory.getLog(SSLValve.class);
 
-    private String sslClientCertHeader = "ssl_client_cert";
-    private String sslCipherHeader = "ssl_cipher";
-    private String sslSessionIdHeader = "ssl_session_id";
-    private String sslCipherUserKeySizeHeader = "ssl_cipher_usekeysize";
 
     //------------------------------------------------------ Constructor
     public SSLValve() {
         super(true);
     }
 
-
-    public String getSslClientCertHeader() {
-        return sslClientCertHeader;
-    }
-
-    public void setSslClientCertHeader(String sslClientCertHeader) {
-        this.sslClientCertHeader = sslClientCertHeader;
-    }
-
-    public String getSslCipherHeader() {
-        return sslCipherHeader;
-    }
-
-    public void setSslCipherHeader(String sslCipherHeader) {
-        this.sslCipherHeader = sslCipherHeader;
-    }
-
-    public String getSslSessionIdHeader() {
-        return sslSessionIdHeader;
-    }
-
-    public void setSslSessionIdHeader(String sslSessionIdHeader) {
-        this.sslSessionIdHeader = sslSessionIdHeader;
-    }
-
-    public String getSslCipherUserKeySizeHeader() {
-        return sslCipherUserKeySizeHeader;
-    }
-
-    public void setSslCipherUserKeySizeHeader(String sslCipherUserKeySizeHeader) {
-        this.sslCipherUserKeySizeHeader = sslCipherUserKeySizeHeader;
-    }
 
 
     public String mygetHeader(Request request, String header) {
@@ -124,7 +88,7 @@ public class SSLValve extends ValveBase {
         throws IOException, ServletException {
 
         /* mod_header converts the '\n' into ' ' so we have to rebuild the client certificate */
-        String strcert0 = mygetHeader(request, sslClientCertHeader);
+        String strcert0 = mygetHeader(request, "ssl_client_cert");
         if (strcert0 != null && strcert0.length()>28) {
             String strcert1 = strcert0.replace(' ', '\n');
             String strcert2 = strcert1.substring(28, strcert1.length()-26);
@@ -133,7 +97,7 @@ public class SSLValve extends ValveBase {
             String strcerts = strcert4.concat("\n-----END CERTIFICATE-----\n");
             // ByteArrayInputStream bais = new ByteArrayInputStream(strcerts.getBytes("UTF-8"));
             ByteArrayInputStream bais = new ByteArrayInputStream(
-                    strcerts.getBytes(StandardCharsets.ISO_8859_1));
+                    strcerts.getBytes(Charset.defaultCharset()));
             X509Certificate jsseCerts[] = null;
             String providerName = (String) request.getConnector().getProperty(
                     "clientCertProvider");
@@ -155,15 +119,16 @@ public class SSLValve extends ValveBase {
             }
             request.setAttribute(Globals.CERTIFICATES_ATTR, jsseCerts);
         }
-        strcert0 = mygetHeader(request, sslCipherHeader);
+        strcert0 = mygetHeader(request, "ssl_cipher");
         if (strcert0 != null) {
             request.setAttribute(Globals.CIPHER_SUITE_ATTR, strcert0);
         }
-        strcert0 = mygetHeader(request, sslSessionIdHeader);
+        strcert0 = mygetHeader(request, "ssl_session_id");
         if (strcert0 != null) {
             request.setAttribute(Globals.SSL_SESSION_ID_ATTR, strcert0);
+            request.setAttribute(Globals.SSL_SESSION_ID_TOMCAT_ATTR, strcert0);
         }
-        strcert0 = mygetHeader(request, sslCipherUserKeySizeHeader);
+        strcert0 = mygetHeader(request, "ssl_cipher_usekeysize");
         if (strcert0 != null) {
             request.setAttribute(Globals.KEY_SIZE_ATTR,
                     Integer.valueOf(strcert0));

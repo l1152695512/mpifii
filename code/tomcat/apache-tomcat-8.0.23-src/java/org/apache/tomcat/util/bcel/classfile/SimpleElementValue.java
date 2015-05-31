@@ -35,7 +35,7 @@ public class SimpleElementValue extends ElementValue
     {
         return index;
     }
-
+    
 
     // Whatever kind of value it is, return it as a string
     @Override

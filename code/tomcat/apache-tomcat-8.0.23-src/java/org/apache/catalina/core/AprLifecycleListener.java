@@ -41,6 +41,7 @@ import org.apache.tomcat.util.res.StringManager;
  * and destroy APR.
  *
  * @author Remy Maucherat
+ * @author Filip Hanik
  * @since 4.1
  */
 public class AprLifecycleListener
@@ -53,7 +54,7 @@ public class AprLifecycleListener
      * so that, in normal (non-error) cases, init() releated log messages appear
      * at the expected point in the lifecycle.
      */
-    private static final List<String> initInfoLogMessages = new ArrayList<>(3);
+    private static final List<String> initInfoLogMessages = new ArrayList<String>(3);
 
     /**
      * The string manager for this package.
@@ -78,6 +79,8 @@ public class AprLifecycleListener
     protected static String SSLRandomSeed = "builtin";
     protected static boolean sslInitialized = false;
     protected static boolean aprInitialized = false;
+    @Deprecated
+    protected static boolean sslAvailable = false;
     protected static boolean aprAvailable = false;
     protected static boolean fipsModeActive = false;
 
@@ -176,6 +179,7 @@ public class AprLifecycleListener
         aprAvailable = false;
         aprInitialized = false;
         sslInitialized = false; // Well we cleaned the pool in terminate.
+        sslAvailable = false; // Well we cleaned the pool in terminate.
         fipsModeActive = false;
     }
 
@@ -341,6 +345,8 @@ public class AprLifecycleListener
         }
 
         log.info(sm.getString("aprListener.initializedOpenSSL", SSL.versionString()));
+
+        sslAvailable = true;
     }
 
     public String getSSLEngine() {

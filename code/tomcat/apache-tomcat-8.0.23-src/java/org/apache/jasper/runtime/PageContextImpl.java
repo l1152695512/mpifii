@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,12 +26,9 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Set;
 
 import javax.el.ELContext;
-import javax.el.ELException;
 import javax.el.ExpressionFactory;
-import javax.el.ImportHandler;
 import javax.el.ValueExpression;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.Servlet;
@@ -47,17 +44,23 @@ import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.JspFactory;
 import javax.servlet.jsp.JspWriter;
 import javax.servlet.jsp.PageContext;
+import javax.servlet.jsp.el.ELException;
+import javax.servlet.jsp.el.ExpressionEvaluator;
+import javax.servlet.jsp.el.VariableResolver;
 import javax.servlet.jsp.tagext.BodyContent;
 
 import org.apache.jasper.Constants;
 import org.apache.jasper.compiler.Localizer;
 import org.apache.jasper.el.ELContextImpl;
+import org.apache.jasper.el.ExpressionEvaluatorImpl;
+import org.apache.jasper.el.FunctionMapperImpl;
+import org.apache.jasper.el.VariableResolverImpl;
 import org.apache.jasper.security.SecurityUtil;
 
 /**
  * Implementation of the PageContext class from the JSP spec. Also doubles as a
  * VariableResolver for the EL.
- *
+ * 
  * @author Anil K. Vijendran
  * @author Larry Cable
  * @author Hans Bergsten
@@ -68,7 +71,7 @@ import org.apache.jasper.security.SecurityUtil;
  */
 public class PageContextImpl extends PageContext {
 
-    private static final JspFactory jspf = JspFactory.getDefaultFactory();
+    private static final JspFactory jspf = JspFactory.getDefaultFactory(); 
 
     private BodyContentImpl[] outs;
 
@@ -86,7 +89,7 @@ public class PageContextImpl extends PageContext {
     private String errorPageURL;
 
     // page-scope attributes
-    private final transient HashMap<String, Object> attributes;
+    private transient HashMap<String, Object> attributes;
 
     // per-request state
     private transient ServletRequest request;
@@ -94,12 +97,12 @@ public class PageContextImpl extends PageContext {
     private transient ServletResponse response;
 
     private transient HttpSession session;
-
+    
     private transient ELContextImpl elContext;
 
     private boolean isIncluded;
-
-
+    
+    
     // initial output stream
     private transient JspWriter out;
 
@@ -110,7 +113,7 @@ public class PageContextImpl extends PageContext {
      */
     PageContextImpl() {
         this.outs = new BodyContentImpl[0];
-        this.attributes = new HashMap<>(16);
+        this.attributes = new HashMap<String, Object>(16);
         this.depth = -1;
     }
 
@@ -120,6 +123,14 @@ public class PageContextImpl extends PageContext {
             boolean needsSession, int bufferSize, boolean autoFlush)
             throws IOException {
 
+        _initialize(servlet, request, response, errorPageURL, needsSession,
+                bufferSize, autoFlush);
+    }
+
+    private void _initialize(Servlet servlet, ServletRequest request,
+            ServletResponse response, String errorPageURL,
+            boolean needsSession, int bufferSize, boolean autoFlush) {
+
         // initialize state
         this.servlet = servlet;
         this.config = servlet.getServletConfig();
@@ -127,7 +138,7 @@ public class PageContextImpl extends PageContext {
         this.errorPageURL = errorPageURL;
         this.request = request;
         this.response = response;
-
+        
         // initialize application context
         this.applicationContext = JspApplicationContextImpl.getInstance(context);
 
@@ -601,11 +612,10 @@ public class PageContextImpl extends PageContext {
     }
 
     /**
-     * Returns the exception associated with this page context, if any.
-     * <p>
+     * Returns the exception associated with this page context, if any. <p/>
      * Added wrapping for Throwables to avoid ClassCastException: see Bugzilla
      * 31171 for details.
-     *
+     * 
      * @return The Exception associated with this page context, if any.
      */
     @Override
@@ -681,9 +691,8 @@ public class PageContextImpl extends PageContext {
 
     @Override
     @Deprecated
-    public javax.servlet.jsp.el.VariableResolver getVariableResolver() {
-        return new org.apache.jasper.el.VariableResolverImpl(
-                this.getELContext());
+    public VariableResolver getVariableResolver() {
+        return new VariableResolverImpl(this.getELContext());
     }
 
     @Override
@@ -796,9 +805,8 @@ public class PageContextImpl extends PageContext {
      */
     @Override
     @Deprecated
-    public javax.servlet.jsp.el.ExpressionEvaluator getExpressionEvaluator() {
-        return new org.apache.jasper.el.ExpressionEvaluatorImpl(
-                this.applicationContext.getExpressionFactory());
+    public ExpressionEvaluator getExpressionEvaluator() {
+        return new ExpressionEvaluatorImpl(this.applicationContext.getExpressionFactory());
     }
 
     @Override
@@ -839,7 +847,6 @@ public class PageContextImpl extends PageContext {
 
     }
 
-    @SuppressWarnings("deprecation") // Still jave to support old JSP EL
     private void doHandlePageException(Throwable t) throws IOException,
             ServletException {
 
@@ -895,9 +902,10 @@ public class PageContextImpl extends PageContext {
                 throw (RuntimeException) t;
 
             Throwable rootCause = null;
-            if (t instanceof JspException || t instanceof ELException ||
-                    t instanceof javax.servlet.jsp.el.ELException) {
-                rootCause =t.getCause();
+            if (t instanceof JspException) {
+                rootCause = ((JspException) t).getCause();
+            } else if (t instanceof ELException) {
+                rootCause = ((ELException) t).getCause();
             }
 
             if (rootCause != null) {
@@ -914,7 +922,7 @@ public class PageContextImpl extends PageContext {
      * go away once the EL interpreter moves out of JSTL and into its own
      * project. For now, this is necessary because the standard machinery is too
      * slow.
-     *
+     * 
      * @param expression
      *            The expression to be evaluated
      * @param expectedType
@@ -927,35 +935,21 @@ public class PageContextImpl extends PageContext {
      */
     public static Object proprietaryEvaluate(final String expression,
             final Class<?> expectedType, final PageContext pageContext,
-            final ProtectedFunctionMapper functionMap)
+            final ProtectedFunctionMapper functionMap, final boolean escape)
             throws ELException {
         final ExpressionFactory exprFactory = jspf.getJspApplicationContext(pageContext.getServletContext()).getExpressionFactory();
         ELContextImpl ctx = (ELContextImpl) pageContext.getELContext();
-        ctx.setFunctionMapper(functionMap);
+        ctx.setFunctionMapper(new FunctionMapperImpl(functionMap));
         ValueExpression ve = exprFactory.createValueExpression(ctx, expression, expectedType);
         return ve.getValue(ctx);
     }
 
     @Override
     public ELContext getELContext() {
-        if (elContext == null) {
-            elContext = applicationContext.createELContext(this);
-            if (servlet instanceof JspSourceImports) {
-                ImportHandler ih = elContext.getImportHandler();
-                Set<String> packageImports = ((JspSourceImports) servlet).getPackageImports();
-                if (packageImports != null) {
-                    for (String packageImport : packageImports) {
-                        ih.importPackage(packageImport);
-                    }
-                }
-                Set<String> classImports = ((JspSourceImports) servlet).getClassImports();
-                if (classImports != null) {
-                    for (String classImport : classImports) {
-                        ih.importClass(classImport);
-                    }
-                }
-            }
+        if (this.elContext == null) {
+            this.elContext = this.applicationContext.createELContext(this);
         }
         return this.elContext;
     }
+
 }

@@ -18,7 +18,6 @@
 
 package org.apache.el.parser;
 
-import javax.el.ELClass;
 import javax.el.ELException;
 import javax.el.MethodExpression;
 import javax.el.MethodInfo;
@@ -61,12 +60,6 @@ public final class AstIdentifier extends SimpleNode {
 
     @Override
     public Object getValue(EvaluationContext ctx) throws ELException {
-        // Lambda parameters
-        if (ctx.isLambdaArgument(this.image)) {
-            return ctx.getLambdaArgument(this.image);
-        }
-
-        // Variable mapper
         VariableMapper varMapper = ctx.getVariableMapper();
         if (varMapper != null) {
             ValueExpression expr = varMapper.resolveVariable(this.image);
@@ -74,31 +67,13 @@ public final class AstIdentifier extends SimpleNode {
                 return expr.getValue(ctx.getELContext());
             }
         }
-
-        // EL Resolvers
         ctx.setPropertyResolved(false);
         Object result = ctx.getELResolver().getValue(ctx, null, this.image);
-        if (ctx.isPropertyResolved()) {
-            return result;
+        if (!ctx.isPropertyResolved()) {
+            throw new PropertyNotFoundException(MessageFactory.get(
+                    "error.resolver.unhandled.null", this.image));
         }
-
-        // Import
-        result = ctx.getImportHandler().resolveClass(this.image);
-        if (result != null) {
-            return new ELClass((Class<?>) result);
-        }
-        result = ctx.getImportHandler().resolveStatic(this.image);
-        if (result != null) {
-            try {
-                return ((Class<?>) result).getField(this.image).get(null);
-            } catch (IllegalArgumentException | IllegalAccessException
-                    | NoSuchFieldException | SecurityException e) {
-                throw new ELException(e);
-            }
-        }
-
-        throw new PropertyNotFoundException(MessageFactory.get(
-                "error.resolver.unhandled.null", this.image));
+        return result;
     }
 
     @Override
@@ -143,7 +118,7 @@ public final class AstIdentifier extends SimpleNode {
             Object[] paramValues) throws ELException {
         return this.getMethodExpression(ctx).invoke(ctx.getELContext(), paramValues);
     }
-
+    
 
     @Override
     public MethodInfo getMethodInfo(EvaluationContext ctx,

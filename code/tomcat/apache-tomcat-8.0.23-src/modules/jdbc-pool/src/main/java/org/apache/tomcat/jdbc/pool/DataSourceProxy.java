@@ -35,11 +35,12 @@ import org.apache.tomcat.jdbc.pool.PoolProperties.InterceptorDefinition;
  *
  * The DataSource proxy lets us implements methods that don't exist in the current
  * compiler JDK but might be methods that are part of a future JDK DataSource interface.
- * <br>
+ * <br/>
  * It's a trick to work around compiler issues when implementing interfaces. For example,
  * I could put in Java 6 methods of javax.sql.DataSource here, and compile it with JDK 1.5
  * and still be able to run under Java 6 without getting NoSuchMethodException.
  *
+ * @author Filip Hanik
  * @version 1.0
  */
 
@@ -146,11 +147,7 @@ public class DataSourceProxy implements PoolConfiguration {
         if (con instanceof XAConnection) {
             return (XAConnection)con;
         } else {
-            try {
-                con.close();
-            } catch (Exception ignore) {
-                // Ignore
-            }
+            try {con.close();} catch (Exception ignore){}
             throw new SQLException("Connection from pool does not implement javax.sql.XAConnection");
         }
     }
@@ -163,11 +160,7 @@ public class DataSourceProxy implements PoolConfiguration {
         if (con instanceof XAConnection) {
             return (XAConnection)con;
         } else {
-            try {
-                con.close();
-            } catch (Exception ignore) {
-                // Ignore
-            }
+            try {con.close();} catch (Exception ignore){}
             throw new SQLException("Connection from pool does not implement javax.sql.XAConnection");
         }
     }
@@ -182,8 +175,6 @@ public class DataSourceProxy implements PoolConfiguration {
 
     /**
      * {@link javax.sql.DataSource#getConnection()}
-     * @param username unused
-     * @param password unused
      */
     public javax.sql.PooledConnection getPooledConnection(String username,
             String password) throws SQLException {
@@ -191,12 +182,7 @@ public class DataSourceProxy implements PoolConfiguration {
     }
 
     public ConnectionPool getPool() {
-        try {
-            return createPool();
-        }catch (SQLException x) {
-            log.error("Error during connection pool creation.", x);
-            return null;
-        }
+        return pool;
     }
 
 
@@ -213,11 +199,11 @@ public class DataSourceProxy implements PoolConfiguration {
                 }
             }
         }catch (Exception x) {
-            log.warn("Error during connection pool closure.", x);
+            log.warn("Error duing connection pool closure.", x);
         }
     }
 
-    public int getPoolSize() {
+    public int getPoolSize() throws SQLException{
         final ConnectionPool p = pool;
         if (p == null) return 0;
         else return p.getSize();
@@ -1351,4 +1337,5 @@ public class DataSourceProxy implements PoolConfiguration {
             log.error("Unable to purge pool.",x);
         }
     }
+
 }

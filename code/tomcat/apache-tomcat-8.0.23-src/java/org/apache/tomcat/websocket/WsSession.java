@@ -91,14 +91,15 @@ public class WsSession implements Session {
     private MessageHandler.Whole<PongMessage> pongMessageHandler = null;
     private volatile State state = State.OPEN;
     private final Object stateLock = new Object();
-    private final Map<String,Object> userProperties = new ConcurrentHashMap<>();
+    private final Map<String,Object> userProperties = new ConcurrentHashMap<String, Object>();
     private volatile int maxBinaryMessageBufferSize =
             Constants.DEFAULT_BUFFER_SIZE;
     private volatile int maxTextMessageBufferSize =
             Constants.DEFAULT_BUFFER_SIZE;
     private volatile long maxIdleTimeout = 0;
     private volatile long lastActive = System.currentTimeMillis();
-    private Map<FutureToSendHandler,FutureToSendHandler> futures = new ConcurrentHashMap<>();
+    private Map<FutureToSendHandler,FutureToSendHandler> futures =
+            new ConcurrentHashMap<FutureToSendHandler,FutureToSendHandler>();
 
     /**
      * Creates a new WebSocket session for communication between the two
@@ -106,34 +107,10 @@ public class WsSession implements Session {
      * at the time this constructor is called will be used when calling
      * {@link Endpoint#onClose(Session, CloseReason)}.
      *
-     * @param localEndpoint        The end point managed by this code
-     * @param wsRemoteEndpoint     The other / remote endpoint
-     * @param wsWebSocketContainer The container that created this session
-     * @param requestUri           The URI used to connect to this endpoint or
-     *                             <code>null</code> is this is a client session
-     * @param requestParameterMap  The parameters associated with the request
-     *                             that initiated this session or
-     *                             <code>null</code> if this is a client session
-     * @param queryString          The query string associated with the request
-     *                             that initiated this session or
-     *                             <code>null</code> if this is a client session
-     * @param userPrincipal        The principal associated with the request
-     *                             that initiated this session or
-     *                             <code>null</code> if this is a client session
-     * @param httpSessionId        The HTTP session ID associated with the
-     *                             request that initiated this session or
-     *                             <code>null</code> if this is a client session
-     * @param negotiatedExtensions The agreed extensions to use for this session
-     * @param subProtocol          The agreed subprotocol to use for this
-     *                             session
-     * @param pathParameters       The path parameters associated with the
-     *                             request that initiated this session or
-     *                             <code>null</code> if this is a client session
-     * @param secure               Was this session initiated over a secure
-     *                             connection?
-     * @param endpointConfig       The configuration information for the
-     *                             endpoint
-     * @throws DeploymentException if an invalid encode is specified
+     * @param localEndpoint
+     * @param wsRemoteEndpoint
+     * @param negotiatedExtensions
+     * @throws DeploymentException
      */
     public WsSession(Endpoint localEndpoint,
             WsRemoteEndpointImplBase wsRemoteEndpoint,
@@ -278,7 +255,7 @@ public class WsSession implements Session {
     @Override
     public Set<MessageHandler> getMessageHandlers() {
         checkState();
-        Set<MessageHandler> result = new HashSet<>();
+        Set<MessageHandler> result = new HashSet<MessageHandler>();
         if (binaryMessageHandler != null) {
             result.add(binaryMessageHandler);
         }
@@ -493,9 +470,6 @@ public class WsSession implements Session {
      * Called when a close message is received. Should only ever happen once.
      * Also called after a protocol error when the ProtocolHandler needs to
      * force the closing of the connection.
-     *
-     * @param closeReason The reason contained within the received close
-     *                    message.
      */
     public void onClose(CloseReason closeReason) {
 

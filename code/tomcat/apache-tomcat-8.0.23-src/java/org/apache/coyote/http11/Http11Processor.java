@@ -37,6 +37,7 @@ import org.apache.tomcat.util.net.SocketWrapper;
  * Processes HTTP requests.
  *
  * @author Remy Maucherat
+ * @author fhanik
  */
 public class Http11Processor extends AbstractHttp11Processor<Socket> {
 
@@ -53,7 +54,7 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
             Set<String> allowedTrailerHeaders, int maxExtensionSize, int maxSwallowSize) {
 
         super(endpoint);
-
+        
         inputBuffer = new InternalInputBuffer(request, headerBufferSize);
         request.setInputBuffer(inputBuffer);
 
@@ -66,12 +67,25 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
 
     // ----------------------------------------------------- Instance Variables
 
+
+    /**
+     * Input.
+     */
+    protected InternalInputBuffer inputBuffer = null;
+
+
+    /**
+     * Output.
+     */
+    protected InternalOutputBuffer outputBuffer = null;
+
+
     /**
      * SSL information.
      */
     protected SSLSupport sslSupport;
 
-
+    
     /**
      * The percentage of threads that have to be in use before keep-alive is
      * disabled to aid scalability.
@@ -102,7 +116,7 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
 
     @Override
     protected boolean disableKeepAlive() {
-        int threadRatio = -1;
+        int threadRatio = -1;   
         // These may return zero or negative values
         // Only calculate a thread ratio when both are >0 to ensure we get a
         // sensible result
@@ -111,24 +125,24 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
                 && (threadsBusy = endpoint.getCurrentThreadsBusy()) > 0) {
             threadRatio = (threadsBusy * 100) / maxThreads;
         }
-        // Disable keep-alive if we are running low on threads
-        if (threadRatio > getDisableKeepAlivePercentage()) {
+        // Disable keep-alive if we are running low on threads      
+        if (threadRatio > getDisableKeepAlivePercentage()) {     
             return true;
         }
-
+        
         return false;
     }
 
 
     @Override
     protected void setRequestLineReadTimeout() throws IOException {
-
+        
         /*
          * When there is no data in the buffer and this is not the first
          * request on this connection and timeouts are being used the
          * first read for this request may need a different timeout to
          * take account of time spent waiting for a processing thread.
-         *
+         * 
          * This is a little hacky but better than exposing the socket
          * and the timeout info to the InputBuffer
          */
@@ -151,8 +165,7 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
                 }
             }
             socketWrapper.getSocket().setSoTimeout(firstReadTimeout);
-            // Blocking IO so fill() always blocks
-            if (!inputBuffer.fill(true)) {
+            if (!inputBuffer.fill()) {
                 throw new EOFException(sm.getString("iib.eof.error"));
             }
             // Once the first byte has been read, the standard timeout should be
@@ -177,8 +190,8 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
     protected void setSocketTimeout(int timeout) throws IOException {
         socketWrapper.getSocket().setSoTimeout(timeout);
     }
-
-
+    
+    
     @Override
     protected void setCometTimeouts(SocketWrapper<Socket> socketWrapper) {
         // NO-OP for BIO
@@ -196,15 +209,10 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
         return false;
     }
 
-
-    @Override
-    protected void registerForEvent(boolean read, boolean write) {
-        // NO-OP for BIO
-    }
-
+    
     @Override
     protected void resetTimeouts() {
-        // NO-OP for BIO
+        // NOOP for BIO
     }
 
 
@@ -270,88 +278,61 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
             break;
         }
         case REQ_HOST_ADDR_ATTRIBUTE: {
-            if (socketWrapper == null) {
-                request.remoteAddr().recycle();
-            } else {
-                if (socketWrapper.getRemoteAddr() == null) {
-                    InetAddress inetAddr = socketWrapper.getSocket().getInetAddress();
-                    if (inetAddr != null) {
-                        socketWrapper.setRemoteAddr(inetAddr.getHostAddress());
-                    }
+            if ((remoteAddr == null) && (socketWrapper != null)) {
+                InetAddress inetAddr = socketWrapper.getSocket().getInetAddress();
+                if (inetAddr != null) {
+                    remoteAddr = inetAddr.getHostAddress();
                 }
-                request.remoteAddr().setString(socketWrapper.getRemoteAddr());
             }
+            request.remoteAddr().setString(remoteAddr);
             break;
         }
         case REQ_LOCAL_NAME_ATTRIBUTE: {
-            if (socketWrapper == null) {
-                request.localName().recycle();
-            } else {
-                if (socketWrapper.getLocalName() == null) {
-                    InetAddress inetAddr = socketWrapper.getSocket().getLocalAddress();
-                    if (inetAddr != null) {
-                        socketWrapper.setLocalName(inetAddr.getHostName());
-                    }
+            if ((localName == null) && (socketWrapper != null)) {
+                InetAddress inetAddr = socketWrapper.getSocket().getLocalAddress();
+                if (inetAddr != null) {
+                    localName = inetAddr.getHostName();
                 }
-                request.localName().setString(socketWrapper.getLocalName());
             }
+            request.localName().setString(localName);
             break;
         }
         case REQ_HOST_ATTRIBUTE: {
-            if (socketWrapper == null) {
-                request.remoteHost().recycle();
-            } else {
-                if (socketWrapper.getRemoteHost() == null) {
-                    InetAddress inetAddr = socketWrapper.getSocket().getInetAddress();
-                    if (inetAddr != null) {
-                        socketWrapper.setRemoteHost(inetAddr.getHostName());
-                    }
-                    if (socketWrapper.getRemoteHost() == null) {
-                        if (socketWrapper.getRemoteAddr() == null &&
-                                inetAddr != null) {
-                            socketWrapper.setRemoteAddr(inetAddr.getHostAddress());
-                        }
-                        if (socketWrapper.getRemoteAddr() != null) {
-                            socketWrapper.setRemoteHost(socketWrapper.getRemoteAddr());
-                        }
+            if ((remoteHost == null) && (socketWrapper != null)) {
+                InetAddress inetAddr = socketWrapper.getSocket().getInetAddress();
+                if (inetAddr != null) {
+                    remoteHost = inetAddr.getHostName();
+                }
+                if(remoteHost == null) {
+                    if(remoteAddr != null) {
+                        remoteHost = remoteAddr;
+                    } else { // all we can do is punt
+                        request.remoteHost().recycle();
                     }
                 }
-                request.remoteHost().setString(socketWrapper.getRemoteHost());
             }
+            request.remoteHost().setString(remoteHost);
             break;
         }
         case REQ_LOCAL_ADDR_ATTRIBUTE: {
-            if (socketWrapper == null) {
-                request.localAddr().recycle();
-            } else {
-                if (socketWrapper.getLocalAddr() == null) {
-                    socketWrapper.setLocalAddr(
-                            socketWrapper.getSocket().getLocalAddress().getHostAddress());
-                }
-                request.localAddr().setString(socketWrapper.getLocalAddr());
-            }
+            if (localAddr == null)
+               localAddr = socketWrapper.getSocket().getLocalAddress().getHostAddress();
+
+            request.localAddr().setString(localAddr);
             break;
         }
         case REQ_REMOTEPORT_ATTRIBUTE: {
-            if (socketWrapper == null) {
-                request.setRemotePort(0);
-            } else {
-                if (socketWrapper.getRemotePort() == -1) {
-                    socketWrapper.setRemotePort(socketWrapper.getSocket().getPort());
-                }
-                request.setRemotePort(socketWrapper.getRemotePort());
+            if ((remotePort == -1 ) && (socketWrapper !=null)) {
+                remotePort = socketWrapper.getSocket().getPort();
             }
+            request.setRemotePort(remotePort);
             break;
         }
         case REQ_LOCALPORT_ATTRIBUTE: {
-            if (socketWrapper == null) {
-                request.setLocalPort(0);
-            } else {
-                if (socketWrapper.getLocalPort() == -1) {
-                    socketWrapper.setLocalPort(socketWrapper.getSocket().getLocalPort());
-                }
-                request.setLocalPort(socketWrapper.getLocalPort());
+            if ((localPort == -1 ) && (socketWrapper !=null)) {
+                localPort = socketWrapper.getSocket().getLocalPort();
             }
+            request.setLocalPort(localPort);
             break;
         }
         case REQ_SSL_CERTIFICATE: {
@@ -374,6 +355,27 @@ public class Http11Processor extends AbstractHttp11Processor<Socket> {
                 } catch (Exception e) {
                     log.warn(sm.getString("http11processor.socket.ssl"), e);
                 }
+            }
+            break;
+        }
+        case ASYNC_COMPLETE: {
+            if (asyncStateMachine.asyncComplete()) {
+                ((JIoEndpoint) endpoint).processSocketAsync(this.socketWrapper,
+                        SocketStatus.OPEN_READ);
+            }
+            break;
+        }
+        case ASYNC_SETTIMEOUT: {
+            if (param == null) return;
+            long timeout = ((Long)param).longValue();
+            // if we are not piggy backing on a worker thread, set the timeout
+            socketWrapper.setTimeout(timeout);
+            break;
+        }
+        case ASYNC_DISPATCH: {
+            if (asyncStateMachine.asyncDispatch()) {
+                ((JIoEndpoint) endpoint).processSocketAsync(this.socketWrapper,
+                        SocketStatus.OPEN_READ);
             }
             break;
         }

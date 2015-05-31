@@ -24,8 +24,16 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 
-import org.apache.catalina.tribes.Member;
-
+/**
+ * <p>Title: </p>
+ *
+ * <p>Description: </p>
+ *
+ * <p>Company: </p>
+ *
+ * @author not attributable
+ * @version 1.0
+ */
 public class TestMemberImplSerialization {
     private MemberImpl m1, m2, p1,p2;
     private byte[] payload = null;
@@ -65,8 +73,8 @@ public class TestMemberImplSerialization {
         byte[] md1 = m1.getData();
         byte[] md2 = m2.getData();
 
-        Member a1 = MemberImpl.getMember(md1);
-        Member a2 = MemberImpl.getMember(md2);
+        MemberImpl a1 = MemberImpl.getMember(md1);
+        MemberImpl a2 = MemberImpl.getMember(md2);
 
         assertTrue(a1.getUdpPort()==a2.getUdpPort());
         assertTrue(a1.getUdpPort()==udpPort);
@@ -74,13 +82,13 @@ public class TestMemberImplSerialization {
 
     @Test
     public void testSerializationOne() throws Exception {
-        Member m = m1;
+        MemberImpl m = m1;
         byte[] md1 = m.getData(false,true);
         byte[] mda1 = m.getData(false,false);
         assertTrue(Arrays.equals(md1,mda1));
         assertTrue(md1==mda1);
         mda1 = m.getData(true,true);
-        Member ma1 = MemberImpl.getMember(mda1);
+        MemberImpl ma1 = MemberImpl.getMember(mda1);
         assertTrue(compareMembers(m,ma1));
         mda1 = p1.getData(false);
         assertFalse(Arrays.equals(md1,mda1));
@@ -90,15 +98,15 @@ public class TestMemberImplSerialization {
         md1 = m.getData(true,true);
         Thread.sleep(50);
         mda1 = m.getData(true,true);
-        Member a1 = MemberImpl.getMember(md1);
-        Member a2 = MemberImpl.getMember(mda1);
+        MemberImpl a1 = MemberImpl.getMember(md1);
+        MemberImpl a2 = MemberImpl.getMember(mda1);
         assertTrue(a1.equals(a2));
         assertFalse(Arrays.equals(md1,mda1));
 
 
     }
 
-    public boolean compareMembers(Member impl1, Member impl2) {
+    public boolean compareMembers(MemberImpl impl1, MemberImpl impl2) {
         boolean result = true;
         result = result && Arrays.equals(impl1.getHost(),impl2.getHost());
         result = result && Arrays.equals(impl1.getPayload(),impl2.getPayload());

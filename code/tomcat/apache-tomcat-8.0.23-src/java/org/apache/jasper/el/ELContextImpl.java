@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,14 +24,11 @@ import javax.el.ArrayELResolver;
 import javax.el.BeanELResolver;
 import javax.el.CompositeELResolver;
 import javax.el.ELContext;
-import javax.el.ELManager;
 import javax.el.ELResolver;
-import javax.el.ExpressionFactory;
 import javax.el.FunctionMapper;
 import javax.el.ListELResolver;
 import javax.el.MapELResolver;
 import javax.el.ResourceBundleELResolver;
-import javax.el.StaticFieldELResolver;
 import javax.el.ValueExpression;
 import javax.el.VariableMapper;
 
@@ -39,7 +36,7 @@ import org.apache.jasper.Constants;
 
 /**
  * Implementation of ELContext
- *
+ * 
  * @author Jacob Hookom
  */
 public final class ELContextImpl extends ELContext {
@@ -66,15 +63,11 @@ public final class ELContextImpl extends ELContext {
         @Override
         public ValueExpression setVariable(String variable,
                 ValueExpression expression) {
-            if (vars == null) {
-                vars = new HashMap<>();
-            }
-            if (expression == null) {
-                return vars.remove(variable);
-            } else {
-                return vars.put(variable, expression);
-            }
+            if (vars == null)
+                vars = new HashMap<String, ValueExpression>();
+            return vars.put(variable, expression);
         }
+
     }
 
     private static final ELResolver DefaultResolver;
@@ -84,9 +77,6 @@ public final class ELContextImpl extends ELContext {
             DefaultResolver = null;
         } else {
             DefaultResolver = new CompositeELResolver();
-            ((CompositeELResolver) DefaultResolver).add(
-                    ELManager.getExpressionFactory().getStreamELResolver());
-            ((CompositeELResolver) DefaultResolver).add(new StaticFieldELResolver());
             ((CompositeELResolver) DefaultResolver).add(new MapELResolver());
             ((CompositeELResolver) DefaultResolver).add(new ResourceBundleELResolver());
             ((CompositeELResolver) DefaultResolver).add(new ListELResolver());
@@ -101,8 +91,8 @@ public final class ELContextImpl extends ELContext {
 
     private VariableMapper variableMapper;
 
-    public ELContextImpl(ExpressionFactory factory) {
-        this(getDefaultResolver(factory));
+    public ELContextImpl() {
+        this(getDefaultResolver());
     }
 
     public ELContextImpl(ELResolver resolver) {
@@ -135,11 +125,9 @@ public final class ELContextImpl extends ELContext {
         this.variableMapper = variableMapper;
     }
 
-    public static ELResolver getDefaultResolver(ExpressionFactory factory) {
+    public static ELResolver getDefaultResolver() {
         if (Constants.IS_SECURITY_ENABLED) {
             CompositeELResolver defaultResolver = new CompositeELResolver();
-            defaultResolver.add(factory.getStreamELResolver());
-            defaultResolver.add(new StaticFieldELResolver());
             defaultResolver.add(new MapELResolver());
             defaultResolver.add(new ResourceBundleELResolver());
             defaultResolver.add(new ListELResolver());

@@ -18,7 +18,6 @@ package org.apache.tomcat.util.http;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
@@ -110,7 +109,13 @@ public class TesterParametersPerformance {
         System.arraycopy(inputBytes, 0, bytes, 0, inputLength);
 
         String[] result = new String[loops];
-        Charset charset = StandardCharsets.ISO_8859_1;
+        Charset charset = null;
+        try {
+            charset = B2CConverter.getCharset("ISO-8859-1");
+        } catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
         long start = System.nanoTime();
         for (int i = 0; i < loops; i++) {

@@ -16,9 +16,11 @@
  */
 package org.apache.catalina.core;
 
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,7 +35,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.naming.Binding;
 import javax.naming.NamingException;
+import javax.naming.directory.DirContext;
 import javax.servlet.Filter;
 import javax.servlet.FilterRegistration;
 import javax.servlet.RequestDispatcher;
@@ -50,26 +54,26 @@ import javax.servlet.SessionCookieConfig;
 import javax.servlet.SessionTrackingMode;
 import javax.servlet.descriptor.JspConfigDescriptor;
 import javax.servlet.http.HttpSessionAttributeListener;
-import javax.servlet.http.HttpSessionIdListener;
 import javax.servlet.http.HttpSessionListener;
 
 import org.apache.catalina.Container;
 import org.apache.catalina.Context;
 import org.apache.catalina.Engine;
 import org.apache.catalina.Globals;
-import org.apache.catalina.Host;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Service;
-import org.apache.catalina.WebResourceRoot;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.connector.Connector;
-import org.apache.catalina.mapper.MappingData;
+import org.apache.catalina.deploy.FilterDef;
+import org.apache.catalina.util.ResourceSet;
 import org.apache.catalina.util.ServerInfo;
+import org.apache.naming.resources.DirContextURLStreamHandler;
+import org.apache.naming.resources.Resource;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.buf.CharChunk;
 import org.apache.tomcat.util.buf.MessageBytes;
-import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.apache.tomcat.util.http.RequestUtil;
+import org.apache.tomcat.util.http.mapper.MappingData;
 import org.apache.tomcat.util.res.StringManager;
 
 
@@ -114,7 +118,6 @@ public class ApplicationContext
     public ApplicationContext(StandardContext context) {
         super();
         this.context = context;
-        this.service = ((Engine) context.getParent().getParent()).getService();
         this.sessionCookieConfig = new ApplicationSessionCookieConfig(context);
 
         // Populate session tracking modes
@@ -128,33 +131,27 @@ public class ApplicationContext
     /**
      * The context attributes for this context.
      */
-    protected Map<String,Object> attributes = new ConcurrentHashMap<>();
+    protected Map<String,Object> attributes =
+        new ConcurrentHashMap<String,Object>();
 
 
     /**
      * List of read only attributes for this context.
      */
-    private final Map<String,String> readOnlyAttributes =
-            new ConcurrentHashMap<>();
+    private Map<String,String> readOnlyAttributes =
+        new ConcurrentHashMap<String,String>();
 
 
     /**
      * The Context instance with which we are associated.
      */
-    private final StandardContext context;
-
-
-    /**
-     * The Service instance with which we are associated.
-     */
-    private final Service service;
+    private StandardContext context = null;
 
 
     /**
      * Empty String collection to serve as the basis for empty enumerations.
      */
     private static final List<String> emptyString = Collections.emptyList();
-
 
     /**
      * Empty Servlet collection to serve as the basis for empty enumerations.
@@ -165,14 +162,14 @@ public class ApplicationContext
     /**
      * The facade around this object.
      */
-    private final ServletContext facade = new ApplicationContextFacade(this);
+    private ServletContext facade = new ApplicationContextFacade(this);
 
 
     /**
      * The merged context initialization parameters for this Context.
      */
     private final ConcurrentHashMap<String,String> parameters =
-            new ConcurrentHashMap<>();
+        new ConcurrentHashMap<String,String>();
 
 
     /**
@@ -185,7 +182,8 @@ public class ApplicationContext
     /**
      * Thread local data used during request dispatch.
      */
-    private final ThreadLocal<DispatchData> dispatchData = new ThreadLocal<>();
+    private ThreadLocal<DispatchData> dispatchData =
+        new ThreadLocal<DispatchData>();
 
 
     /**
@@ -207,8 +205,24 @@ public class ApplicationContext
      */
     private boolean newServletContextListenerAllowed = true;
 
+    // --------------------------------------------------------- Public Methods
+
+
+    /**
+     * Return the resources object that is mapped to a specified path.
+     * The path must begin with a "/" and is interpreted as relative to the
+     * current context root.
+     */
+    @Deprecated
+    public DirContext getResources() {
+
+        return context.getResources();
+
+    }
+
 
     // ------------------------------------------------- ServletContext Methods
+
 
     /**
      * Return the value of the specified context attribute, if any;
@@ -218,7 +232,9 @@ public class ApplicationContext
      */
     @Override
     public Object getAttribute(String name) {
+
         return (attributes.get(name));
+
     }
 
 
@@ -228,7 +244,7 @@ public class ApplicationContext
      */
     @Override
     public Enumeration<String> getAttributeNames() {
-        Set<String> names = new HashSet<>();
+        Set<String> names = new HashSet<String>();
         names.addAll(attributes.keySet());
         return Collections.enumeration(names);
     }
@@ -280,8 +296,9 @@ public class ApplicationContext
                 pathMB.setString(uri);
 
                 MappingData mappingData = new MappingData();
-                ((Engine) host.getParent()).getService().getMapper().map(hostMB, pathMB, null, mappingData);
-                child = mappingData.context;
+                ((Engine) host.getParent()).getService().findConnectors()[0].getMapper().map(
+                        hostMB, pathMB, null, mappingData);
+                child = (Context) mappingData.context;
             }
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
@@ -328,6 +345,10 @@ public class ApplicationContext
                 context.getTldValidation()) {
             return "true";
         }
+        if (Globals.JASPER_XML_VALIDATION_INIT_PARAM.equals(name) &&
+                context.getXmlValidation()) {
+            return "true";
+        }
         if (Globals.JASPER_XML_BLOCK_EXTERNAL_INIT_PARAM.equals(name)) {
             if (!context.getXmlBlockExternal()) {
                 // System admin has explicitly changed the default
@@ -344,12 +365,15 @@ public class ApplicationContext
      */
     @Override
     public Enumeration<String> getInitParameterNames() {
-        Set<String> names = new HashSet<>();
+        Set<String> names = new HashSet<String>();
         names.addAll(parameters.keySet());
         // Special handling for XML settings as these attributes will always be
         // available if they have been set on the context
         if (context.getTldValidation()) {
             names.add(Globals.JASPER_XML_VALIDATION_TLD_INIT_PARAM);
+        }
+        if (context.getXmlValidation()) {
+            names.add(Globals.JASPER_XML_VALIDATION_INIT_PARAM);
         }
         if (!context.getXmlBlockExternal()) {
             names.add(Globals.JASPER_XML_BLOCK_EXTERNAL_INIT_PARAM);
@@ -496,7 +520,7 @@ public class ApplicationContext
                 semicolon = -1;
             }
             uriCC.append(normalizedPath, 0, semicolon > 0 ? semicolon : pos);
-            service.getMapper().map(context, uriMB, mappingData);
+            context.getMapper().map(uriMB, mappingData);
             if (mappingData.wrapper == null) {
                 return (null);
             }
@@ -514,7 +538,7 @@ public class ApplicationContext
             return (null);
         }
 
-        Wrapper wrapper = mappingData.wrapper;
+        Wrapper wrapper = (Wrapper) mappingData.wrapper;
         String wrapperPath = mappingData.wrapperPath.toString();
         String pathInfo = mappingData.pathInfo.toString();
 
@@ -548,12 +572,31 @@ public class ApplicationContext
             throw new MalformedURLException(sm.getString(
                     "applicationContext.requestDispatcher.iae", path));
 
-        WebResourceRoot resources = context.getResources();
+        String normPath = RequestUtil.normalize(path);
+        if (normPath == null)
+            return (null);
+
+        DirContext resources = context.getResources();
         if (resources != null) {
-            return resources.getResource(path).getURL();
+            String fullPath = context.getPath() + normPath;
+            String hostName = context.getParent().getName();
+            try {
+                resources.lookup(normPath);
+                URI uri = new URI("jndi", null, "", -1,
+                        getJNDIUri(hostName, fullPath), null, null);
+                return new URL(null, uri.toString(),
+                        new DirContextURLStreamHandler(resources));
+            } catch (NamingException e) {
+                // Ignore
+            } catch (Exception e) {
+                // Unexpected
+                log(sm.getString("applicationContext.lookup.error", path,
+                        getContextPath()), e);
+            }
         }
 
-        return null;
+        return (null);
+
     }
 
 
@@ -574,20 +617,33 @@ public class ApplicationContext
         if (!path.startsWith("/") && GET_RESOURCE_REQUIRE_SLASH)
             return null;
 
-        WebResourceRoot resources = context.getResources();
-        if (resources != null) {
-            return resources.getResource(path).getInputStream();
-        }
+        String normalizedPath = RequestUtil.normalize(path);
+        if (normalizedPath == null)
+            return (null);
 
-        return null;
+        DirContext resources = context.getResources();
+        if (resources != null) {
+            try {
+                Object resource = resources.lookup(normalizedPath);
+                if (resource instanceof Resource)
+                    return (((Resource) resource).streamContent());
+            } catch (NamingException e) {
+                // Ignore
+            } catch (Exception e) {
+                // Unexpected
+                log(sm.getString("applicationContext.lookup.error", path,
+                        getContextPath()), e);
+            }
+        }
+        return (null);
+
     }
 
 
     /**
      * Return a Set containing the resource paths of resources member of the
      * specified collection. Each path will be a String starting with
-     * a "/" character. Paths representing directories will end with a "/"
-     * character.
+     * a "/" character. The returned set is immutable.
      *
      * @param path Collection path
      */
@@ -603,12 +659,46 @@ public class ApplicationContext
                 (sm.getString("applicationContext.resourcePaths.iae", path));
         }
 
-        WebResourceRoot resources = context.getResources();
-        if (resources != null) {
-            return resources.listWebAppPaths(path);
+        String normalizedPath;
+        if (File.separatorChar == '\\') {
+            // On Windows '\\' is a separator so in case a Windows style
+            // separator has managed to make it into the path, replace it.
+            normalizedPath = RequestUtil.normalize(path, true);
+        } else {
+            // On UNIX and similar systems, '\\' is a valid file name so do not
+            // convert it to '/'
+            normalizedPath = RequestUtil.normalize(path, false);
         }
+        if (normalizedPath == null)
+            return (null);
 
-        return null;
+        DirContext resources = context.getResources();
+        if (resources != null) {
+            return (getResourcePathsInternal(resources, normalizedPath));
+        }
+        return (null);
+
+    }
+
+
+    /**
+     * Internal implementation of getResourcesPath() logic.
+     *
+     * @param resources Directory context to search
+     * @param path Collection path
+     */
+    private Set<String> getResourcePathsInternal(DirContext resources,
+            String path) {
+
+        ResourceSet<String> set = new ResourceSet<String>();
+        try {
+            listCollectionPaths(set, resources, path);
+        } catch (NamingException e) {
+            return (null);
+        }
+        set.setLocked(true);
+        return (set);
+
     }
 
 
@@ -1298,7 +1388,6 @@ public class ApplicationContext
         if (t instanceof ServletContextAttributeListener ||
                 t instanceof ServletRequestListener ||
                 t instanceof ServletRequestAttributeListener ||
-                t instanceof HttpSessionIdListener ||
                 t instanceof HttpSessionAttributeListener) {
             context.addApplicationEventListener(t);
             match = true;
@@ -1339,7 +1428,6 @@ public class ApplicationContext
                     listener instanceof ServletRequestListener ||
                     listener instanceof ServletRequestAttributeListener ||
                     listener instanceof HttpSessionListener ||
-                    listener instanceof HttpSessionIdListener ||
                     listener instanceof HttpSessionAttributeListener) {
                 return listener;
             }
@@ -1422,7 +1510,8 @@ public class ApplicationContext
 
     @Override
     public Map<String, ? extends FilterRegistration> getFilterRegistrations() {
-        Map<String, ApplicationFilterRegistration> result = new HashMap<>();
+        Map<String, ApplicationFilterRegistration> result =
+            new HashMap<String, ApplicationFilterRegistration>();
 
         FilterDef[] filterDefs = context.findFilterDefs();
         for (FilterDef filterDef : filterDefs) {
@@ -1436,13 +1525,21 @@ public class ApplicationContext
 
     @Override
     public JspConfigDescriptor getJspConfigDescriptor() {
-        return context.getJspConfigDescriptor();
+        JspConfigDescriptor jspConfigDescriptor = context
+                .getJspConfigDescriptor();
+        if (jspConfigDescriptor.getJspPropertyGroups().isEmpty()
+                && jspConfigDescriptor.getTaglibs().isEmpty()) {
+            return null;
+        } else {
+            return jspConfigDescriptor;
+        }
     }
 
 
     @Override
     public Map<String, ? extends ServletRegistration> getServletRegistrations() {
-        Map<String, ApplicationServletRegistration> result = new HashMap<>();
+        Map<String, ApplicationServletRegistration> result =
+            new HashMap<String, ApplicationServletRegistration>();
 
         Container[] wrappers = context.findChildren();
         for (Container wrapper : wrappers) {
@@ -1455,25 +1552,22 @@ public class ApplicationContext
     }
 
 
-    @Override
-    public String getVirtualServerName() {
-        // Constructor will fail if context or its parent is null
-        return ((Host) context.getParent()).getName();
-    }
-
-
     // -------------------------------------------------------- Package Methods
     protected StandardContext getContext() {
         return this.context;
     }
 
+    @Deprecated
+    protected Map<String,String> getReadonlyAttributes() {
+        return this.readOnlyAttributes;
+    }
     /**
      * Clear all application-created attributes.
      */
     protected void clearAttributes() {
 
         // Create list of attributes to be removed
-        ArrayList<String> list = new ArrayList<>();
+        ArrayList<String> list = new ArrayList<String>();
         Iterator<String> iter = attributes.keySet().iterator();
         while (iter.hasNext()) {
             list.add(iter.next());
@@ -1516,6 +1610,47 @@ public class ApplicationContext
     }
 
     /**
+     * List resource paths (recursively), and store all of them in the given
+     * Set.
+     */
+    private static void listCollectionPaths(Set<String> set,
+            DirContext resources, String path) throws NamingException {
+
+        Enumeration<Binding> childPaths = resources.listBindings(path);
+        while (childPaths.hasMoreElements()) {
+            Binding binding = childPaths.nextElement();
+            String name = binding.getName();
+            StringBuilder childPath = new StringBuilder(path);
+            if (!"/".equals(path) && !path.endsWith("/"))
+                childPath.append("/");
+            childPath.append(name);
+            Object object = binding.getObject();
+            if (object instanceof DirContext) {
+                childPath.append("/");
+            }
+            set.add(childPath.toString());
+        }
+
+    }
+
+
+    /**
+     * Get full path, based on the host name and the context path.
+     */
+    private static String getJNDIUri(String hostName, String path) {
+        String result;
+
+        if (path.startsWith("/")) {
+            result = "/" + hostName + path;
+        } else {
+            result = "/" + hostName + "/" + path;
+        }
+
+        return result;
+    }
+
+
+    /**
      * Internal class used as thread-local storage when doing path
      * mapping during dispatch.
      */
@@ -1531,4 +1666,6 @@ public class ApplicationContext
             mappingData = new MappingData();
         }
     }
+
+
 }

@@ -71,14 +71,17 @@ public final class ExpressionBuilder implements NodeVisitor {
     }
 
     private static final ConcurrentCache<String, Node> cache =
-            new ConcurrentCache<>(CACHE_SIZE);
+        new ConcurrentCache<String, Node>(CACHE_SIZE);
 
     private FunctionMapper fnMapper;
 
     private VariableMapper varMapper;
 
-    private final String expression;
+    private String expression;
 
+    /**
+     *
+     */
     public ExpressionBuilder(String expression, ELContext ctx)
             throws ELException {
         this.expression = expression;
@@ -185,39 +188,20 @@ public final class ExpressionBuilder implements NodeVisitor {
 
             AstFunction funcNode = (AstFunction) node;
 
-            Method m = null;
-
-            if (this.fnMapper != null) {
-                m = fnMapper.resolveFunction(funcNode.getPrefix(), funcNode
-                        .getLocalName());
-            }
-
-            // References to variables that refer to lambda expressions will be
-            // parsed as functions. This is handled at runtime but at this point
-            // need to treat it as a variable rather than a function.
-            if (m == null && this.varMapper != null &&
-                    funcNode.getPrefix().length() == 0) {
-                this.varMapper.resolveVariable(funcNode.getLocalName());
-                return;
-            }
-
             if (this.fnMapper == null) {
                 throw new ELException(MessageFactory.get("error.fnMapper.null"));
             }
-
+            Method m = fnMapper.resolveFunction(funcNode.getPrefix(), funcNode
+                    .getLocalName());
             if (m == null) {
                 throw new ELException(MessageFactory.get(
                         "error.fnMapper.method", funcNode.getOutputName()));
             }
-
-            int methodParameterCount = m.getParameterTypes().length;
-            // AstFunction->MethodParameters->Parameters()
-            int inputParameterCount = node.jjtGetChild(0).jjtGetNumChildren();
-            if (m.isVarArgs() && inputParameterCount < methodParameterCount - 1 ||
-                    !m.isVarArgs() && inputParameterCount != methodParameterCount) {
+            int pcnt = m.getParameterTypes().length;
+            if (node.jjtGetNumChildren() != pcnt) {
                 throw new ELException(MessageFactory.get(
                         "error.fnMapper.paramcount", funcNode.getOutputName(),
-                        "" + methodParameterCount, "" + node.jjtGetChild(0).jjtGetNumChildren()));
+                        "" + pcnt, "" + node.jjtGetNumChildren()));
             }
         } else if (node instanceof AstIdentifier && this.varMapper != null) {
             String variable = ((AstIdentifier) node).getImage();

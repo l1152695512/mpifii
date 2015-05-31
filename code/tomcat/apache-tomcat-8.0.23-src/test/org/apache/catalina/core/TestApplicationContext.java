@@ -16,16 +16,14 @@
  */
 package org.apache.catalina.core;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Collection;
 
 import javax.servlet.Filter;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.descriptor.JspConfigDescriptor;
-import javax.servlet.descriptor.JspPropertyGroupDescriptor;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,7 +34,6 @@ import org.junit.Test;
 import org.apache.catalina.Context;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleEvent;
-import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleListener;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.Tomcat.FixContextListener;
@@ -47,7 +44,13 @@ public class TestApplicationContext extends TomcatBaseTest {
 
     @Test
     public void testBug53257() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir = new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         ByteChunk res = getUrl("http://localhost:" + getPort() +
                 "/test/bug53257/index.jsp");
@@ -64,7 +67,13 @@ public class TestApplicationContext extends TomcatBaseTest {
 
     @Test
     public void testBug53467() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir = new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         ByteChunk res = new ByteChunk();
         int rc = getUrl("http://localhost:" + getPort() +
@@ -76,35 +85,37 @@ public class TestApplicationContext extends TomcatBaseTest {
 
 
     @Test(expected = IllegalArgumentException.class)
-    public void testAddFilterWithFilterNameNull() throws LifecycleException {
+    public void testAddFilterWithFilterNameNull() {
         getServletContext().addFilter(null, (Filter) null);
     }
 
 
     @Test(expected = IllegalArgumentException.class)
-    public void testAddFilterWithFilterNameEmptyString() throws LifecycleException {
+    public void testAddFilterWithFilterNameEmptyString() {
         getServletContext().addFilter("", (Filter) null);
     }
 
 
     @Test(expected = IllegalArgumentException.class)
-    public void testAddServletWithServletNameNull() throws LifecycleException {
+    public void testAddServletWithServletNameNull() {
         getServletContext().addServlet(null, (Servlet) null);
     }
 
 
     @Test(expected = IllegalArgumentException.class)
-    public void testAddServletWithServletNameEmptyString() throws LifecycleException {
+    public void testAddServletWithServletNameEmptyString() {
         getServletContext().addServlet("", (Servlet) null);
     }
 
 
     @Test
     public void testGetJspConfigDescriptor() throws Exception {
-        Tomcat tomcat = getTomcatInstanceTestWebapp(false, false);
+        Tomcat tomcat = getTomcatInstance();
 
-        StandardContext standardContext =
-                (StandardContext) tomcat.getHost().findChildren()[0];
+        File appDir = new File("test/webapp-3.0");
+        // app dir is relative to server home
+        StandardContext standardContext = (StandardContext) tomcat.addWebapp(
+                null, "/test", appDir.getAbsolutePath());
 
         ServletContext servletContext = standardContext.getServletContext();
 
@@ -115,37 +126,14 @@ public class TestApplicationContext extends TomcatBaseTest {
         Assert.assertNotNull(servletContext.getJspConfigDescriptor());
     }
 
-    @Test
-    public void testJspPropertyGroupsAreIsolated() throws Exception {
-        Tomcat tomcat = getTomcatInstanceTestWebapp(false, false);
 
-        StandardContext standardContext =
-                (StandardContext) tomcat.getHost().findChildren()[0];
+    private ServletContext getServletContext() {
+        Tomcat tomcat = getTomcatInstance();
 
-        ServletContext servletContext = standardContext.getServletContext();
-
-        Assert.assertNull(servletContext.getJspConfigDescriptor());
-
-        tomcat.start();
-
-        JspConfigDescriptor jspConfigDescriptor =
-                servletContext.getJspConfigDescriptor();
-        Collection<JspPropertyGroupDescriptor> propertyGroups =
-                jspConfigDescriptor.getJspPropertyGroups();
-        Assert.assertFalse(propertyGroups.isEmpty());
-        propertyGroups.clear();
-
-        jspConfigDescriptor = servletContext.getJspConfigDescriptor();
-        propertyGroups = jspConfigDescriptor.getJspPropertyGroups();
-        Assert.assertFalse(propertyGroups.isEmpty());
-    }
-
-
-    private ServletContext getServletContext() throws LifecycleException {
-        Tomcat tomcat = getTomcatInstanceTestWebapp(false, false);
-
-        StandardContext standardContext =
-                (StandardContext) tomcat.getHost().findChildren()[0];
+        File appDir = new File("test/webapp-3.0");
+        // app dir is relative to server home
+        StandardContext standardContext = (StandardContext) tomcat.addWebapp(
+                null, "/test", appDir.getAbsolutePath());
 
         return standardContext.getServletContext();
     }
@@ -169,6 +157,7 @@ public class TestApplicationContext extends TomcatBaseTest {
         foo1.setName("/foo##1");
         foo1.setPath("/foo");
         foo1.setWebappVersion("1");
+        foo1.setDocBase(System.getProperty("java.io.tmpdir"));
         foo1.addLifecycleListener(new FixContextListener());
         foo1.addLifecycleListener(new SetIdListener("foo1"));
         tomcat.getHost().addChild(foo1);
@@ -177,14 +166,15 @@ public class TestApplicationContext extends TomcatBaseTest {
         foo2.setName("/foo##2");
         foo2.setPath("/foo");
         foo2.setWebappVersion("2");
+        foo2.setDocBase(System.getProperty("java.io.tmpdir"));
         foo2.addLifecycleListener(new FixContextListener());
         foo2.addLifecycleListener(new SetIdListener("foo2"));
         tomcat.getHost().addChild(foo2);
 
-        Context bar = tomcat.addContext("/bar", null);
+        Context bar = tomcat.addContext("/bar", System.getProperty("java.io.tmpdir"));
         bar.addLifecycleListener(new SetIdListener("bar"));
 
-        Context ctx = tomcat.addContext("", null);
+        Context ctx = tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addLifecycleListener(new SetIdListener("ROOT"));
         ctx.setCrossContext(true);
 

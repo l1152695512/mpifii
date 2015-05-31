@@ -34,6 +34,16 @@ import org.apache.catalina.tribes.MembershipListener;
 import org.apache.catalina.tribes.TesterUtil;
 import org.apache.catalina.tribes.group.GroupChannel;
 
+/**
+ * <p>Title: </p>
+ *
+ * <p>Description: </p>
+ *
+ * <p>Company: </p>
+ *
+ * @author not attributable
+ * @version 1.0
+ */
 public class TestTcpFailureDetector {
     private TcpFailureDetector tcpFailureDetector1 = null;
     private TcpFailureDetector tcpFailureDetector2 = null;
@@ -126,17 +136,9 @@ public class TestTcpFailureDetector {
     public void tearDown() throws Exception {
         tcpFailureDetector1 = null;
         tcpFailureDetector2 = null;
-        try {
-            channel1.stop(Channel.DEFAULT);
-        } catch (Exception ignore) {
-            // Ignore
-        }
+        try { channel1.stop(Channel.DEFAULT);}catch (Exception ignore){ /* Ignore */ }
         channel1 = null;
-        try {
-            channel2.stop(Channel.DEFAULT);
-        } catch (Exception ignore) {
-            // Ignore
-        }
+        try { channel2.stop(Channel.DEFAULT);}catch (Exception ignore){ /* Ignore */ }
         channel2 = null;
     }
 
@@ -145,7 +147,7 @@ public class TestTcpFailureDetector {
         public TestMbrListener(String name) {
             this.name = name;
         }
-        public ArrayList<Member> members = new ArrayList<>();
+        public ArrayList<Member> members = new ArrayList<Member>();
         @Override
         public void memberAdded(Member member) {
             if ( !members.contains(member) ) {

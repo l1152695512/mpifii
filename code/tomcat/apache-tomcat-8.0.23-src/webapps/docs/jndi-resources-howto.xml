@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -590,7 +590,7 @@ Transport.send(message);]]></source>
     properties defined in Annex A of the JavaMail specification, individual
     providers may also support additional properties.
     </p>
-
+    
     <p>If the resource is configured with a <code>password</code> attribute and
     either a <code>mail.smtp.user</code> or <code>mail.user</code> attribute
     then Tomcat&apos;s resource factory will configure and add a
@@ -744,7 +744,7 @@ conn.close();]]></source>
             password="dbpassword"
             driverClassName="org.hsql.jdbcDriver"
             url="jdbc:HypersonicSQL:database"
-            maxTotal="8"
+            maxActive="8"
             maxIdle="4"/>
   ...
 </Context>]]></source>
@@ -759,7 +759,7 @@ conn.close();]]></source>
 
     <p>The configuration properties for Tomcat's standard data source
     resource factory
-    (<code>org.apache.tomcat.dbcp.dbcp2.BasicDataSourceFactory</code>) are
+    (<code>org.apache.tomcat.dbcp.dbcp.BasicDataSourceFactory</code>) are
     as follows:</p>
     <ul>
     <li><strong>driverClassName</strong> - Fully qualified Java class name
@@ -773,13 +773,13 @@ conn.close();]]></source>
         is also recognized.)</li>
     <li><strong>initialSize</strong> - The initial number of connections
         that will be created in the pool during pool initialization. Default: 0</li>
-    <li><strong>maxTotal</strong> - The maximum number of connections
+    <li><strong>maxActive</strong> - The maximum number of connections
         that can be allocated from this pool at the same time. Default: 8</li>
     <li><strong>minIdle</strong> - The minimum number of connections that
         will sit idle in this pool at the same time. Default: 0</li>
     <li><strong>maxIdle</strong> - The maximum number of connections that
         can sit idle in this pool at the same time. Default: 8</li>
-    <li><strong>maxWaitMillis</strong> - The maximum number of milliseconds that the
+    <li><strong>maxWait</strong> - The maximum number of milliseconds that the
         pool will wait (when there are no available connections) for a
         connection to be returned before throwing an exception. Default: -1 (infinite)</li>
     </ul>

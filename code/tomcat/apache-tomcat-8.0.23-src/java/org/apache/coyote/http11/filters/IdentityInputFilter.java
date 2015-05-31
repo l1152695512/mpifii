@@ -18,7 +18,7 @@
 package org.apache.coyote.http11.filters;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
@@ -28,7 +28,7 @@ import org.apache.tomcat.util.res.StringManager;
 
 /**
  * Identity input filter.
- *
+ * 
  * @author Remy Maucherat
  */
 public class IdentityInputFilter implements InputFilter {
@@ -48,8 +48,8 @@ public class IdentityInputFilter implements InputFilter {
 
 
     static {
-        ENCODING.setBytes(ENCODING_NAME.getBytes(StandardCharsets.ISO_8859_1),
-                0, ENCODING_NAME.length());
+        ENCODING.setBytes(ENCODING_NAME.getBytes(Charset.defaultCharset()), 0,
+                ENCODING_NAME.length());
     }
 
 
@@ -77,11 +77,37 @@ public class IdentityInputFilter implements InputFilter {
     /**
      * Chunk used to read leftover bytes.
      */
-    protected final ByteChunk endChunk = new ByteChunk();
+    protected ByteChunk endChunk = new ByteChunk();
 
 
     private final int maxSwallowSize;
 
+
+    // ------------------------------------------------------------- Properties
+
+    /**
+     * Get content length.
+     *
+     * @deprecated  Unused - will be removed in 8.0.x
+     */
+    @Deprecated
+    public long getContentLength() {
+        return contentLength;
+    }
+
+
+    /**
+     * Get remaining bytes.
+     *
+     * @deprecated  Unused - will be removed in 8.0.x
+     */
+    @Deprecated
+    public long getRemaining() {
+        return remaining;
+    }
+
+
+    // ------------------------------------------------------------ Constructor
 
     public IdentityInputFilter(int maxSwallowSize) {
         this.maxSwallowSize = maxSwallowSize;
@@ -90,12 +116,13 @@ public class IdentityInputFilter implements InputFilter {
 
     // ---------------------------------------------------- InputBuffer Methods
 
+
     /**
      * Read bytes.
-     *
+     * 
      * @return If the filter does request length control, this value is
      * significant; it should be the number of bytes consumed from the buffer,
-     * up until the end of the current request body, or the buffer length,
+     * up until the end of the current request body, or the buffer length, 
      * whichever is greater. If the filter does not do request body length
      * control, the returned value should be -1.
      */
@@ -112,7 +139,7 @@ public class IdentityInputFilter implements InputFilter {
                     // The chunk is longer than the number of bytes remaining
                     // in the body; changing the chunk length to the number
                     // of bytes remaining
-                    chunk.setBytes(chunk.getBytes(), chunk.getStart(),
+                    chunk.setBytes(chunk.getBytes(), chunk.getStart(), 
                                    (int) remaining);
                     result = (int) remaining;
                 } else {
@@ -122,7 +149,7 @@ public class IdentityInputFilter implements InputFilter {
                     remaining = remaining - nRead;
                 }
             } else {
-                // No more bytes left to be read : return -1 and clear the
+                // No more bytes left to be read : return -1 and clear the 
                 // buffer
                 chunk.recycle();
                 result = -1;
@@ -184,7 +211,7 @@ public class IdentityInputFilter implements InputFilter {
     public int available() {
         return 0;
     }
-
+    
 
     /**
      * Set the next buffer in the filter pipeline.
@@ -207,7 +234,7 @@ public class IdentityInputFilter implements InputFilter {
 
 
     /**
-     * Return the name of the associated encoding; Here, the value is
+     * Return the name of the associated encoding; Here, the value is 
      * "identity".
      */
     @Override
@@ -216,10 +243,4 @@ public class IdentityInputFilter implements InputFilter {
     }
 
 
-    @Override
-    public boolean isFinished() {
-        // Only finished if a content length is defined and there is no data
-        // remaining
-        return contentLength > -1 && remaining <= 0;
-    }
 }

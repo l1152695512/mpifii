@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -81,8 +81,7 @@
 
     <attribute name="asyncTimeout" required="false">
       <p>The default timeout for asynchronous requests in milliseconds. If not
-      specified, this attribute is set to the Servlet specification default of
-      30000 (30 seconds).</p>
+      specified, this attribute is set to 10000 (10 seconds).</p>
     </attribute>
 
     <attribute name="enableLookups" required="false">
@@ -158,11 +157,11 @@
     <attribute name="protocol" required="false">
       <p>Sets the protocol to handle incoming traffic. The default value is
         <code>HTTP/1.1</code> which uses an auto-switching mechanism to select
-        either a non blocking Java NIO based connector or an APR/native based connector.
+        either a blocking Java based connector or an APR/native based connector.
         If the <code>PATH</code> (Windows) or <code>LD_LIBRARY_PATH</code> (on
         most unix systems) environment variables contain the Tomcat native
         library, the APR/native connector will be used. If the native library
-        cannot be found, the non blocking Java based connector will be used. Note
+        cannot be found, the blocking Java based connector will be used. Note
         that the APR/native connector has different settings for HTTPS than the
         Java connectors.<br/>
         To use an explicit protocol rather than rely on the auto-switching
@@ -170,9 +169,7 @@
         <code>org.apache.coyote.http11.Http11Protocol</code> -
               blocking Java connector<br/>
         <code>org.apache.coyote.http11.Http11NioProtocol</code> -
-              non blocking Java NIO connector<br/>
-        <code>org.apache.coyote.http11.Http11Nio2Protocol</code> -
-              non blocking Java NIO2 connector<br/>
+              non blocking Java connector<br/>
         <code>org.apache.coyote.http11.Http11AprProtocol</code> -
               the APR/native connector.<br/>
         Custom implementations may also be used.<br/>
@@ -227,10 +224,8 @@
 
     <attribute name="URIEncoding" required="false">
       <p>This specifies the character encoding used to decode the URI bytes,
-      after %xx decoding the URL. If not specified, UTF-8 will be used unless
-      the <code>org.apache.catalina.STRICT_SERVLET_COMPLIANCE</code>
-      <a href="systemprops.html">system property</a> is set to <code>true</code>
-      in which case ISO-8859-1 will be used.</p>
+      after %xx decoding the URL. If not specified, ISO-8859-1 will be used.
+      </p>
     </attribute>
 
     <attribute name="useBodyEncodingForURI" required="false">
@@ -270,9 +265,9 @@
 
   <subsection name="Standard Implementation">
 
-  <p>The standard HTTP connectors (BIO, NIO, NIO2 and APR/native) all support
-  the following attributes in addition to the common Connector attributes
-  listed above.</p>
+  <p>The standard HTTP connectors (BIO, NIO and APR/native) all support the
+  following attributes in addition to the common Connector attributes listed
+  above.</p>
 
   <attributes>
 
@@ -399,8 +394,8 @@
       <p>The time that the private internal executor will wait for request
       processing threads to terminate before continuing with the process of
       stopping the connector. If not set, the default is <code>0</code> (zero)
-      for the BIO connector and <code>5000</code> (5 seconds) for the NIO,
-      NIO2 and APR/native connectors.</p>
+      for the BIO connector and <code>5000</code> (5 seconds) for the NIO and
+      APR/native connectors.</p>
     </attribute>
 
     <attribute name="keepAliveTimeout" required="false">
@@ -423,12 +418,12 @@
       connector type. For BIO the default is the value of
       <strong>maxThreads</strong> unless an <a href="executor.html">Executor</a>
       is used in which case the default will be the value of maxThreads from the
-      executor. For NIO and NIO2 the default is <code>10000</code>.
+      executor. For NIO the default is <code>10000</code>.
       For APR/native, the default is <code>8192</code>.</p>
       <p>Note that for APR/native on Windows, the configured value will be
       reduced to the highest multiple of 1024 that is less than or equal to
       maxConnections. This is done for performance reasons.<br/>
-      If set to a value of -1, the maxConnections feature is disabled
+      If set to a value of -1, the maxConnections feature is disabled 
       and connections are not counted.</p>
     </attribute>
 
@@ -568,9 +563,9 @@
 
   <subsection name="Java TCP socket attributes">
 
-    <p>The BIO, NIO and NIO2 implementation support the following Java TCP
-    socket attributes in addition to the common Connector and HTTP attributes
-    listed above.</p>
+    <p>The BIO and NIO implementation support the following Java TCP socket
+    attributes in addition to the common Connector and HTTP attributes listed
+    above.</p>
 
     <attributes>
       <attribute name="socket.rxBufSize" required="false">
@@ -619,19 +614,19 @@
       </attribute>
       <attribute name="socket.performanceConnectionTime" required="false">
         <p>(int)The first value for the performance settings. See
-        <a href="http://docs.oracle.com/javase/7/docs/api/java/net/Socket.html#setPerformancePreferences(int,%20int,%20int)">Socket Performance Options</a>.
+        <a href="http://docs.oracle.com/javase/6/docs/api/java/net/Socket.html#setPerformancePreferences(int,%20int,%20int)">Socket Performance Options</a>.
         All three performance attributes must be set else the JVM defaults will
         be used for all three.</p>
       </attribute>
       <attribute name="socket.performanceLatency" required="false">
         <p>(int)The second value for the performance settings. See
-        <a href="http://docs.oracle.com/javase/7/docs/api/java/net/Socket.html#setPerformancePreferences(int,%20int,%20int)">Socket Performance Options</a>.
+        <a href="http://docs.oracle.com/javase/6/docs/api/java/net/Socket.html#setPerformancePreferences(int,%20int,%20int)">Socket Performance Options</a>.
         All three performance attributes must be set else the JVM defaults will
         be used for all three.</p>
       </attribute>
       <attribute name="socket.performanceBandwidth" required="false">
         <p>(int)The third value for the performance settings. See
-        <a href="http://docs.oracle.com/javase/7/docs/api/java/net/Socket.html#setPerformancePreferences(int,%20int,%20int)">Socket Performance Options</a>.
+        <a href="http://docs.oracle.com/javase/6/docs/api/java/net/Socket.html#setPerformancePreferences(int,%20int,%20int)">Socket Performance Options</a>.
         All three performance attributes must be set else the JVM defaults will
         be used for all three.</p>
       </attribute>
@@ -668,12 +663,13 @@
 
       <attribute name="pollerThreadCount" required="false">
         <p>(int)The number of threads to be used to run for the polling events.
-        Default value is <code>1</code> per processor but not more than 2.<br/>
-        When accepting a socket, the operating system holds a global lock. So the benefit of
-        going above 2 threads diminishes rapidly. Having more than one thread is for
-        system that need to accept connections very rapidly. However usually just
-        increasing <code>acceptCount</code> will solve that problem.
-        Increasing this value may also be beneficial when a large amount of send file
+        Default value is <code>1</code> per processor up to and including version 7.0.27.
+        Default value as of version 7.0.28 is <code>1</code> per processor but not more than 2.<br/>
+        When accepting a socket, the operating system holds a global lock. So the benefit of 
+        going above 2 threads diminishes rapidly. Having more than one thread is for 
+        system that need to accept connections very rapidly. However usually just 
+        increasing <code>acceptCount</code> will solve that problem. 
+        Increasing this value may also be beneficial when a large amount of send file 
         operations are going on.
         </p>
       </attribute>
@@ -700,9 +696,7 @@
 
       <attribute name="useSendfile" required="false">
         <p>(bool)Use this attribute to enable or disable sendfile capability.
-        The default value is <code>true</code>. Note that the use of sendfile
-        will disable any compression that Tomcat may otherwise have performed on
-        the response.</p>
+        The default value is <code>true</code>.</p>
       </attribute>
 
       <attribute name="socket.directBuffer" required="false">
@@ -816,110 +810,6 @@
     </attributes>
   </subsection>
 
-  <subsection name="NIO2 specific configuration">
-
-    <p>The following attributes are specific to the NIO2 connector.</p>
-
-    <attributes>
-
-      <attribute name="useCaches" required="false">
-        <p>(bool)Use this attribute to enable or disable object caching to
-        reduce the amount of GC objects produced.
-        The default value is <code>false</code>.</p>
-      </attribute>
-
-      <attribute name="useComet" required="false">
-        <p>(bool)Whether to allow comet servlets or not. Default value is
-        <code>true</code>.</p>
-      </attribute>
-
-      <attribute name="useSendfile" required="false">
-        <p>(bool)Use this attribute to enable or disable sendfile capability.
-        The default value is <code>true</code>. Note that the use of sendfile
-        will disable any compression that Tomcat may otherwise have performed on
-        the response.</p>
-      </attribute>
-
-      <attribute name="socket.directBuffer" required="false">
-        <p>(bool)Boolean value, whether to use direct ByteBuffers or java mapped
-        ByteBuffers. Default is <code>false</code>.<br/>
-        When you are using direct buffers, make sure you allocate the
-        appropriate amount of memory for the direct memory space. On Sun's JDK
-        that would be something like <code>-XX:MaxDirectMemorySize=256m</code>.
-        </p>
-      </attribute>
-
-      <attribute name="socket.directSslBuffer" required="false">
-        <p>(bool)Boolean value, whether to use direct ByteBuffers or java mapped
-        ByteBuffers for the SSL buffers. If <code>true</code> then
-        <code>java.nio.ByteBuffer.allocateDirect()</code> is used to allocate
-        the buffers, if <code>false</code> then
-        <code>java.nio.ByteBuffer.allocate()</code> is used. The default value
-        is <code>false</code>.<br/>
-        When you are using direct buffers, make sure you allocate the
-        appropriate amount of memory for the direct memory space. On Oracle's JDK
-        that would be something like <code>-XX:MaxDirectMemorySize=256m</code>.
-        </p>
-      </attribute>
-
-      <attribute name="socket.appReadBufSize" required="false">
-        <p>(int)Each connection that is opened up in Tomcat get associated with
-        a read ByteBuffer. This attribute controls the size of this buffer. By
-        default this read buffer is sized at <code>8192</code> bytes. For lower
-        concurrency, you can increase this to buffer more data. For an extreme
-        amount of keep alive connections, decrease this number or increase your
-        heap size.</p>
-      </attribute>
-
-      <attribute name="socket.appWriteBufSize" required="false">
-        <p>(int)Each connection that is opened up in Tomcat get associated with
-        a write ByteBuffer. This attribute controls the size of this buffer. By
-        default this write buffer is sized at <code>8192</code> bytes. For low
-        concurrency you can increase this to buffer more response data. For an
-        extreme amount of keep alive connections, decrease this number or
-        increase your heap size.<br/>
-        The default value here is pretty low, you should up it if you are not
-        dealing with tens of thousands concurrent connections.</p>
-      </attribute>
-
-      <attribute name="socket.bufferPoolSize" required="false">
-        <p>(int)The NIO2 connector uses a class called Nio2Channel that holds
-        elements linked to a socket. To reduce garbage collection, the NIO2
-        connector caches these channel objects. This value specifies the size of
-        this cache. The default value is <code>500</code>, and represents that
-        the cache will hold 500 Nio2Channel objects. Other values are
-        <code>-1</code> for unlimited cache and <code>0</code> for no cache.</p>
-      </attribute>
-
-      <attribute name="socket.processorCache" required="false">
-        <p>(int)Tomcat will cache SocketProcessor objects to reduce garbage
-        collection. The integer value specifies how many objects to keep in the
-        cache at most. The default is <code>500</code>. Other values are
-        <code>-1</code> for unlimited cache and <code>0</code> for no cache.</p>
-      </attribute>
-
-      <attribute name="socket.socketWrapperCache" required="false">
-        <p>(int)Tomcat will cache SocketWrapper objects to reduce garbage
-        collection. The integer value specifies how many objects to keep in the
-        cache at most. The default is <code>500</code>. Other values are
-        <code>-1</code> for unlimited cache and <code>0</code> for no cache.</p>
-      </attribute>
-
-      <attribute name="oomParachute" required="false">
-        <p>(int)The NIO2 connector implements an OutOfMemoryError strategy called
-        parachute. It holds a chunk of data as a byte array. In case of an OOM,
-        this chunk of data is released and the error is reported. This will give
-        the VM enough room to clean up. The <code>oomParachute</code> represents
-        the size in bytes of the parachute(the byte array). The default value is
-        <code>1024*1024</code>(1MB). Please note, this only works for OOM errors
-        regarding the Java Heap space, and there is absolutely no  guarantee
-        that you will be able to recover at all. If you have an OOM outside of
-        the Java Heap, then this parachute trick will not help.
-        </p>
-      </attribute>
-    </attributes>
-  </subsection>
-
   <subsection name="APR/native specific configuration">
 
     <p>The following attributes are specific to the APR/native connector.</p>
@@ -940,13 +830,6 @@
         connections. This is a synonym for maxConnections.</p>
       </attribute>
 
-      <attribute name="pollerThreadCount" required="false">
-        <p>Number of threads used to poll kept alive connections. On Windows the
-        default is chosen so that the sockets managed by each thread is
-        less than 1024. For Linux the default is 1. Changing the default on
-        Windows is likely to have a negative performance impact.</p>
-      </attribute>
-
       <attribute name="pollTime" required="false">
         <p>Duration of a poll call in microseconds. Lowering this value will
         slightly decrease latency of connections being kept alive in some cases,
@@ -965,13 +848,6 @@
         specified amount. The default value is 1024.</p>
       </attribute>
 
-      <attribute name="sendfileThreadCount" required="false">
-        <p>Number of threads used service sendfile sockets. On Windows the
-        default is chosen so that the sockets managed by each thread is
-        less than 1024. For Linux the default is 1. Changing the default on
-        Windows is likely to have a negative performance impact.</p>
-      </attribute>
-
       <attribute name="threadPriority" required="false">
         <p>(int)The priority of the acceptor and poller threads.
         The default value is <code>5</code> (the value of the
@@ -987,9 +863,7 @@
 
       <attribute name="useSendfile" required="false">
         <p>(bool)Use this attribute to enable or disable sendfile capability.
-        The default value is <code>true</code>. Note that the use of sendfile
-        will disable any compression that Tomcat may otherwise have performed on
-        the response.</p>
+        The default value is <code>true</code>.</p>
       </attribute>
 
     </attributes>
@@ -1057,7 +931,7 @@
   attributes to the values <code>https</code> and <code>true</code>
   respectively, to pass correct information to the servlets.</p>
 
-  <p>The BIO, NIO and NIO2 connectors use the JSSE SSL whereas the APR/native
+  <p>The BIO and NIO connectors use the JSSE SSL whereas the APR/native
   connector uses OpenSSL. Therefore, in addition to using different attributes
   to configure SSL, the APR/native connector also requires keys and certificates
   to be provided in a different format.</p>
@@ -1065,9 +939,9 @@
   <p>For more information, see the
   <a href="../ssl-howto.html">SSL Configuration HOW-TO</a>.</p>
 
-  <subsection name="SSL Support - BIO, NIO and NIO2">
+  <subsection name="SSL Support - BIO and NIO">
 
-  <p>The BIO, NIO and NIO2 connectors use the following attributes to configure SSL:
+  <p>The BIO and NIO connectors use the following attributes to configure SSL:
   </p>
 
   <attributes>
@@ -1105,20 +979,15 @@
     </attribute>
 
     <attribute name="ciphers" required="false">
-      <p>If specified and using ',' as a separator, only the ciphers that are
-      listed and supported by the SSL implementation will be used.
+      <p>The comma separated list of encryption ciphers to support for HTTPS
+      connections. If specified, only the ciphers that are listed and supported
+      by the SSL implementation will be used. By default, the default ciphers
+      for the JVM will be used. Note that this usually means that the weak
+      export grade ciphers will be included in the list of available ciphers.
       The ciphers are specified using the JSSE cipher naming convention. The
       special value of <code>ALL</code> will enable all supported ciphers. This
       will include many that are not secure. <code>ALL</code> is intended for
       testing purposes only.</p>
-      <p>The list can also use ':' as a separator, in that case
-      it will use the OpenSSL syntax (see OpenSSL documentation for the list
-      of ciphers supported and the syntax). The behaviour of this filtering is
-      kept aligned with the behaviour of the OpenSSL 1.0.2 stable branch.</p>
-      <p>If not specified, a default (using the OpenSSL notation) of
-      <code>HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5</code> will be used.</p>
-      <p>Note that Java does not treat the order in which ciphers are defined as
-      an order of preference. See <code>useServerCipherSuitesOrder</code>.</p>
     </attribute>
 
     <attribute name="clientAuth" required="false">
@@ -1207,11 +1076,13 @@
     <attribute name="sslEnabledProtocols" required="false">
       <p>The comma separated list of SSL protocols to support for HTTPS
       connections. If specified, only the protocols that are listed and
-      supported by the SSL implementation will be enabled. If not specified,
+      supported by the SSL implementation will be enabled.  If not specified,
       the JVM default (excluding SSLv2 and SSLv3 if the JVM enables either or
-      both of them by default) is used. The permitted values may be obtained
-      from the JVM documentation for the allowed values for
+      both of them by default) is used. The permitted values may be obtained from the
+      JVM documentation for the allowed values for 
       <code>SSLSocket.setEnabledProtocols()</code> e.g.
+      <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/security/StandardNames.html#jssenames">
+      Oracle Java 6</a> and
       <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#jssenames">
       Oracle Java 7</a>. Note: There is overlap between this attribute and
       <code>sslProtocol</code>.</p>
@@ -1230,6 +1101,8 @@
       default is <code>TLS</code>. The permitted values may be obtained from the
       JVM documentation for the allowed values for algorithm when creating an
       <code>SSLContext</code> instance e.g.
+      <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/security/StandardNames.html#SSLContext">
+      Oracle Java 6</a> and
       <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/security/StandardNames.html#SSLContext">
       Oracle Java 7</a>. Note: There is overlap between this attribute and
       <code>sslEnabledProtocols</code>.</p>
@@ -1378,8 +1251,9 @@
 
     <attribute name="SSLCipherSuite" required="false">
       <p>Ciphers which may be used for communicating with clients. The default
-      is <code>HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5</code>. See the OpenSSL
-      documentation for details of the syntax for this attribute.</p>
+      is "ALL", with other acceptable values being a list of ciphers, with ":"
+      used as the delimiter (see OpenSSL documentation for the list of ciphers
+      supported).</p>
     </attribute>
 
     <attribute name="SSLDisableCompression" required="false">
@@ -1420,11 +1294,6 @@
       "10".</p>
     </attribute>
 
-    <attribute name="SSLDisableSessionTickets" required="false">
-      <p>Disables use of TLS Session Tickets (RFC 4507) if set to
-      <code>true</code>. Default is <code>false</code>.</p>
-    </attribute>
-
   </attributes>
 
   </subsection>
@@ -1433,93 +1302,23 @@
   <subsection name="Connector Comparison">
 
     <p>Below is a small chart that shows how the connectors differentiate.</p>
+    <source>
+                       Java Blocking Connector   Java Non Blocking Connector   APR/native Connector
+                                 BIO                         NIO                       APR
+    Classname              Http11Protocol             Http11NioProtocol         Http11AprProtocol
+    Tomcat Version           3.x onwards                 6.x onwards              5.5.x onwards
+    Support Polling              NO                          YES                       YES
+    Polling Size                 N/A                   maxConnections             maxConnections
+    Read HTTP Request         Blocking                  Non Blocking                 Blocking
+    Read HTTP Body            Blocking                  Sim Blocking                 Blocking
+    Write HTTP Response       Blocking                  Sim Blocking                 Blocking
+    Wait for next Request     Blocking                  Non Blocking               Non Blocking
+    SSL Support               Java SSL                    Java SSL                   OpenSSL
+    SSL Handshake             Blocking                  Non blocking                 Blocking
+    Max Connections        maxConnections              maxConnections             maxConnections
 
-    <table class="defaultTable" style="text-align: center;">
-      <tr>
-        <th />
-        <th>Java Blocking Connector<br />BIO</th>
-        <th>Java Nio Connector<br />NIO</th>
-        <th>Java Nio2 Connector<br />NIO2</th>
-        <th>APR/native Connector<br />APR</th>
-      </tr>
-      <tr>
-        <th style="text-align: left;">Classname</th>
-        <td><code class="noHighlight">Http11Protocol</code></td>
-        <td><code class="noHighlight">Http11NioProtocol</code></td>
-        <td><code class="noHighlight">Http11Nio2Protocol</code></td>
-        <td><code class="noHighlight">Http11AprProtocol</code></td>
-      </tr>
-      <tr>
-        <th style="text-align: left;">Tomcat Version</th>
-        <td>3.x onwards</td>
-        <td>6.x onwards</td>
-        <td>8.x onwards</td>
-        <td>5.5.x onwards</td>
-      </tr>
-      <tr>
-        <th style="text-align: left;">Support Polling</th>
-        <td>NO</td>
-        <td>YES</td>
-        <td>YES</td>
-        <td>YES</td>
-      </tr>
-      <tr>
-        <th style="text-align: left;">Polling Size</th>
-        <td>N/A</td>
-        <td><code class="noHighlight">maxConnections</code></td>
-        <td><code class="noHighlight">maxConnections</code></td>
-        <td><code class="noHighlight">maxConnections</code></td>
-      </tr>
-      <tr>
-        <th style="text-align: left;">Read HTTP Request</th>
-        <td>Blocking</td>
-        <td>Non Blocking</td>
-        <td>Non Blocking</td>
-        <td>Blocking</td>
-      </tr>
-      <tr>
-        <th style="text-align: left;">Read HTTP Body</th>
-        <td>Blocking</td>
-        <td>Sim Blocking</td>
-        <td>Blocking</td>
-        <td>Blocking</td>
-      </tr>
-      <tr>
-        <th style="text-align: left;">Write HTTP Response</th>
-        <td>Blocking</td>
-        <td>Sim Blocking</td>
-        <td>Blocking</td>
-        <td>Blocking</td>
-      </tr>
-      <tr>
-        <th style="text-align: left;">Wait for next Request</th>
-        <td>Blocking</td>
-        <td>Non Blocking</td>
-        <td>Non Blocking</td>
-        <td>Non Blocking</td>
-      </tr>
-      <tr>
-        <th style="text-align: left;">SSL Support</th>
-        <td>Java SSL</td>
-        <td>Java SSL</td>
-        <td>Java SSL</td>
-        <td>OpenSSL</td>
-      </tr>
-      <tr>
-        <th style="text-align: left;">SSL Handshake</th>
-        <td>Blocking</td>
-        <td>Non blocking</td>
-        <td>Non blocking</td>
-        <td>Blocking</td>
-      </tr>
-      <tr>
-        <th style="text-align: left;">Max Connections</th>
-        <td><code class="noHighlight">maxConnections</code></td>
-        <td><code class="noHighlight">maxConnections</code></td>
-        <td><code class="noHighlight">maxConnections</code></td>
-        <td><code class="noHighlight">maxConnections</code></td>
-      </tr>
-    </table>
+
+    </source>
 
   </subsection>
 </section>

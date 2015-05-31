@@ -136,7 +136,7 @@ public final class Room {
     /**
      * List of all currently joined players.
      */
-    private final List<Player> players = new ArrayList<>();
+    private final List<Player> players = new ArrayList<Player>();
 
 
 
@@ -348,7 +348,7 @@ public final class Room {
         if (roomLock.isHeldByCurrentThread()) {
 
             if (cachedRunnables == null) {
-                cachedRunnables = new ArrayList<>();
+                cachedRunnables = new ArrayList<Runnable>();
             }
             cachedRunnables.add(task);
 
@@ -423,7 +423,7 @@ public final class Room {
          * Buffered DrawMessages that will be sent by a Timer.
          */
         private final List<DrawMessage> bufferedDrawMessages =
-                new ArrayList<>();
+                new ArrayList<DrawMessage>();
 
         private List<DrawMessage> getBufferedDrawMessages() {
             return bufferedDrawMessages;

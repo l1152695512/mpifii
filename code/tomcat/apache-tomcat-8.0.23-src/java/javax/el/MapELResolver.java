@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,8 +27,8 @@ import java.util.Map;
 
 public class MapELResolver extends ELResolver {
 
-    private static final Class<?> UNMODIFIABLE =
-            Collections.unmodifiableMap(new HashMap<>()).getClass();
+    private static final Class<?> UNMODIFIABLE = Collections.unmodifiableMap(
+            new HashMap<Object, Object>()).getClass();
 
     private final boolean readOnly;
 
@@ -41,46 +41,51 @@ public class MapELResolver extends ELResolver {
     }
 
     @Override
-    public Class<?> getType(ELContext context, Object base, Object property) {
+    public Object getValue(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base instanceof Map<?,?>) {
-            context.setPropertyResolved(base, property);
-            return Object.class;
+            context.setPropertyResolved(true);
+            return ((Map<?,?>) base).get(property);
         }
-
+        
         return null;
     }
 
     @Override
-    public Object getValue(ELContext context, Object base, Object property) {
+    public Class<?> getType(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base instanceof Map<?,?>) {
-            context.setPropertyResolved(base, property);
-            return ((Map<?,?>) base).get(property);
+            context.setPropertyResolved(true);
+            return Object.class;
         }
-
+        
         return null;
     }
 
     @Override
     public void setValue(ELContext context, Object base, Object property,
-            Object value) {
+            Object value) throws NullPointerException,
+            PropertyNotFoundException, PropertyNotWritableException,
+            ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base instanceof Map<?, ?>) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
 
             if (this.readOnly) {
                 throw new PropertyNotWritableException(Util.message(context,
-                        "resolverNotWriteable", base.getClass().getName()));
+                        "resolverNotWriteable", new Object[] { base.getClass()
+                                .getName() }));
             }
 
             try {
@@ -94,16 +99,17 @@ public class MapELResolver extends ELResolver {
     }
 
     @Override
-    public boolean isReadOnly(ELContext context, Object base, Object property) {
+    public boolean isReadOnly(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base instanceof Map<?, ?>) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
             return this.readOnly || UNMODIFIABLE.equals(base.getClass());
         }
-
+        
         return this.readOnly;
     }
 
@@ -111,7 +117,7 @@ public class MapELResolver extends ELResolver {
     public Iterator<FeatureDescriptor> getFeatureDescriptors(ELContext context, Object base) {
         if (base instanceof Map<?, ?>) {
             Iterator<?> itr = ((Map<?, ?>) base).keySet().iterator();
-            List<FeatureDescriptor> feats = new ArrayList<>();
+            List<FeatureDescriptor> feats = new ArrayList<FeatureDescriptor>();
             Object key;
             FeatureDescriptor desc;
             while (itr.hasNext()) {

@@ -25,10 +25,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import org.apache.catalina.Context;
+import org.apache.catalina.deploy.FilterDef;
 import org.apache.catalina.filters.AddDefaultCharsetFilter;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
-import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.apache.tomcat.util.modeler.Registry;
 
 public class TestApplicationFilterConfig extends TomcatBaseTest {
@@ -37,8 +37,9 @@ public class TestApplicationFilterConfig extends TomcatBaseTest {
     public void testBug54170() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "HelloWorld", new HelloWorldServlet());
         ctx.addServletMapping("/", "HelloWorld");

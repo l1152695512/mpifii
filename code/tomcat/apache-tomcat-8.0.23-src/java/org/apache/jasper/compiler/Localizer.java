@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,12 +31,12 @@ import org.apache.jasper.util.ExceptionUtils;
  */
 public class Localizer {
 
-    private static ResourceBundle bundle;
-
+    private static ResourceBundle bundle = null;
+    
     static {
         try {
-            bundle = ResourceBundle.getBundle(
-                    "org.apache.jasper.resources.LocalStrings");
+        bundle = ResourceBundle.getBundle(
+            "org.apache.jasper.resources.LocalStrings");
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
             t.printStackTrace();
@@ -51,7 +51,7 @@ public class Localizer {
      * localized error messages, it is used as the error message.
      *
      * @param errCode Error code to localize
-     *
+     * 
      * @return Localized error message
      */
     public static String getMessage(String errCode) {
@@ -63,7 +63,7 @@ public class Localizer {
         return errMsg;
     }
 
-    /*
+    /* 
      * Returns the localized error message corresponding to the given error
      * code.
      *
@@ -79,7 +79,7 @@ public class Localizer {
         return getMessage(errCode, new Object[] {arg});
     }
 
-    /*
+    /* 
      * Returns the localized error message corresponding to the given error
      * code.
      *
@@ -95,8 +95,8 @@ public class Localizer {
     public static String getMessage(String errCode, String arg1, String arg2) {
         return getMessage(errCode, new Object[] {arg1, arg2});
     }
-
-    /*
+    
+    /* 
      * Returns the localized error message corresponding to the given error
      * code.
      *
@@ -115,7 +115,7 @@ public class Localizer {
         return getMessage(errCode, new Object[] {arg1, arg2, arg3});
     }
 
-    /*
+    /* 
      * Returns the localized error message corresponding to the given error
      * code.
      *
@@ -151,13 +151,13 @@ public class Localizer {
         String errMsg = errCode;
         try {
             errMsg = bundle.getString(errCode);
-            if (args != null && args.length > 0) {
+            if (args != null) {
                 MessageFormat formatter = new MessageFormat(errMsg);
                 errMsg = formatter.format(args);
             }
         } catch (MissingResourceException e) {
         }
-
+        
         return errMsg;
     }
 }

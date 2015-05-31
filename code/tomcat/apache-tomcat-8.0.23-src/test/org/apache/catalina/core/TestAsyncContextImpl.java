@@ -16,6 +16,7 @@
  */
 package org.apache.catalina.core;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
@@ -52,11 +53,11 @@ import org.junit.Test;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
+import org.apache.catalina.deploy.ErrorPage;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.catalina.valves.TesterAccessLogValve;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.descriptor.web.ErrorPage;
 
 public class TestAsyncContextImpl extends TomcatBaseTest {
 
@@ -86,8 +87,9 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Bug49528Servlet servlet = new Bug49528Servlet();
 
@@ -123,8 +125,9 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Bug49567Servlet servlet = new Bug49567Servlet();
 
@@ -165,8 +168,9 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         tomcat.getConnector().setAttribute(
                 "connectionTimeout", Integer.valueOf(3000));
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         AsyncStartNoCompleteServlet servlet =
             new AsyncStartNoCompleteServlet();
@@ -204,8 +208,9 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         AsyncStartWithCompleteServlet servlet =
             new AsyncStartWithCompleteServlet();
@@ -221,7 +226,7 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
 
         // Call the servlet once
         ByteChunk bc = new ByteChunk();
-        Map<String,List<String>> headers = new HashMap<>();
+        Map<String,List<String>> headers = new HashMap<String,List<String>>();
         getUrl("http://localhost:" + getPort() + "/", bc, headers);
 
         assertEquals("OK", bc.toString());
@@ -461,8 +466,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         TimeoutServlet timeout = new TimeoutServlet(completeOnTimeout, dispatchUrl);
 
@@ -617,8 +624,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         DispatchingServlet dispatch = new DispatchingServlet(false, false);
         Wrapper wrapper = Tomcat.addServlet(ctx, "dispatch", dispatch);
@@ -736,8 +745,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         TrackingServlet tracking = new TrackingServlet();
         Wrapper wrapper = Tomcat.addServlet(ctx, "tracking", tracking);
@@ -958,8 +969,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         DispatchingServlet dispatch =
             new DispatchingServlet(true, completeOnError);
@@ -1027,7 +1040,7 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
             } catch (InterruptedException e) {
                 throw new ServletException(e);
             }
-            throw new ServletException("Oops.");
+            throw new ServletException("Opps.");
         }
     }
 
@@ -1037,8 +1050,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         AsyncStartRunnable servlet = new AsyncStartRunnable();
         Wrapper wrapper = Tomcat.addServlet(ctx, "servlet", servlet);
@@ -1104,8 +1119,9 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Bug50753Servlet servlet = new Bug50753Servlet();
 
@@ -1119,7 +1135,7 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         tomcat.start();
 
         // Call the servlet once
-        Map<String,List<String>> headers = new LinkedHashMap<>();
+        Map<String,List<String>> headers = new LinkedHashMap<String,List<String>>();
         ByteChunk bc = new ByteChunk();
         int rc = getUrl("http://localhost:" + getPort() + "/", bc, headers);
         assertEquals(200, rc);
@@ -1168,8 +1184,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         ErrorServlet error = new ErrorServlet();
         Tomcat.addServlet(ctx, "error", error);
@@ -1202,8 +1220,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         AsyncStatusServlet asyncStatusServlet =
             new AsyncStatusServlet(HttpServletResponse.SC_BAD_REQUEST);
@@ -1280,8 +1300,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         AsyncErrorServlet asyncErrorServlet =
             new AsyncErrorServlet(HttpServletResponse.SC_BAD_REQUEST, threaded);
@@ -1397,9 +1419,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
 
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
         Wrapper a = Tomcat.addServlet(ctx, "ServletA", new Bug53337ServletA());
         a.setAsyncSupported(true);
         Wrapper b = Tomcat.addServlet(ctx, "ServletB", new Bug53337ServletB());
@@ -1477,9 +1500,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
 
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
         Bug53843ServletA servletA = new Bug53843ServletA();
         Wrapper a = Tomcat.addServlet(ctx, "ServletA", servletA);
         a.setAsyncSupported(true);
@@ -1590,8 +1614,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         TimeoutServlet timeout = new TimeoutServlet(null, null);
         Wrapper w1 = Tomcat.addServlet(ctx, "time", timeout);
@@ -1719,8 +1745,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         Bug54178ServletA bug54178ServletA = new Bug54178ServletA();
         Wrapper wrapper =
@@ -1822,8 +1850,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         NonAsyncServlet nonAsyncServlet = new NonAsyncServlet();
         Wrapper wrapper = Tomcat.addServlet(ctx, "nonAsyncServlet",
@@ -1893,85 +1923,8 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
                 TestAsyncContextImpl.track("DispatchingGenericServletGet-");
             }
         }
+
     }
-
-
-    @Test
-    public void testGetRequestISE() throws Exception {
-        doTestAsyncISE(true);
-    }
-
-
-    @Test
-    public void testGetResponseISE() throws Exception {
-        doTestAsyncISE(false);
-    }
-
-
-    private void doTestAsyncISE(boolean useGetRequest) throws Exception {
-        // Setup Tomcat instance
-        Tomcat tomcat = getTomcatInstance();
-
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
-
-        AsyncISEServlet servlet = new AsyncISEServlet();
-
-        Wrapper w = Tomcat.addServlet(ctx, "AsyncISEServlet", servlet);
-        w.setAsyncSupported(true);
-        ctx.addServletMapping("/test", "AsyncISEServlet");
-
-        tomcat.start();
-
-        ByteChunk response = new ByteChunk();
-        int rc = getUrl("http://localhost:" + getPort() +"/test", response,
-                null);
-
-        Assert.assertEquals(HttpServletResponse.SC_OK, rc);
-
-        boolean hasIse = false;
-        try {
-            if (useGetRequest) {
-                servlet.getAsyncContext().getRequest();
-            } else {
-                servlet.getAsyncContext().getResponse();
-                }
-        } catch (IllegalStateException ise) {
-            hasIse = true;
-        }
-
-        Assert.assertTrue(hasIse);
-    }
-
-
-    /**
-     * Accessing the AsyncContext in this way is an ugly hack that should never
-     * be used in a real application since it is not thread safe. That said, it
-     * is this sort of hack that the ISE is meant to be preventing.
-     *
-     */
-    private static class AsyncISEServlet extends HttpServlet {
-
-        private static final long serialVersionUID = 1L;
-
-        private AsyncContext asyncContext;
-
-        @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-                throws ServletException, IOException {
-
-            resp.setContentType("text/plain;UTF-8");
-
-            asyncContext = req.startAsync();
-            // This will commit the response
-            asyncContext.complete();
-        }
-
-        public AsyncContext getAsyncContext() {
-            return asyncContext;
-        }
-    }
-
 
     @Test
     public void testDispatchWithCustomRequestResponse() throws Exception {
@@ -2049,8 +2002,10 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext(contextPath, null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext(contextPath, docBase.getAbsolutePath());
 
         DispatchingGenericServlet dispatch = new DispatchingGenericServlet();
         Wrapper wrapper = Tomcat.addServlet(ctx, "dispatch", dispatch);
@@ -2083,6 +2038,84 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
     }
 
 
+    @Test
+    public void testGetRequestISE() throws Exception {
+        doTestAsyncISE(true);
+    }
+
+
+    @Test
+    public void testGetResponseISE() throws Exception {
+        doTestAsyncISE(false);
+    }
+
+
+    private void doTestAsyncISE(boolean useGetRequest) throws Exception {
+        // Setup Tomcat instance
+        Tomcat tomcat = getTomcatInstance();
+
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
+
+        AsyncISEServlet servlet = new AsyncISEServlet();
+
+        Wrapper w = Tomcat.addServlet(ctx, "AsyncISEServlet", servlet);
+        w.setAsyncSupported(true);
+        ctx.addServletMapping("/test", "AsyncISEServlet");
+
+        tomcat.start();
+
+        ByteChunk response = new ByteChunk();
+        int rc = getUrl("http://localhost:" + getPort() +"/test", response,
+                null);
+
+        Assert.assertEquals(HttpServletResponse.SC_OK, rc);
+
+        boolean hasIse = false;
+        try {
+            if (useGetRequest) {
+                servlet.getAsyncContext().getRequest();
+            } else {
+                servlet.getAsyncContext().getResponse();
+                }
+        } catch (IllegalStateException ise) {
+            hasIse = true;
+        }
+
+        Assert.assertTrue(hasIse);
+    }
+
+
+    /**
+     * Accessing the AsyncContext in this way is an ugly hack that should never
+     * be used in a real application since it is not thread safe. That said, it
+     * is this sort of hack that the ISE is meant to be preventing.
+     *
+     */
+    private static class AsyncISEServlet extends HttpServlet {
+
+        private static final long serialVersionUID = 1L;
+
+        private AsyncContext asyncContext;
+
+        @Override
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+                throws ServletException, IOException {
+
+            resp.setContentType("text/plain;UTF-8");
+
+            asyncContext = req.startAsync();
+            // This will commit the response
+            asyncContext.complete();
+        }
+
+        public AsyncContext getAsyncContext() {
+            return asyncContext;
+        }
+    }
+
+
     // https://bz.apache.org/bugzilla/show_bug.cgi?id=57326
     @Test
     public void testAsyncContextListenerClearing() throws Exception {
@@ -2092,7 +2125,8 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         Servlet stage1 = new DispatchingServletTracking("/stage2", true);
         Wrapper wrapper1 = Tomcat.addServlet(ctx, "stage1", stage1);
@@ -2143,107 +2177,5 @@ public class TestAsyncContextImpl extends TomcatBaseTest {
             }
             ac.dispatch(target);
          }
-    }
-
-    @Test
-    public void testDispatchFromOtherContainerThread() throws Exception {
-        resetTracker();
-        // Setup Tomcat instance
-        Tomcat tomcat = getTomcatInstance();
-
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
-
-        NonAsyncServlet nonAsyncServlet = new NonAsyncServlet();
-        Tomcat.addServlet(ctx, "nonAsyncServlet", nonAsyncServlet);
-        ctx.addServletMapping("/target", "nonAsyncServlet");
-
-        AsyncStashServlet asyncStashServlet = new AsyncStashServlet();
-        Wrapper w1 = Tomcat.addServlet(ctx, "asyncStashServlet", asyncStashServlet);
-        w1.setAsyncSupported(true);
-        ctx.addServletMapping("/asyncStashServlet", "asyncStashServlet");
-
-        AsyncRetrieveServlet asyncRetrieveServlet = new AsyncRetrieveServlet();
-        Wrapper w2 = Tomcat.addServlet(ctx, "asyncRetrieveServlet", asyncRetrieveServlet);
-        w2.setAsyncSupported(true);
-        ctx.addServletMapping("/asyncRetrieveServlet", "asyncRetrieveServlet");
-
-        tomcat.start();
-
-        // First request in separate thread because the response won't be
-        // written until after the second request has been made.
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    getUrl("http://localhost:" + getPort() + "/asyncStashServlet");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-        t.start();
-
-        // Wait for first request to get as far as it can
-        int count = 0;
-        while (count < 100 && getTrack() != null &&
-                !getTrack().startsWith("AsyncStashServletGet-")) {
-            count++;
-            Thread.sleep(100);
-        }
-
-        getUrl("http://localhost:" + getPort() + "/asyncRetrieveServlet");
-
-        // Wait for second request to release first and allow it to complete
-        String expectedTrack = "AsyncStashServletGet-AsyncRetrieveServletGet-NonAsyncServletGet-";
-        count = 0;
-        while (count < 100 && !getTrack().equals(expectedTrack)) {
-            count++;
-            Thread.sleep(100);
-        }
-
-        Assert.assertEquals(expectedTrack, getTrack());
-    }
-
-    private static class AsyncStashServlet extends HttpServlet {
-
-        private static final long serialVersionUID = 1L;
-        private static final String DEFAULT_KEY = "DEFAULT";
-
-        @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-                throws ServletException, IOException {
-
-            String key = req.getParameter("key");
-            if (key == null) {
-                key = DEFAULT_KEY;
-            }
-
-            req.getServletContext().setAttribute(key, req.startAsync());
-            TestAsyncContextImpl.track("AsyncStashServletGet-");
-        }
-    }
-
-    private static class AsyncRetrieveServlet extends HttpServlet {
-        private static final long serialVersionUID = 1L;
-        private static final String DEFAULT_KEY = "DEFAULT";
-
-        @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-                throws ServletException, IOException {
-
-            String key = req.getParameter("key");
-            if (key == null) {
-                key = DEFAULT_KEY;
-            }
-
-            AsyncContext ac = (AsyncContext) req.getServletContext().getAttribute(key);
-            if (ac == null) {
-                TestAsyncContextImpl.track("FAIL:nullAsyncContext-");
-            } else {
-                TestAsyncContextImpl.track("AsyncRetrieveServletGet-");
-                ac.dispatch("/target");
-            }
-        }
     }
 }

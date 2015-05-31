@@ -76,6 +76,19 @@ public class Http11AprProcessor extends AbstractHttp11Processor<Long> {
 
     // ----------------------------------------------------- Instance Variables
 
+
+    /**
+     * Input.
+     */
+    protected InternalAprInputBuffer inputBuffer = null;
+
+
+    /**
+     * Output.
+     */
+    protected InternalAprOutputBuffer outputBuffer = null;
+
+
     /**
      * Sendfile data.
      */
@@ -222,14 +235,8 @@ public class Http11AprProcessor extends AbstractHttp11Processor<Long> {
 
 
     @Override
-    protected void registerForEvent(boolean read, boolean write) {
-        socketWrapper.registerforEvent(-1, read, write);
-    }
-
-
-    @Override
     protected void resetTimeouts() {
-        // NO-OP for APR
+        // NOOP for APR
     }
 
 
@@ -262,110 +269,87 @@ public class Http11AprProcessor extends AbstractHttp11Processor<Long> {
 
         switch (actionCode) {
         case REQ_HOST_ADDR_ATTRIBUTE: {
-            if (socketRef == 0) {
-                request.remoteAddr().recycle();
-            } else {
-                if (socketWrapper.getRemoteAddr() == null) {
-                    try {
-                        long sa = Address.get(Socket.APR_REMOTE, socketRef);
-                        socketWrapper.setRemoteAddr(Address.getip(sa));
-                    } catch (Exception e) {
-                        log.warn(sm.getString("http11processor.socket.info"), e);
-                    }
+            // Get remote host address
+            if (remoteAddr == null && (socketRef != 0)) {
+                try {
+                    long sa = Address.get(Socket.APR_REMOTE, socketRef);
+                    remoteAddr = Address.getip(sa);
+                } catch (Exception e) {
+                    log.warn(sm.getString("http11processor.socket.info"), e);
                 }
-                request.remoteAddr().setString(socketWrapper.getRemoteAddr());
             }
+            request.remoteAddr().setString(remoteAddr);
             break;
         }
         case REQ_LOCAL_NAME_ATTRIBUTE: {
-            if (socketRef == 0) {
-                request.localName().recycle();
-            } else {
-                if (socketWrapper.getLocalName() == null) {
-                    try {
-                        long sa = Address.get(Socket.APR_LOCAL, socketRef);
-                        socketWrapper.setLocalName(Address.getnameinfo(sa, 0));
-                    } catch (Exception e) {
-                        log.warn(sm.getString("http11processor.socket.info"), e);
-                    }
+            // Get local host name
+            if (localName == null && (socketRef != 0)) {
+                try {
+                    long sa = Address.get(Socket.APR_LOCAL, socketRef);
+                    localName = Address.getnameinfo(sa, 0);
+                } catch (Exception e) {
+                    log.warn(sm.getString("http11processor.socket.info"), e);
                 }
-                request.localName().setString(socketWrapper.getLocalName());
             }
+            request.localName().setString(localName);
             break;
         }
         case REQ_HOST_ATTRIBUTE: {
-            if (socketRef == 0) {
-                request.remoteHost().recycle();
-            } else {
-                if (socketWrapper.getRemoteHost() == null) {
-                    try {
-                        long sa = Address.get(Socket.APR_REMOTE, socketRef);
-                        socketWrapper.setRemoteHost(Address.getnameinfo(sa, 0));
-                        if (socketWrapper.getRemoteHost() == null) {
-                            if (socketWrapper.getRemoteAddr() == null) {
-                                socketWrapper.setRemoteAddr(Address.getip(sa));
-                            }
-                            if (socketWrapper.getRemoteAddr() != null) {
-                                socketWrapper.setRemoteHost(socketWrapper.getRemoteAddr());
-                            }
-                        }
-                    } catch (Exception e) {
-                        log.warn(sm.getString("http11processor.socket.info"), e);
+            // Get remote host name
+            if (remoteHost == null && (socketRef != 0)) {
+                try {
+                    long sa = Address.get(Socket.APR_REMOTE, socketRef);
+                    remoteHost = Address.getnameinfo(sa, 0);
+                    if (remoteHost == null) {
+                        remoteHost = Address.getip(sa);
                     }
-                } else {
-                    request.remoteHost().setString(socketWrapper.getRemoteHost());
+                } catch (Exception e) {
+                    log.warn(sm.getString("http11processor.socket.info"), e);
                 }
             }
+            request.remoteHost().setString(remoteHost);
             break;
         }
         case REQ_LOCAL_ADDR_ATTRIBUTE: {
-            if (socketRef == 0) {
-                request.localAddr().recycle();
-            } else {
-                if (socketWrapper.getLocalAddr() == null) {
-                    try {
-                        long sa = Address.get(Socket.APR_LOCAL, socketRef);
-                        socketWrapper.setLocalAddr(Address.getip(sa));
-                    } catch (Exception e) {
-                        log.warn(sm.getString("http11processor.socket.info"), e);
-                    }
+            // Get local host address
+            if (localAddr == null && (socketRef != 0)) {
+                try {
+                    long sa = Address.get(Socket.APR_LOCAL, socketRef);
+                    localAddr = Address.getip(sa);
+                } catch (Exception e) {
+                    log.warn(sm.getString("http11processor.socket.info"), e);
                 }
-                request.localAddr().setString(socketWrapper.getLocalAddr());
             }
+
+            request.localAddr().setString(localAddr);
             break;
         }
         case REQ_REMOTEPORT_ATTRIBUTE: {
-            if (socketRef == 0) {
-                request.setRemotePort(0);
-            } else {
-                if (socketWrapper.getRemotePort() == -1) {
-                    try {
-                        long sa = Address.get(Socket.APR_REMOTE, socketRef);
-                        Sockaddr addr = Address.getInfo(sa);
-                        socketWrapper.setRemotePort(addr.port);
-                    } catch (Exception e) {
-                        log.warn(sm.getString("http11processor.socket.info"), e);
-                    }
+            // Get remote port
+            if (remotePort == -1 && (socketRef != 0)) {
+                try {
+                    long sa = Address.get(Socket.APR_REMOTE, socketRef);
+                    Sockaddr addr = Address.getInfo(sa);
+                    remotePort = addr.port;
+                } catch (Exception e) {
+                    log.warn(sm.getString("http11processor.socket.info"), e);
                 }
-                request.setRemotePort(socketWrapper.getRemotePort());
             }
+            request.setRemotePort(remotePort);
             break;
         }
         case REQ_LOCALPORT_ATTRIBUTE: {
-            if (socketRef == 0) {
-                request.setLocalPort(0);
-            } else {
-                if (socketWrapper.getLocalPort() == -1) {
-                    try {
-                        long sa = Address.get(Socket.APR_LOCAL, socketRef);
-                        Sockaddr addr = Address.getInfo(sa);
-                        socketWrapper.setLocalPort(addr.port);
-                    } catch (Exception e) {
-                        log.warn(sm.getString("http11processor.socket.info"), e);
-                    }
+            // Get local port
+            if (localPort == -1 && (socketRef != 0)) {
+                try {
+                    long sa = Address.get(Socket.APR_LOCAL, socketRef);
+                    Sockaddr addr = Address.getInfo(sa);
+                    localPort = addr.port;
+                } catch (Exception e) {
+                    log.warn(sm.getString("http11processor.socket.info"), e);
                 }
-                request.setLocalPort(socketWrapper.getLocalPort());
             }
+            request.setLocalPort(localPort);
             break;
         }
         case REQ_SSL_ATTRIBUTE: {
@@ -460,6 +444,10 @@ public class Http11AprProcessor extends AbstractHttp11Processor<Long> {
             }
             break;
         }
+        case AVAILABLE: {
+            request.setAvailable(inputBuffer.available());
+            break;
+        }
         case COMET_BEGIN: {
             comet = true;
             break;
@@ -469,15 +457,38 @@ public class Http11AprProcessor extends AbstractHttp11Processor<Long> {
             break;
         }
         case COMET_CLOSE: {
-            ((AprEndpoint)endpoint).processSocket(this.socketWrapper,
-                    SocketStatus.OPEN_READ, true);
+            ((AprEndpoint)endpoint).processSocketAsync(this.socketWrapper,
+                    SocketStatus.OPEN_READ);
             break;
         }
         case COMET_SETTIMEOUT: {
             //no op
             break;
         }
+        case ASYNC_COMPLETE: {
+            if (asyncStateMachine.asyncComplete()) {
+                ((AprEndpoint)endpoint).processSocketAsync(this.socketWrapper,
+                        SocketStatus.OPEN_READ);
+            }
+            break;
         }
+        case ASYNC_SETTIMEOUT: {
+            if (param==null) {
+                return;
+            }
+            long timeout = ((Long)param).longValue();
+            socketWrapper.setTimeout(timeout);
+            break;
+        }
+        case ASYNC_DISPATCH: {
+            if (asyncStateMachine.asyncDispatch()) {
+                ((AprEndpoint)endpoint).processSocketAsync(this.socketWrapper,
+                        SocketStatus.OPEN_READ);
+            }
+            break;
+        }
+        }
+
     }
 
 

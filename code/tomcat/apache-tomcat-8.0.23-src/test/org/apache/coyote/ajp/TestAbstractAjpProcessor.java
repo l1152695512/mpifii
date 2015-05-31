@@ -16,13 +16,10 @@
  */
 package org.apache.coyote.ajp;
 
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -53,8 +50,6 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
         // Use BIO by default
         if (protocol == null) {
             protocol = "org.apache.coyote.ajp.AjpProtocol";
-        } else if (protocol.contains("Nio2")) {
-            protocol = "org.apache.coyote.ajp.AjpNio2Protocol";
         } else if (protocol.contains("Nio")) {
             protocol = "org.apache.coyote.ajp.AjpNioProtocol";
         } else if (protocol.contains("Apr")) {
@@ -80,8 +75,8 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
         tomcat.getConnector().setProperty("packetSize", Integer.toString(ajpPacketSize));
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "snoop", new SnoopServlet());
         ctx.addServletMapping("/", "snoop");
@@ -97,78 +92,64 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
 
         String value;
         int bodySize = 0;
-        Map<String, String> savedRequestInfo = new HashMap<>();
+        Map<String, String> savedRequestInfo = new HashMap<String, String>();
         for (String name: requestInfo.keySet()) {
             value = requestInfo.get(name);
-            switch (name) {
-                case "REQUEST-METHOD":
-                    ajpClient.setMethod(value);
-                    break;
-                case "REQUEST-PROTOCOL":
-                    ajpClient.setProtocol(value);
-                    break;
-                case "REQUEST-URI":
-                    ajpClient.setUri(value);
-                    break;
-                case "REQUEST-REMOTE-HOST":
-                    /* request.getRemoteHost() will default to
-                     * request.getRemoteAddr() unless enableLookups is set. */
-                    tomcat.getConnector().setEnableLookups(true);
-                    ajpClient.setRemoteHost(value);
-                    break;
-                case "REQUEST-REMOTE-ADDR":
-                    ajpClient.setRemoteAddr(value);
-                    break;
-                case "REQUEST-SERVER-NAME":
-                    ajpClient.setServerName(value);
-                    break;
-                case "REQUEST-SERVER-PORT":
-                    ajpClient.setServerPort(Integer.valueOf(value).intValue());
-                    break;
-                case "REQUEST-IS-SECURE":
-                    ajpClient.setSsl(Boolean.parseBoolean(value));
-                    break;
-                case "REQUEST-LOCAL-ADDR":
-                    savedRequestInfo.put(name, value);
-                    break;
-                case "REQUEST-REMOTE-PORT":
-                    savedRequestInfo.put(name, value);
-                    break;
-                case "REQUEST-REMOTE-USER":
-                case "REQUEST-ROUTE":
-                case "REQUEST-SECRET":
-                case "REQUEST-AUTH-TYPE":
-                case "REQUEST-QUERY-STRING":
-                    savedRequestInfo.put(name, value);
-                    break;
-                case "REQUEST-CONTENT-LENGTH":
-                    headers.put("CONTENT-LENGTH", value);
-                    break;
-                case "REQUEST-BODY-SIZE":
-                    savedRequestInfo.put(name, value);
-                    bodySize = Integer.parseInt(value);
-                    break;
-                case "REQUEST-CONTENT-TYPE":
-                    headers.put("CONTENT-TYPE", value);
-                    break;
-                /* Not yet implemented or not (easily) possible to implement */
-                case "REQUEST-LOCAL-NAME":          //request.getLocalName()
-                case "REQUEST-LOCAL-PORT":          //request.getLocalPort()
-                case "REQUEST-SCHEME":              //request.getScheme()
-                case "REQUEST-URL":                 //request.getRequestURL()
-                case "REQUEST-CONTEXT-PATH":        //request.getContextPath()
-                case "REQUEST-SERVLET-PATH":        //request.getServletPath()
-                case "REQUEST-PATH-INFO":           //request.getPathInfo()
-                case "REQUEST-PATH-TRANSLATED":     //request.getPathTranslated()
-                case "REQUEST-USER-PRINCIPAL":      //request.getUserPrincipal()
-                case "REQUEST-CHARACTER-ENCODING":  //request.getCharacterEncoding()
-                case "REQUEST-LOCALE":              //request.getLocale()
-                case "SESSION-REQUESTED-ID":        //request.getRequestedSessionId()
-                case "SESSION-REQUESTED-ID-COOKIE": //request.isRequestedSessionIdFromCookie()
-                case "SESSION-REQUESTED-ID-URL":    //request.isRequestedSessionIdFromUrl()
-                case "SESSION-REQUESTED-ID-VALID":  //request.isRequestedSessionIdValid()
-                default:
-                    throw(new IllegalArgumentException("Request setting '" + name + "' not supported"));
+            if (name.equals("REQUEST-METHOD")) {
+                ajpClient.setMethod(value);
+            } else if (name.equals("REQUEST-PROTOCOL")) {
+                ajpClient.setProtocol(value);
+            } else if (name.equals("REQUEST-URI")) {
+                ajpClient.setUri(value);
+            } else if (name.equals("REQUEST-REMOTE-HOST")) {
+                /* request.getRemoteHost() will default to
+                 * request.getRemoteAddr() unless enableLookups is set. */
+                tomcat.getConnector().setEnableLookups(true);
+                ajpClient.setRemoteHost(value);
+            } else if (name.equals("REQUEST-REMOTE-ADDR")) {
+                ajpClient.setRemoteAddr(value);
+            } else if (name.equals("REQUEST-SERVER-NAME")) {
+                ajpClient.setServerName(value);
+            } else if (name.equals("REQUEST-SERVER-PORT")) {
+                ajpClient.setServerPort(Integer.valueOf(value));
+            } else if (name.equals("REQUEST-IS-SECURE")) {
+                ajpClient.setSsl(Boolean.parseBoolean(value));
+            } else if (name.equals("REQUEST-LOCAL-ADDR")) {
+                savedRequestInfo.put(name, value);
+            } else if (name.equals("REQUEST-REMOTE-PORT")) {
+                savedRequestInfo.put(name, value);
+            } else if (name.equals("REQUEST-REMOTE-USER") ||
+                       name.equals("REQUEST-ROUTE") ||
+                       name.equals("REQUEST-SECRET") ||
+                       name.equals("REQUEST-AUTH-TYPE") ||
+                       name.equals("REQUEST-QUERY-STRING")) {
+                savedRequestInfo.put(name, value);
+            } else if (name.equals("REQUEST-CONTENT-LENGTH")) {
+                headers.put("CONTENT-LENGTH", value);
+            } else if (name.equals("REQUEST-BODY-SIZE")) {
+                savedRequestInfo.put(name, value);
+                bodySize = Integer.parseInt(value);
+            } else if (name.equals("REQUEST-CONTENT-TYPE")) {
+                headers.put("CONTENT-TYPE", value);
+            /* Not yet implemented or not (easily) possible to implement
+             * "REQUEST-LOCAL-NAME"
+             * "REQUEST-LOCAL-PORT"
+             * "REQUEST-SCHEME"
+             * "REQUEST-URL"
+             * "REQUEST-CONTEXT-PATH"
+             * "REQUEST-SERVLET-PATH"
+             * "REQUEST-PATH-INFO"
+             * "REQUEST-PATH-TRANSLATED"
+             * "REQUEST-USER-PRINCIPAL"
+             * "REQUEST-CHARACTER-ENCODING"
+             * "REQUEST-LOCALE"
+             * "SESSION-REQUESTED-ID"
+             * "SESSION-REQUESTED-ID-COOKIE"
+             * "SESSION-REQUESTED-ID-URL"
+             * "SESSION-REQUESTED-ID-VALID"
+             */
+            } else {
+                throw(new IllegalArgumentException("Request setting '" + name + "' not supported"));
             }
         }
 
@@ -185,38 +166,30 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
 
         for (String name: savedRequestInfo.keySet()) {
             value = savedRequestInfo.get(name);
-            switch (name) {
-                case "REQUEST-LOCAL-ADDR":
-                    forwardMessage.addAttribute("AJP_LOCAL_ADDR", value);
-                    break;
-                case "REQUEST-REMOTE-PORT":
-                    forwardMessage.addAttribute("AJP_REMOTE_PORT", value);
-                    break;
-                case "REQUEST-REMOTE-USER":
-                    /* request.getRemoteUser() will not trust the AJP
-                     * info if tomcatAuthentication is set. */
-                    tomcat.getConnector().setProperty("tomcatAuthentication", "false");
-                    forwardMessage.addAttribute(0x03, value);
-                    break;
-                case "REQUEST-AUTH-TYPE":
-                    /* request.getAuthType() will not trust the AJP
-                     * info if tomcatAuthentication is set. */
-                    tomcat.getConnector().setProperty("tomcatAuthentication", "false");
-                    forwardMessage.addAttribute(0x04, value);
-                    break;
-                case "REQUEST-QUERY-STRING":
-                    forwardMessage.addAttribute(0x05, value);
-                    break;
-                case "REQUEST-ROUTE":
-                    forwardMessage.addAttribute(0x06, value);
-                    break;
-                case "REQUEST-SECRET":
-                    forwardMessage.addAttribute(0x0C, value);
-                    break;
-                case "REQUEST-BODY-SIZE":
-                    break;
-                default:
-                    throw(new IllegalArgumentException("Request setting '" + name + "' not supported"));
+            if (name.equals("REQUEST-LOCAL-ADDR")) {
+                forwardMessage.addAttribute("AJP_LOCAL_ADDR", value);
+            } else if (name.equals("REQUEST-REMOTE-PORT")) {
+                forwardMessage.addAttribute("AJP_REMOTE_PORT", value);
+            } else if (name.equals("REQUEST-REMOTE-USER")) {
+                /* request.getRemoteUser() will not trust the AJP
+                 * info if tomcatAuthentication is set. */
+                tomcat.getConnector().setProperty("tomcatAuthentication", "false");
+                forwardMessage.addAttribute(0x03, value);
+            } else if (name.equals("REQUEST-AUTH-TYPE")) {
+                /* request.getAuthType() will not trust the AJP
+                 * info if tomcatAuthentication is set. */
+                tomcat.getConnector().setProperty("tomcatAuthentication", "false");
+                forwardMessage.addAttribute(0x04, value);
+            } else if (name.equals("REQUEST-QUERY-STRING")) {
+                forwardMessage.addAttribute(0x05, value);
+            } else if (name.equals("REQUEST-ROUTE")) {
+                forwardMessage.addAttribute(0x06, value);
+            } else if (name.equals("REQUEST-SECRET")) {
+                forwardMessage.addAttribute(0x0C, value);
+            } else if (name.equals("REQUEST-BODY-SIZE")) {
+                // NO-OP
+            } else {
+                throw(new IllegalArgumentException("Request setting '" + name + "' not supported"));
             }
         }
 
@@ -239,52 +212,36 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
         for (String name: headers.keySet()) {
             value = headers.get(name);
             name = name.toUpperCase(Locale.ENGLISH);
-            switch (name) {
-                case "ACCEPT":
-                    forwardMessage.addHeader(0xA001, value);
-                    break;
-                case "ACCEPT-CHARSET":
-                    forwardMessage.addHeader(0xA002, value);
-                    break;
-                case "ACCEPT-ENCODING":
-                    forwardMessage.addHeader(0xA003, value);
-                    break;
-                case "ACCEPT-LANGUAGE":
-                    forwardMessage.addHeader(0xA004, value);
-                    break;
-                case "AUTHORIZATION":
-                    forwardMessage.addHeader(0xA005, value);
-                    break;
-                case "CONNECTION":
-                    forwardMessage.addHeader(0xA006, value);
-                    break;
-                case "CONTENT-TYPE":
-                    forwardMessage.addHeader(0xA007, value);
-                    break;
-                case "CONTENT-LENGTH":
-                    forwardMessage.addHeader(0xA008, value);
-                    break;
-                case "COOKIE":
-                    forwardMessage.addHeader(0xA009, value);
-                    break;
-                case "COOKIE2":
-                    forwardMessage.addHeader(0xA00A, value);
-                    break;
-                case "HOST":
-                    forwardMessage.addHeader(0xA00B, value);
-                    break;
-                case "PRAGMA":
-                    forwardMessage.addHeader(0xA00C, value);
-                    break;
-                case "REFERER":
-                    forwardMessage.addHeader(0xA00D, value);
-                    break;
-                case "USER-AGENT":
-                    forwardMessage.addHeader(0xA00E, value);
-                    break;
-                default:
-                    forwardMessage.addHeader(name, value);
-                    break;
+            if (name.equals("ACCEPT")) {
+                forwardMessage.addHeader(0xA001, value);
+            } else if (name.equals("ACCEPT-CHARSET")) {
+                forwardMessage.addHeader(0xA002, value);
+            } else if (name.equals("ACCEPT-ENCODING")) {
+                forwardMessage.addHeader(0xA003, value);
+            } else if (name.equals("ACCEPT-LANGUAGE")) {
+                forwardMessage.addHeader(0xA004, value);
+            } else if (name.equals("AUTHORIZATION")) {
+                forwardMessage.addHeader(0xA005, value);
+            } else if (name.equals("CONNECTION")) {
+                forwardMessage.addHeader(0xA006, value);
+            } else if (name.equals("CONTENT-TYPE")) {
+                forwardMessage.addHeader(0xA007, value);
+            } else if (name.equals("CONTENT-LENGTH")) {
+                forwardMessage.addHeader(0xA008, value);
+            } else if (name.equals("COOKIE")) {
+                forwardMessage.addHeader(0xA009, value);
+            } else if (name.equals("COOKIE2")) {
+                forwardMessage.addHeader(0xA00A, value);
+            } else if (name.equals("HOST")) {
+                forwardMessage.addHeader(0xA00B, value);
+            } else if (name.equals("PRAGMA")) {
+                forwardMessage.addHeader(0xA00C, value);
+            } else if (name.equals("REFERER")) {
+                forwardMessage.addHeader(0xA00D, value);
+            } else if (name.equals("USER-AGENT")) {
+                forwardMessage.addHeader(0xA00E, value);
+            } else {
+                forwardMessage.addHeader(name, value);
             }
         }
         for (String name: attributes.keySet()) {
@@ -495,8 +452,8 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
         tomcat.getConnector().setProperty("requiredSecret", "RIGHTSECRET");
         tomcat.start();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "helloWorld", new HelloWorldServlet());
         ctx.addServletMapping("/", "helloWorld");
@@ -555,9 +512,8 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
         tomcat.getConnector().setProperty("connectionTimeout", "-1");
         tomcat.start();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
-
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         Tomcat.addServlet(ctx, "helloWorld", new HelloWorldServlet());
         ctx.addServletMapping("/", "helloWorld");
 
@@ -609,7 +565,13 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
     public void doTestPost(boolean multipleCL, int expectedStatus,
                            String expectedMessage) throws Exception {
 
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        // Use the normal Tomcat ROOT context
+        File root = new File("test/webapp-3.0");
+        tomcat.addWebapp("", root.getAbsolutePath());
+
+        tomcat.start();
 
         SimpleAjpClient ajpClient = new SimpleAjpClient();
         ajpClient.setPort(getPort());
@@ -617,7 +579,7 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
 
         validateCpong(ajpClient.cping());
 
-        ajpClient.setUri("/test/echo-params.jsp");
+        ajpClient.setUri("/echo-params.jsp");
         ajpClient.setMethod("POST");
         TesterAjpMessage forwardMessage = ajpClient.createForwardMessage();
         forwardMessage.addHeader(0xA008, "9");
@@ -660,9 +622,8 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
 
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
-
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         Tomcat.addServlet(ctx, "bug55453", new Tester304WithBodyServlet());
         ctx.addServletMapping("/", "bug55453");
 
@@ -692,80 +653,6 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
 
 
     @Test
-    public void testZeroLengthRequestBodyGetA() throws Exception {
-        doTestZeroLengthRequestBody("GET", true);
-    }
-
-    @Test
-    public void testZeroLengthRequestBodyGetB() throws Exception {
-        doTestZeroLengthRequestBody("GET", false);
-    }
-
-    @Test
-    public void testZeroLengthRequestBodyPostA() throws Exception {
-        doTestZeroLengthRequestBody("POST", true);
-    }
-
-    @Test
-    public void testZeroLengthRequestBodyPostB() throws Exception {
-        doTestZeroLengthRequestBody("POST", false);
-    }
-
-    private void doTestZeroLengthRequestBody(String method, boolean callAvailable)
-            throws Exception {
-
-        Tomcat tomcat = getTomcatInstance();
-
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
-
-        ReadBodyServlet servlet = new ReadBodyServlet(callAvailable);
-        Tomcat.addServlet(ctx, "ReadBody", servlet);
-        ctx.addServletMapping("/", "ReadBody");
-
-        tomcat.start();
-
-        SimpleAjpClient ajpClient = new SimpleAjpClient();
-        ajpClient.setPort(getPort());
-        ajpClient.connect();
-
-        validateCpong(ajpClient.cping());
-
-        ajpClient.setMethod(method);
-        TesterAjpMessage forwardMessage = ajpClient.createForwardMessage();
-        forwardMessage.addHeader(0xA008, "0");
-        forwardMessage.end();
-
-        TesterAjpMessage responseHeaders =
-                ajpClient.sendMessage(forwardMessage, null);
-
-        // Expect 3 messages: headers, body, end
-        validateResponseHeaders(responseHeaders, 200, "OK");
-        validateResponseBody(ajpClient.readMessage(),
-                "Request Body length in bytes: 0");
-        validateResponseEnd(ajpClient.readMessage(), true);
-
-        // Double check the connection is still open
-        validateCpong(ajpClient.cping());
-
-        ajpClient.disconnect();
-
-        if (callAvailable) {
-            boolean success = true;
-            Iterator<Integer> itAvailable = servlet.availableList.iterator();
-            Iterator<Integer> itRead = servlet.readList.iterator();
-            while (success && itAvailable.hasNext()) {
-                success = ((itRead.next().intValue() > 0) == (itAvailable.next().intValue() > 0));
-            }
-            if (!success) {
-                Assert.fail("available() and read() results do not match.\nAvailable: "
-                        + servlet.availableList + "\nRead: " + servlet.readList);
-            }
-        }
-    }
-
-
-    @Test
     public void testLargeResponse() throws Exception {
 
         int ajpPacketSize = 16000;
@@ -774,7 +661,7 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
         tomcat.getConnector().setProperty("packetSize", Integer.toString(ajpPacketSize));
 
         // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        Context ctx = tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         FixedResponseSizeServlet servlet = new FixedResponseSizeServlet(15000, 16000);
         Tomcat.addServlet(ctx, "FixedResponseSizeServlet", servlet);
@@ -925,66 +812,6 @@ public class TestAbstractAjpProcessor extends TomcatBaseTest {
 
             resp.setStatus(304);
             resp.getWriter().print("Body not permitted for 304 response");
-        }
-    }
-
-
-    private static class ReadBodyServlet extends HttpServlet {
-
-        private static final long serialVersionUID = 1L;
-
-        private final boolean callAvailable;
-        final List<Integer> availableList;
-        final List<Integer> readList;
-
-        public ReadBodyServlet(boolean callAvailable) {
-            this.callAvailable = callAvailable;
-            this.availableList = callAvailable ? new ArrayList<Integer>() : null;
-            this.readList = callAvailable ? new ArrayList<Integer>() : null;
-        }
-
-        @Override
-        protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-                throws ServletException, IOException {
-            doRequest(req, resp, false);
-        }
-
-        @Override
-        protected void doPost(HttpServletRequest req, HttpServletResponse resp)
-                throws ServletException, IOException {
-            doRequest(req, resp, true);
-        }
-
-        private void doRequest(HttpServletRequest request, HttpServletResponse response,
-                boolean isPost) throws IOException {
-
-            long readCount = 0;
-
-            try (InputStream s = request.getInputStream()) {
-                byte[] buf = new byte[4096];
-                int read;
-                do {
-                    if (callAvailable) {
-                        int available = s.available();
-                        read = s.read(buf);
-                        availableList.add(Integer.valueOf(available));
-                        readList.add(Integer.valueOf(read));
-                    } else {
-                        read = s.read(buf);
-                    }
-                    if (read > 0) {
-                        readCount += read;
-                    }
-                } while (read > 0);
-            }
-
-            response.setContentType("text/plain");
-            response.setCharacterEncoding("UTF-8");
-
-            try (PrintWriter w = response.getWriter()) {
-                w.println("Method: " + (isPost ? "POST" : "GET") + ". Reading request body...");
-                w.println("Request Body length in bytes: " + readCount);
-            }
         }
     }
 

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -52,26 +52,28 @@ in order to avoid a "ManagedBean is not found" exception.</p>
 a mbeans-descriptor.xml file, located in the same package as the class files
 it describes.</p>
 
-<source><![CDATA[  <mbean         name="LDAPRealm"
+<source>
+  &lt;mbean         name="LDAPRealm"
             className="org.apache.catalina.mbeans.ClassNameMBean"
           description="Custom LDAPRealm"
                domain="Catalina"
                 group="Realm"
-                 type="com.myfirm.mypackage.LDAPRealm">
+                 type="com.myfirm.mypackage.LDAPRealm"&gt;
 
-    <attribute   name="className"
+    &lt;attribute   name="className"
           description="Fully qualified class name of the managed object"
                  type="java.lang.String"
-            writeable="false"/>
+            writeable="false"/&gt;
 
-    <attribute   name="debug"
+    &lt;attribute   name="debug"
           description="The debugging detail level for this component"
-                 type="int"/>
+                 type="int"/&gt;
     .
     .
     .
 
-  </mbean>]]></source>
+  &lt;/mbean&gt;
+</source>
 
 
 </section>

@@ -31,12 +31,10 @@ import org.apache.catalina.connector.Response;
 
 public class TesterAccessLogValve extends ValveBase implements AccessLog {
 
-    private static final boolean RELAX_TIMING = Boolean.getBoolean("tomcat.test.relaxTiming");
+    // Timing tests need a small error margin to prevent failures
+    private static final long ERROR_MARGIN = 100;
 
-    // Timing tests need an error margin to prevent failures.
-    private static final long ERROR_MARGIN = RELAX_TIMING ? 1000 : 100;
-
-    private final List<Entry> entries = new ArrayList<>();
+    private final List<Entry> entries = new ArrayList<Entry>();
 
     public TesterAccessLogValve() {
         // Async requests are supported
@@ -67,10 +65,6 @@ public class TesterAccessLogValve extends ValveBase implements AccessLog {
         getNext().invoke(request, response);
     }
 
-    public int getEntryCount() {
-        return entries.size();
-    }
-
     public void validateAccessLog(int count, int status, long minTime,
             long maxTime) throws Exception {
 
@@ -80,12 +74,7 @@ public class TesterAccessLogValve extends ValveBase implements AccessLog {
             Thread.sleep(100);
         }
 
-        StringBuilder entriesLog = new StringBuilder();
-        for (Entry entry : entries) {
-            entriesLog.append(entry.toString());
-            entriesLog.append(System.lineSeparator());
-        }
-        assertEquals(entriesLog.toString(), count, entries.size());
+        assertEquals(count, entries.size());
         for (int j = 0; j < count; j++) {
             Entry entry = entries.get(j);
             assertEquals(status, entry.getStatus());

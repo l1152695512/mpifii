@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -51,7 +51,7 @@ import org.apache.juli.logging.LogFactory;
 
 /*
  * Changes from commons.modeler:
- *
+ * 
  *  - use DynamicMBean
  *  - remove methods not used in tomcat and redundant/not very generic
  *  - must be created from the ManagedBean - I don't think there were any direct
@@ -59,14 +59,14 @@ import org.apache.juli.logging.LogFactory;
  *  - some of the gratuitous flexibility removed - instead this is more predictive and
  *    strict with the use cases.
  *  - all Method and metadata is stored in ManagedBean. BaseModelBMean and ManagedBean act
- *    like Object and Class.
+ *    like Object and Class. 
  *  - setModelMBean is no longer called on resources ( not used in tomcat )
- *  - no caching of Methods for now - operations and setters are not called repeatedly in most
+ *  - no caching of Methods for now - operations and setters are not called repeatedly in most 
  *  management use cases. Getters should't be called very frequently either - and even if they
  *  are, the overhead of getting the method should be small compared with other JMX costs ( RMI, etc ).
  *  We can add getter cache if needed.
  *  - removed unused constructor, fields
- *
+ *  
  *  TODO:
  *   - clean up catalina.mbeans, stop using weird inheritance
  */
@@ -76,7 +76,7 @@ import org.apache.juli.logging.LogFactory;
  * supports the minimal requirements of the interface contract.</p>
  *
  * <p>This can be used directly to wrap an existing java bean, or inside
- * an mlet or anywhere an MBean would be used.
+ * an mlet or anywhere an MBean would be used. 
  *
  * Limitations:
  * <ul>
@@ -131,7 +131,7 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
      * Notification broadcaster for general notifications.
      */
     protected BaseNotificationBroadcaster generalBroadcaster = null;
-
+    
     /** Metadata for the mbean instance.
      */
     protected ManagedBean managedBean = null;
@@ -144,7 +144,8 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
     // --------------------------------------------------- DynamicMBean Methods
     // TODO: move to ManagedBean
     static final Object[] NO_ARGS_PARAM = new Object[0];
-
+    static final Class<?>[] NO_ARGS_PARAM_SIG = new Class[0];
+    
     protected String resourceType = null;
 
     // key: operation val: invoke method
@@ -172,11 +173,11 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
                 (new IllegalArgumentException("Attribute name is null"),
                  "Attribute name is null");
 
-        if( (resource instanceof DynamicMBean) &&
+        if( (resource instanceof DynamicMBean) && 
              ! ( resource instanceof BaseModelMBean )) {
             return ((DynamicMBean)resource).getAttribute(name);
         }
-
+        
         Method m=managedBean.getGetter(name, this, resource);
         Object result = null;
         try {
@@ -274,13 +275,13 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
      */
     @Override
     public Object invoke(String name, Object params[], String signature[])
-        throws MBeanException, ReflectionException
+        throws MBeanException, ReflectionException 
     {
-        if( (resource instanceof DynamicMBean) &&
+        if( (resource instanceof DynamicMBean) && 
              ! ( resource instanceof BaseModelMBean )) {
             return ((DynamicMBean)resource).invoke(name, params, signature);
         }
-
+    
         // Validate the input parameters
         if (name == null)
             throw new RuntimeOperationsException
@@ -290,7 +291,7 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
         if( log.isDebugEnabled()) log.debug("Invoke " + name);
 
         Method method= managedBean.getInvoke(name, params, signature, this, resource);
-
+        
         // Invoke the selected method on the appropriate object
         Object result = null;
         try {
@@ -348,7 +349,7 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
             try {
                 ClassLoader cl=Thread.currentThread().getContextClassLoader();
                 if( cl!=null )
-                    return cl.loadClass(signature);
+                    return cl.loadClass(signature); 
             } catch( ClassNotFoundException e ) {
             }
             try {
@@ -381,16 +382,16 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
         if( log.isDebugEnabled() )
             log.debug("Setting attribute " + this + " " + attribute );
 
-        if( (resource instanceof DynamicMBean) &&
+        if( (resource instanceof DynamicMBean) && 
              ! ( resource instanceof BaseModelMBean )) {
             try {
                 ((DynamicMBean)resource).setAttribute(attribute);
             } catch (InvalidAttributeValueException e) {
-                throw new MBeanException(e);
+                throw new MBeanException(e);                
             }
             return;
         }
-
+        
         // Validate the input parameters
         if (attribute == null)
             throw new RuntimeOperationsException
@@ -450,7 +451,7 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
 
     @Override
     public String toString() {
-        if( resource==null )
+        if( resource==null ) 
             return "BaseModelMbean[" + resourceType + "]";
         return resource.toString();
     }
@@ -469,7 +470,7 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
         // Validate the input parameters
         if (attributes == null)
             return response;
-
+        
         // Prepare and return our response, eating all exceptions
         String names[] = new String[attributes.size()];
         int n = 0;
@@ -523,7 +524,11 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
      * Set the instance handle of the object against which we will execute
      * all methods in this ModelMBean management interface.
      *
-     * The caller can provide the mbean instance or the object name to
+     * <strike>This method will detect and call "setModelMbean" method. A resource
+     * can implement this method to get a reference to the model mbean.
+     * The reference can be used to send notification and access the
+     * registry.
+     * </strike> The caller can provide the mbean instance or the object name to
      * the resource, if needed.
      *
      * @param resource The resource object to be managed
@@ -539,7 +544,7 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
      *  resource type is <code>null</code> or invalid
      */
     public void setManagedResource(Object resource, String type)
-        throws InstanceNotFoundException,
+        throws InstanceNotFoundException, 
         MBeanException, RuntimeOperationsException
     {
         if (resource == null)
@@ -552,7 +557,7 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
 
         this.resource = resource;
         this.resourceType = resource.getClass().getName();
-
+        
 //        // Make the resource aware of the model mbean.
 //        try {
 //            Method m=resource.getClass().getMethod("setModelMBean",
@@ -625,6 +630,28 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
         if (attributeBroadcaster != null) {
             attributeBroadcaster.removeNotificationListener(listener);
         }
+
+    }
+
+
+    /**
+     * Remove an attribute change notification event listener from
+     * this MBean.
+     *
+     * @param listener The listener to be removed
+     * @param attributeName The attribute name for which no more events are required
+     * @param handback Handback object to be sent along with event
+     *  notifications
+     *
+     *
+     * @exception ListenerNotFoundException if this listener is not
+     *  registered in the MBean
+     */
+    public void removeAttributeChangeNotificationListener
+        (NotificationListener listener, String attributeName, Object handback)
+        throws ListenerNotFoundException {
+
+        removeAttributeChangeNotificationListener(listener, attributeName);
 
     }
 
@@ -867,6 +894,170 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
      }
 
 
+    /**
+     * Remove a notification event listener from this MBean.
+     *
+     * @param listener The listener to be removed (any and all registrations
+     *  for this listener will be eliminated)
+     * @param handback Handback object to be sent along with event
+     *  notifications
+     *
+     * @exception ListenerNotFoundException if this listener is not
+     *  registered in the MBean
+     */
+    public void removeNotificationListener(NotificationListener listener,
+                                           Object handback)
+        throws ListenerNotFoundException {
+
+        removeNotificationListener(listener);
+
+    }
+
+
+    /**
+     * Remove a notification event listener from this MBean.
+     *
+     * @param listener The listener to be removed (any and all registrations
+     *  for this listener will be eliminated)
+     * @param filter Filter object used to filter event notifications
+     *  actually delivered, or <code>null</code> for no filtering
+     * @param handback Handback object to be sent along with event
+     *  notifications
+     *
+     * @exception ListenerNotFoundException if this listener is not
+     *  registered in the MBean
+     */
+    public void removeNotificationListener(NotificationListener listener,
+                                           NotificationFilter filter,
+                                           Object handback)
+        throws ListenerNotFoundException {
+
+        removeNotificationListener(listener);
+
+    }
+
+
+    // ------------------------------------------------ PersistentMBean Methods
+
+
+//    /**
+//     * Instantiates this MBean instance from data found in the persistent
+//     * store.  The data loaded could include attribute and operation values.
+//     * This method should be called during construction or initialization
+//     * of the instance, and before the MBean is registered with the
+//     * <code>MBeanServer</code>.
+//     *
+//     * <p><strong>IMPLEMENTATION NOTE</strong> - This implementation does
+//     * not support persistence.</p>
+//     *
+//     * @exception InstanceNotFoundException if the managed resource object
+//     *  cannot be found
+//     * @exception MBeanException if the initializer of the object throws
+//     *  an exception
+//     * @exception RuntimeOperationsException if an exception is reported
+//     *  by the persistence mechanism
+//     */
+//    public void load() throws InstanceNotFoundException,
+//        MBeanException, RuntimeOperationsException {
+//        // XXX If a context was set, use it to load the data
+//        throw new MBeanException
+//            (new IllegalStateException("Persistence is not supported"),
+//             "Persistence is not supported");
+//
+//    }
+
+
+//    /**
+//     * Capture the current state of this MBean instance and write it out
+//     * to the persistent store.  The state stored could include attribute
+//     * and operation values.  If one of these methods of persistence is not
+//     * supported, a "service not found" exception will be thrown.
+//     *
+//     * <p><strong>IMPLEMENTATION NOTE</strong> - This implementation does
+//     * not support persistence.</p>
+//     *
+//     * @exception InstanceNotFoundException if the managed resource object
+//     *  cannot be found
+//     * @exception MBeanException if the initializer of the object throws
+//     *  an exception, or persistence is not supported
+//     * @exception RuntimeOperationsException if an exception is reported
+//     *  by the persistence mechanism
+//     */
+//    public void store() throws InstanceNotFoundException,
+//        MBeanException, RuntimeOperationsException {
+//
+//        // XXX if a context was set, use it to store the data
+//        throw new MBeanException
+//            (new IllegalStateException("Persistence is not supported"),
+//             "Persistence is not supported");
+//
+//    }
+
+    // --------------------  BaseModelMBean methods --------------------
+
+//    /** Set the type of the mbean. This is used as a key to locate
+//     * the description in the Registry.
+//     *
+//     * @param type the type of classname of the modeled object
+//     */
+//    void setModeledType( String type ) {
+//        initModelInfo(type);
+//        createResource();
+//    }
+//    /** Set the type of the mbean. This is used as a key to locate
+//     * the description in the Registry.
+//     *
+//     * @param type the type of classname of the modeled object
+//     */
+//    void initModelInfo( String type ) {
+//        try {
+//            if( log.isDebugEnabled())
+//                log.debug("setModeledType " + type);
+//
+//            log.debug( "Set model Info " + type);
+//            if(type==null) {
+//                return;
+//            }
+//            resourceType=type;
+//            //Thread.currentThread().setContextClassLoader(BaseModelMBean.class.getClassLoader());
+//            Class c=null;
+//            try {
+//                c=Class.forName( type);
+//            } catch( Throwable t ) {
+//                log.debug( "Error creating class " + t);
+//            }
+//
+//            // The class c doesn't need to exist
+//            ManagedBean descriptor=getRegistry().findManagedBean(c, type);
+//            if( descriptor==null ) 
+//                return;
+//            this.setModelMBeanInfo(descriptor.createMBeanInfo());
+//        } catch( Throwable ex) {
+//            log.error( "TCL: " + Thread.currentThread().getContextClassLoader(),
+//                    ex);
+//        }
+//    }
+
+//    /** Set the type of the mbean. This is used as a key to locate
+//     * the description in the Registry.
+//     */
+//    protected void createResource() {
+//        try {
+//            //Thread.currentThread().setContextClassLoader(BaseModelMBean.class.getClassLoader());
+//            Class c=null;
+//            try {
+//                c=Class.forName( resourceType );
+//                resource = c.newInstance();
+//            } catch( Throwable t ) {
+//                log.error( "Error creating class " + t);
+//            }
+//        } catch( Throwable ex) {
+//            log.error( "TCL: " + Thread.currentThread().getContextClassLoader(),
+//                    ex);
+//        }
+//    }
+
+
     public String getModelerType() {
         return resourceType;
     }
@@ -887,6 +1078,44 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
         }
     }
 
+//    public void setRegistry(Registry registry) {
+//        this.registry = registry;
+//    }
+//
+//    public Registry getRegistry() {
+//        // XXX Need a better solution - to avoid the static
+//        if( registry == null )
+//            registry=Registry.getRegistry();
+//
+//        return registry;
+//    }
+
+    // ------------------------------------------------------ Protected Methods
+
+
+//    /**
+//     * Create and return a default <code>ModelMBeanInfo</code> object.
+//     */
+//    protected ModelMBeanInfo createDefaultModelMBeanInfo() {
+//
+//        return (new ModelMBeanInfoSupport(this.getClass().getName(),
+//                                          "Default ModelMBean",
+//                                          null, null, null, null));
+//
+//    }
+
+//    /**
+//     * Is the specified <code>ModelMBeanInfo</code> instance valid?
+//     *
+//     * <p><strong>IMPLEMENTATION NOTE</strong> - This implementation
+//     * does not check anything, but this method can be overridden
+//     * as required.</p>
+//     *
+//     * @param info The <code>ModelMBeanInfo object to check
+//     */
+//    protected boolean isModelMBeanInfoValid(ModelMBeanInfo info) {
+//        return (true);
+//    }
 
     // -------------------- Registration  --------------------
     // XXX We can add some method patterns here- like setName() and
@@ -924,6 +1153,44 @@ public class BaseModelMBean implements DynamicMBean, MBeanRegistration, ModelMBe
     public void postDeregister() {
         if( resource instanceof MBeanRegistration ) {
             ((MBeanRegistration)resource).postDeregister();
+        }
+    }
+
+    static class MethodKey {
+        private String name;
+        private String[] signature;
+
+        MethodKey(String name, String[] signature) {
+            this.name = name;
+            if(signature == null) {
+                signature = new String[0];
+            }
+            this.signature = signature;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if(!(other instanceof MethodKey)) {
+                return false;
+            }
+            MethodKey omk = (MethodKey)other;
+            if(!name.equals(omk.name)) {
+                return false;
+            }
+            if(signature.length != omk.signature.length) {
+                return false;
+            }
+            for(int i=0; i < signature.length; i++) {
+                if(!signature[i].equals(omk.signature[i])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return name.hashCode();
         }
     }
 }

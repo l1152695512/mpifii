@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -106,14 +106,15 @@
                     watchDir="/tmp/war-listen/"
                     watchEnabled="false"/>
 
-          <ClusterListener className="org.apache.catalina.ha.session.ClusterSessionListener"/>
+          <ClusterListener className="org.apache.catalina.ha.session.JvmRouteSessionIDBinderListener">
+          <ClusterListener className="org.apache.catalina.ha.session.ClusterSessionListener">
         </Cluster>]]></source>
   <p>Will cover this section in more detail later in this document.</p>
 </section>
 
 <section name="Cluster Basics">
 
-<p>To run session replication in your Tomcat <version-major/> container, the following steps
+<p>To run session replication in your Tomcat 7.0 container, the following steps
 should be completed:</p>
 <ul>
   <li>All your session attributes must implement <code>java.io.Serializable</code></li>
@@ -195,7 +196,7 @@ should be completed:</p>
     Synchronous vs. asynchronous is configured using the <code>channelSendOptions</code>
     flag and is an integer value. The default value for the <code>SimpleTcpCluster/DeltaManager</code> combo is
     8, which is asynchronous. You can read more on the <a href="tribes/introduction.html">send flag(overview)</a> or the
-    <doc path="/api/org/apache/catalina/tribes/Channel.html">send flag(javadoc)</doc>.
+    <a href="http://tomcat.apache.org/tomcat-7.0-doc/api/org/apache/catalina/tribes/Channel.html">send flag(javadoc)</a>.
     During async replication, the request is returned before the data has been replicated. async replication yields shorter
     request times, and synchronous replication guarantees the session to be replicated before the request returns.
 </p>
@@ -215,8 +216,11 @@ should be completed:</p>
     Not having this valve in place, will make it harder to ensure stickiness in case of a failure for the mod_jk module.
 </p>
 <p>
-    Remember, if you are adding your own valves in server.xml then the defaults are no longer valid,
-    make sure that you add in all the appropriate valves as defined by the default.
+    By default, if no valves are configured, the JvmRouteBinderValve is added on.
+    The cluster message listener called JvmRouteSessionIDBinderListener is also defined by default and is used to actually rewrite the
+    session id on the other nodes in the cluster once a fail over has occurred.
+    Remember, if you are adding your own valves or cluster listeners in server.xml then the defaults are no longer valid,
+    make sure that you add in all the appropriate valves and listeners as defined by the default.
 </p>
 <p>
     <b>Hint:</b><br/>
@@ -287,8 +291,8 @@ should be completed:</p>
       The main element, inside this element all cluster details can be configured.
       The <code>channelSendOptions</code> is the flag that is attached to each message sent by the
       SimpleTcpCluster class or any objects that are invoking the SimpleTcpCluster.send method.
-      The description of the send flags is available at <doc path="/api/org/apache/catalina/tribes/Channel.html">
-      our javadoc site</doc>
+      The description of the send flags is available at <a href="http://tomcat.apache.org/tomcat-7.0-doc/api/org/apache/catalina/tribes/Channel.html">
+      our javadoc site</a>
       The <code>DeltaManager</code> sends information using the SimpleTcpCluster.send method, while the backup manager
       sends it itself directly through the channel.
       <br/>For more info, Please visit the <a href="config/cluster.html">reference documentation</a>
@@ -448,6 +452,7 @@ should be completed:</p>
                                          -- ClusterListener
                                          |      \
                                          |       -- ClusterSessionListener
+                                         |       -- JvmRouteSessionIDBinderListener
                                          |
                                          -- Deployer
                                                 \

@@ -5,21 +5,21 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ */ 
 
 
 package org.apache.catalina.startup;
 
 import org.apache.catalina.Context;
-import org.apache.catalina.deploy.NamingResourcesImpl;
+import org.apache.catalina.deploy.NamingResources;
 import org.apache.tomcat.util.IntrospectionUtils;
 import org.apache.tomcat.util.digester.Rule;
 
@@ -30,9 +30,9 @@ import org.apache.tomcat.util.digester.Rule;
  * commonly used to establish parent-child relationships.</p>
  *
  * <p>This rule now supports more flexible method matching by default.
- * It is possible that this may break (some) code
+ * It is possible that this may break (some) code 
  * written against release 1.1.1 or earlier.
- * </p>
+ * </p> 
  */
 
 public class SetNextNamingRule extends Rule {
@@ -40,7 +40,7 @@ public class SetNextNamingRule extends Rule {
 
     // ----------------------------------------------------------- Constructors
 
-
+    
     /**
      * Construct a "set next" rule with the specified method name.
      *
@@ -65,13 +65,13 @@ public class SetNextNamingRule extends Rule {
     /**
      * The method name to call on the parent object.
      */
-    protected final String methodName;
+    protected String methodName = null;
 
 
     /**
      * The Java class name of the parameter type expected by the method.
      */
-    protected final String paramType;
+    protected String paramType = null;
 
 
     // --------------------------------------------------------- Public Methods
@@ -79,11 +79,11 @@ public class SetNextNamingRule extends Rule {
 
     /**
      * Process the end of this element.
-     *
-     * @param namespace the namespace URI of the matching element, or an
+     * 
+     * @param namespace the namespace URI of the matching element, or an 
      *   empty string if the parser is not namespace aware or the element has
      *   no namespace
-     * @param name the local name if the parser is namespace aware, or just
+     * @param name the local name if the parser is namespace aware, or just 
      *   the element name otherwise
      */
     @Override
@@ -93,13 +93,13 @@ public class SetNextNamingRule extends Rule {
         Object child = digester.peek(0);
         Object parent = digester.peek(1);
 
-        NamingResourcesImpl namingResources = null;
+        NamingResources namingResources = null;
         if (parent instanceof Context) {
             namingResources = ((Context) parent).getNamingResources();
         } else {
-            namingResources = (NamingResourcesImpl) parent;
+            namingResources = (NamingResources) parent;
         }
-
+        
         // Call the specified method
         IntrospectionUtils.callMethod1(namingResources, methodName,
                 child, paramType, digester.getClassLoader());

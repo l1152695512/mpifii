@@ -5,15 +5,17 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ */ 
+
+
 package org.apache.naming.factory.webservices;
 
 import java.lang.reflect.InvocationHandler;
@@ -29,16 +31,18 @@ import javax.xml.rpc.ServiceException;
 
 /**
  * Object proxy for Web Services.
- *
+ * 
  * @author Fabien Carrion
  */
-public class ServiceProxy implements InvocationHandler {
+
+public class ServiceProxy
+    implements InvocationHandler {
 
     /**
      * Service object.
      * used for delegation
      */
-    private final Service service;
+    private Service service = null;
 
     /**
      * changing behavior to method : Service.getPort(QName, Class)
@@ -97,14 +101,14 @@ public class ServiceProxy implements InvocationHandler {
      * @return Returns the correct Port
      * @throws ServiceException if port's QName is an unknown Port (not defined in WSDL).
      */
+    @SuppressWarnings("unchecked")
     private Object getProxyPortQNameClass(Object[] args)
     throws ServiceException {
         QName name = (QName) args[0];
         String nameString = name.getLocalPart();
         Class<?> serviceendpointClass = (Class<?>) args[1];
 
-        for (@SuppressWarnings("unchecked")
-        Iterator<QName> ports = service.getPorts(); ports.hasNext();) {
+        for (Iterator<QName> ports = service.getPorts(); ports.hasNext();) {
             QName portName = ports.next();
             String portnameString = portName.getLocalPart();
             if (portnameString.equals(nameString)) {
@@ -128,7 +132,7 @@ public class ServiceProxy implements InvocationHandler {
      * @return Returns the correct Port
      * @throws ServiceException if port's QName is an unknown Port
      */
-    private Remote getProxyPortClass(Object[] args)
+    private Remote getProxyPortClass(Object[] args) 
     throws ServiceException {
         Class<?> serviceendpointClass = (Class<?>) args[0];
 

@@ -18,7 +18,7 @@
 package org.apache.coyote.http11.filters;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
@@ -40,7 +40,7 @@ public class BufferedInputFilter implements InputFilter {
     // ----------------------------------------------------- Instance Variables
 
     private ByteChunk buffered = null;
-    private final ByteChunk tempRead = new ByteChunk(1024);
+    private ByteChunk tempRead = new ByteChunk(1024);
     private InputBuffer buffer;
     private boolean hasRead = false;
 
@@ -48,8 +48,8 @@ public class BufferedInputFilter implements InputFilter {
     // ----------------------------------------------------- Static Initializer
 
     static {
-        ENCODING.setBytes(ENCODING_NAME.getBytes(StandardCharsets.ISO_8859_1),
-                0, ENCODING_NAME.length());
+        ENCODING.setBytes(ENCODING_NAME.getBytes(Charset.defaultCharset()), 0,
+                ENCODING_NAME.length());
     }
 
 
@@ -139,10 +139,5 @@ public class BufferedInputFilter implements InputFilter {
     public int available() {
         return buffered.getLength();
     }
-
-
-    @Override
-    public boolean isFinished() {
-        return hasRead || buffered.getLength() <= 0;
-    }
+    
 }

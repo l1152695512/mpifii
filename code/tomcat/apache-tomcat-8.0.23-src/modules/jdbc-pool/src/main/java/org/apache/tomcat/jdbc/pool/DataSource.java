@@ -33,6 +33,7 @@ import org.apache.juli.logging.LogFactory;
  * A DataSource that can be instantiated through IoC and implements the DataSource interface
  * since the DataSourceProxy is used as a generic proxy.
  * The DataSource simply wraps a {@link ConnectionPool} in order to provide a standard interface to the user.
+ * @author Filip Hanik
  * @version 1.0
  */
 public class DataSource extends DataSourceProxy implements javax.sql.DataSource,MBeanRegistration, org.apache.tomcat.jdbc.pool.jmx.ConnectionPoolMBean, javax.sql.ConnectionPoolDataSource {
@@ -63,7 +64,7 @@ public class DataSource extends DataSourceProxy implements javax.sql.DataSource,
     protected volatile ObjectName oname = null;
 
     /**
-     * Unregisters the underlying connection pool mbean.<br>
+     * Unregisters the underlying connection pool mbean.<br/>
      * {@inheritDoc}
      */
     @Override
@@ -72,7 +73,7 @@ public class DataSource extends DataSourceProxy implements javax.sql.DataSource,
     }
 
     /**
-     * no-op<br>
+     * no-op<br/>
      * {@inheritDoc}
      */
     @Override
@@ -82,7 +83,7 @@ public class DataSource extends DataSourceProxy implements javax.sql.DataSource,
 
 
     /**
-     * no-op<br>
+     * no-op<br/>
      * {@inheritDoc}
      */
     @Override
@@ -91,13 +92,13 @@ public class DataSource extends DataSourceProxy implements javax.sql.DataSource,
     }
 
     /**
-     * If the connection pool MBean exists, it will be registered during this operation.<br>
+     * If the connection pool MBean exists, it will be registered during this operation.<br/>
      * {@inheritDoc}
      */
     @Override
     public ObjectName preRegister(MBeanServer server, ObjectName name) throws Exception {
         try {
-            if ( isJmxEnabled() ) {
+            if ( isJmxEnabled() ) { 
                 this.oname = createObjectName(name);
                 if (oname!=null) registerJmx();
             }

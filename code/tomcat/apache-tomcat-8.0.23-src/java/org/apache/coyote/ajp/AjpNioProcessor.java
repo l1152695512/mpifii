@@ -18,27 +18,41 @@ package org.apache.coyote.ajp;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 
+import org.apache.coyote.ActionCode;
+import org.apache.coyote.ErrorState;
+import org.apache.coyote.RequestInfo;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
+import org.apache.tomcat.util.ExceptionUtils;
+import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.NioChannel;
 import org.apache.tomcat.util.net.NioEndpoint;
+import org.apache.tomcat.util.net.NioEndpoint.KeyAttachment;
 import org.apache.tomcat.util.net.NioSelectorPool;
+import org.apache.tomcat.util.net.SocketStatus;
 import org.apache.tomcat.util.net.SocketWrapper;
+
 
 /**
  * Processes AJP requests using NIO.
  */
 public class AjpNioProcessor extends AbstractAjpProcessor<NioChannel> {
 
+
+    /**
+     * Logger.
+     */
     private static final Log log = LogFactory.getLog(AjpNioProcessor.class);
     @Override
     protected Log getLog() {
         return log;
     }
+
+    // ----------------------------------------------------------- Constructors
 
 
     public AjpNioProcessor(int packetSize, NioEndpoint endpoint) {
@@ -51,28 +65,206 @@ public class AjpNioProcessor extends AbstractAjpProcessor<NioChannel> {
     }
 
 
+    // ----------------------------------------------------- Instance Variables
+
     /**
      * Selector pool for the associated endpoint.
      */
-    protected final NioSelectorPool pool;
+    protected NioSelectorPool pool;
 
 
+    // --------------------------------------------------------- Public Methods
+
+
+    /**
+     * Process pipelined HTTP requests using the specified input and output
+     * streams.
+     *
+     * @throws IOException error during an I/O operation
+     */
     @Override
-    protected void registerForEvent(boolean read, boolean write) {
-        final NioChannel socket = socketWrapper.getSocket();
-        final NioEndpoint.KeyAttachment attach =
-                (NioEndpoint.KeyAttachment) socket.getAttachment();
-        if (attach == null) {
-            return;
+    public SocketState process(SocketWrapper<NioChannel> socket)
+        throws IOException {
+        RequestInfo rp = request.getRequestProcessor();
+        rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
+
+        // Setting up the socket
+        this.socketWrapper = socket;
+        
+        long soTimeout = endpoint.getSoTimeout();
+        boolean cping = false;
+
+        while (!getErrorState().isError() && !endpoint.isPaused()) {
+            // Parsing the request header
+            try {
+                // Get first message of the request
+                int bytesRead = readMessage(requestHeaderMessage, false);
+                if (bytesRead == 0) {
+                    break;
+                }
+                // Set back timeout if keep alive timeout is enabled
+                if (keepAliveTimeout > 0) {
+                    socket.setTimeout(soTimeout);
+                }
+                // Check message type, process right away and break if
+                // not regular request processing
+                int type = requestHeaderMessage.getByte();
+                if (type == Constants.JK_AJP13_CPING_REQUEST) {
+                    if (endpoint.isPaused()) {
+                        recycle(true);
+                        break;
+                    }
+                    cping = true;
+                    try {
+                        output(pongMessageArray, 0, pongMessageArray.length);
+                    } catch (IOException e) {
+                        setErrorState(ErrorState.CLOSE_NOW, null);
+                    }
+                    recycle(false);
+                    continue;
+                } else if(type != Constants.JK_AJP13_FORWARD_REQUEST) {
+                    // Unexpected packet type. Unread body packets should have
+                    // been swallowed in finish().
+                    if (log.isDebugEnabled()) {
+                        log.debug("Unexpected message: " + type);
+                    }
+                    setErrorState(ErrorState.CLOSE_NOW, null);
+                    recycle(true);
+                    break;
+                }
+                request.setStartTime(System.currentTimeMillis());
+            } catch (IOException e) {
+                setErrorState(ErrorState.CLOSE_NOW, e);
+                break;
+            } catch (Throwable t) {
+                ExceptionUtils.handleThrowable(t);
+                log.debug(sm.getString("ajpprocessor.header.error"), t);
+                // 400 - Bad Request
+                response.setStatus(400);
+                setErrorState(ErrorState.CLOSE_CLEAN, t);
+                getAdapter().log(request, response, 0);
+            }
+
+            if (!getErrorState().isError()) {
+                // Setting up filters, and parse some request headers
+                rp.setStage(org.apache.coyote.Constants.STAGE_PREPARE);
+                try {
+                    prepareRequest();
+                } catch (Throwable t) {
+                    ExceptionUtils.handleThrowable(t);
+                    log.debug(sm.getString("ajpprocessor.request.prepare"), t);
+                    // 500 - Internal Server Error
+                    response.setStatus(500);
+                    setErrorState(ErrorState.CLOSE_CLEAN, t);
+                    getAdapter().log(request, response, 0);
+                }
+            }
+
+            if (!getErrorState().isError() && !cping && endpoint.isPaused()) {
+                // 503 - Service unavailable
+                response.setStatus(503);
+                setErrorState(ErrorState.CLOSE_CLEAN, null);
+                getAdapter().log(request, response, 0);
+            }
+            cping = false;
+
+            // Process the request in the adapter
+            if (!getErrorState().isError()) {
+                try {
+                    rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
+                    adapter.service(request, response);
+                } catch (InterruptedIOException e) {
+                    setErrorState(ErrorState.CLOSE_NOW, e);
+                } catch (Throwable t) {
+                    ExceptionUtils.handleThrowable(t);
+                    log.error(sm.getString("ajpprocessor.request.process"), t);
+                    // 500 - Internal Server Error
+                    response.setStatus(500);
+                    setErrorState(ErrorState.CLOSE_CLEAN, t);
+                    getAdapter().log(request, response, 0);
+                }
+            }
+
+            if (isAsync() && !getErrorState().isError()) {
+                break;
+            }
+
+            // Finish the response if not done yet
+            if (!finished && getErrorState().isIoAllowed()) {
+                try {
+                    finish();
+                } catch (Throwable t) {
+                    ExceptionUtils.handleThrowable(t);
+                    setErrorState(ErrorState.CLOSE_NOW, t);
+                }
+            }
+
+            // If there was an error, make sure the request is counted as
+            // and error, and update the statistics counter
+            if (getErrorState().isError()) {
+                response.setStatus(500);
+            }
+            request.updateCounters();
+
+            rp.setStage(org.apache.coyote.Constants.STAGE_KEEPALIVE);
+            // Set keep alive timeout if enabled
+            if (keepAliveTimeout > 0) {
+                socket.setTimeout(keepAliveTimeout);
+            }
+
+            recycle(false);
         }
-        SelectionKey key = socket.getIOChannel().keyFor(socket.getPoller().getSelector());
-        if (read) {
-            attach.interestOps(attach.interestOps() | SelectionKey.OP_READ);
-            key.interestOps(key.interestOps() | SelectionKey.OP_READ);
+
+        rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
+
+        if (!getErrorState().isError() && !endpoint.isPaused()) {
+            if (isAsync()) {
+                return SocketState.LONG;
+            } else {
+                return SocketState.OPEN;
+            }
+        } else {
+            return SocketState.CLOSED;
         }
-        if (write) {
-            attach.interestOps(attach.interestOps() | SelectionKey.OP_WRITE);
-            key.interestOps(key.interestOps() | SelectionKey.OP_READ);
+    }
+
+
+    // ----------------------------------------------------- ActionHook Methods
+
+
+    /**
+     * Send an action to the connector.
+     *
+     * @param actionCode Type of the action
+     * @param param Action parameter
+     */
+    @Override
+    @SuppressWarnings("incomplete-switch") // Other cases are handled by action()
+    protected void actionInternal(ActionCode actionCode, Object param) {
+
+        switch (actionCode) {
+        case ASYNC_COMPLETE: {
+            if (asyncStateMachine.asyncComplete()) {
+                ((NioEndpoint)endpoint).processSocket(this.socketWrapper.getSocket(),
+                        SocketStatus.OPEN_READ, false);
+            }
+            break;
+        }
+        case ASYNC_SETTIMEOUT: {
+            if (param == null) return;
+            long timeout = ((Long)param).longValue();
+            final KeyAttachment ka =
+                    (KeyAttachment)socketWrapper.getSocket().getAttachment();
+            ka.setTimeout(timeout);
+            break;
+        }
+        case ASYNC_DISPATCH: {
+            if (asyncStateMachine.asyncDispatch()) {
+                ((NioEndpoint)endpoint).processSocket(this.socketWrapper.getSocket(),
+                        SocketStatus.OPEN_READ, true);
+            }
+            break;
+        }
         }
     }
 
@@ -82,8 +274,8 @@ public class AjpNioProcessor extends AbstractAjpProcessor<NioChannel> {
         // The NIO connector uses the timeout configured on the wrapper in the
         // poller. Therefore, it needs to be reset once asycn processing has
         // finished.
-        final NioEndpoint.KeyAttachment attach =
-                (NioEndpoint.KeyAttachment)socketWrapper.getSocket().getAttachment();
+        final KeyAttachment attach =
+                (KeyAttachment)socketWrapper.getSocket().getAttachment();
         if (!getErrorState().isError() && attach != null &&
                 asyncStateMachine.isAsyncDispatching()) {
             long soTimeout = endpoint.getSoTimeout();
@@ -100,76 +292,66 @@ public class AjpNioProcessor extends AbstractAjpProcessor<NioChannel> {
 
 
     @Override
-    protected void setupSocket(SocketWrapper<NioChannel> socketWrapper)
+    protected void output(byte[] src, int offset, int length)
             throws IOException {
-        // NO-OP
-    }
-
-
-    @Override
-    protected void setTimeout(SocketWrapper<NioChannel> socketWrapper,
-            int timeout) throws IOException {
-        socketWrapper.setTimeout(timeout);
-    }
-
-
-    @Override
-    protected int output(byte[] src, int offset, int length, boolean block)
-            throws IOException {
-
-        NioEndpoint.KeyAttachment att =
-                (NioEndpoint.KeyAttachment) socketWrapper.getSocket().getAttachment();
+        
+        KeyAttachment att =
+                (KeyAttachment) socketWrapper.getSocket().getAttachment();
         if ( att == null ) throw new IOException("Key must be cancelled");
 
         ByteBuffer writeBuffer =
                 socketWrapper.getSocket().getBufHandler().getWriteBuffer();
 
-        int toWrite = Math.min(length, writeBuffer.remaining());
-        writeBuffer.put(src, offset, toWrite);
-
-        writeBuffer.flip();
-
-        long writeTimeout = att.getWriteTimeout();
-        Selector selector = null;
-        try {
-            selector = pool.get();
-        } catch (IOException x) {
-            //ignore
-        }
-        try {
-            return pool.write(writeBuffer, socketWrapper.getSocket(), selector,
-                    writeTimeout, block);
-        } finally {
-            writeBuffer.clear();
-            if (selector != null) {
-                pool.put(selector);
+        int thisTime = 0;
+        int written = 0;
+        while (written < length) {
+            int toWrite = Math.min(length - written, writeBuffer.remaining());
+            writeBuffer.put(src, offset + written, toWrite);
+            
+            writeBuffer.flip();
+    
+            long writeTimeout = att.getWriteTimeout();
+            Selector selector = null;
+            try {
+                selector = pool.get();
+            } catch ( IOException x ) {
+                //ignore
             }
+            try {
+                thisTime = pool.write(writeBuffer, socketWrapper.getSocket(),
+                        selector, writeTimeout, true);
+            } finally { 
+                writeBuffer.clear();
+                if ( selector != null ) pool.put(selector);
+            }
+            written += thisTime;
         }
     }
 
 
-    @Override
-    protected boolean read(byte[] buf, int pos, int n, boolean blockFirstRead)
+    /**
+     * Read the specified amount of bytes, and place them in the input buffer.
+     */
+    protected int read(byte[] buf, int pos, int n, boolean blockFirstRead)
         throws IOException {
 
         int read = 0;
         int res = 0;
         boolean block = blockFirstRead;
-
+        
         while (read < n) {
             res = readSocket(buf, read + pos, n - read, block);
             if (res > 0) {
                 read += res;
             } else if (res == 0 && !block) {
-                return false;
+                break;
             } else {
                 throw new IOException(sm.getString("ajpprocessor.failedread"));
             }
             block = true;
         }
-        return true;
+        return read;
     }
-
 
     private int readSocket(byte[] buf, int pos, int n, boolean block)
             throws IOException {
@@ -195,7 +377,7 @@ public class AjpNioProcessor extends AbstractAjpProcessor<NioChannel> {
                         selector, att.getTimeout());
             } catch ( EOFException eof ) {
                 nRead = -1;
-            } finally {
+            } finally { 
                 if ( selector != null ) pool.put(selector);
             }
         } else {
@@ -213,4 +395,78 @@ public class AjpNioProcessor extends AbstractAjpProcessor<NioChannel> {
             return 0;
         }
     }
+
+
+    /** Receive a chunk of data. Called to implement the
+     *  'special' packet in ajp13 and to receive the data
+     *  after we send a GET_BODY packet
+     */
+    @Override
+    public boolean receive() throws IOException {
+
+        first = false;
+        bodyMessage.reset();
+        
+        readMessage(bodyMessage, true);
+
+        // No data received.
+        if (bodyMessage.getLen() == 0) {
+            // just the header
+            // Don't mark 'end of stream' for the first chunk.
+            return false;
+        }
+        int blen = bodyMessage.peekInt();
+        if (blen == 0) {
+            return false;
+        }
+
+        bodyMessage.getBodyBytes(bodyBytes);
+        empty = false;
+        return true;
+    }
+
+
+    /**
+     * Read an AJP message.
+     *
+     * @return The number of bytes read
+     * @throws IOException any other failure, including incomplete reads
+     */
+    protected int readMessage(AjpMessage message, boolean blockFirstRead)
+        throws IOException {
+
+        byte[] buf = message.getBuffer();
+        int headerLength = message.getHeaderLength();
+
+        int bytesRead = read(buf, 0, headerLength, blockFirstRead);
+
+        if (bytesRead == 0) {
+            return 0;
+        }
+        
+        int messageLength = message.processHeader(true);
+        if (messageLength < 0) {
+            // Invalid AJP header signature
+            throw new IOException(sm.getString("ajpmessage.invalidLength",
+                    Integer.valueOf(messageLength)));
+        }
+        else if (messageLength == 0) {
+            // Zero length message.
+            return bytesRead;
+        }
+        else {
+            if (messageLength > buf.length) {
+                // Message too long for the buffer
+                // Need to trigger a 400 response
+                throw new IllegalArgumentException(sm.getString(
+                        "ajpprocessor.header.tooLong",
+                        Integer.valueOf(messageLength),
+                        Integer.valueOf(buf.length)));
+            }
+            bytesRead += read(buf, headerLength, messageLength, true);
+            return bytesRead;
+        }
+    }
+
+
 }

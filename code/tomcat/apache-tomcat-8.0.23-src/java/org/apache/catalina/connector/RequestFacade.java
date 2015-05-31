@@ -37,11 +37,12 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import javax.servlet.http.HttpUpgradeHandler;
 import javax.servlet.http.Part;
 
 import org.apache.catalina.Globals;
 import org.apache.catalina.security.SecurityUtil;
+import org.apache.coyote.http11.upgrade.UpgradeInbound;
+import org.apache.coyote.http11.upgrade.servlet31.HttpUpgradeHandler;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
@@ -50,6 +51,7 @@ import org.apache.tomcat.util.res.StringManager;
  *
  * @author Craig R. McClanahan
  * @author Remy Maucherat
+ * @author Jean-Francois Arcand
  */
 @SuppressWarnings("deprecation")
 public class RequestFacade implements HttpServletRequest {
@@ -907,16 +909,6 @@ public class RequestFacade implements HttpServletRequest {
         return getSession(true);
     }
 
-    @Override
-    public String changeSessionId() {
-
-        if (request == null) {
-            throw new IllegalStateException(
-                            sm.getString("requestFacade.nullRequest"));
-        }
-
-        return request.changeSessionId();
-    }
 
     @Override
     public boolean isRequestedSessionIdValid() {
@@ -1094,23 +1086,24 @@ public class RequestFacade implements HttpServletRequest {
     }
 
     /**
-     * {@inheritDoc}
+     * Sets the response status to {@link
+     * HttpServletResponse#SC_SWITCHING_PROTOCOLS} and flushes the response.
+     * Protocol specific headers must have already been set before this method
+     * is called.
      *
-     * @since Servlet 3.1
+     * @param inbound   The handler for all further incoming data on the current
+     *                  connection.
+     *
+     * @throws IOException  If the upgrade fails (e.g. if the response has
+     *                      already been committed.
      */
-    @Override
-    public long getContentLengthLong() {
-        return request.getContentLengthLong();
+    public void doUpgrade(UpgradeInbound inbound)
+            throws IOException {
+        request.doUpgrade(inbound);
     }
-
-    /**
-     * {@inheritDoc}
-     *
-     * @since Servlet 3.1
-     */
-    @Override
+    
     public <T extends HttpUpgradeHandler> T upgrade(
-            Class<T> httpUpgradeHandlerClass) throws java.io.IOException, ServletException {
+            Class<T> httpUpgradeHandlerClass) throws ServletException {
         return request.upgrade(httpUpgradeHandlerClass);
     }
 }

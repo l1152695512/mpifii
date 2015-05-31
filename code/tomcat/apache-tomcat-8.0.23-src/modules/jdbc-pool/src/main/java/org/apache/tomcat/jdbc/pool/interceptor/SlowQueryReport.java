@@ -37,6 +37,7 @@ import org.apache.tomcat.jdbc.pool.PooledConnection;
 
 /**
  * Slow query report interceptor. Tracks timing of query executions.
+ * @author Filip Hanik
  * @version 1.0
  */
 public class SlowQueryReport extends AbstractQueryReport  {
@@ -47,7 +48,7 @@ public class SlowQueryReport extends AbstractQueryReport  {
      * we will be keeping track of query stats on a per pool basis
      */
     protected static ConcurrentHashMap<String,ConcurrentHashMap<String,QueryStats>> perPoolStats =
-        new ConcurrentHashMap<>();
+        new ConcurrentHashMap<String,ConcurrentHashMap<String,QueryStats>>();
     /**
      * the queries that are used for this interceptor.
      */
@@ -56,16 +57,6 @@ public class SlowQueryReport extends AbstractQueryReport  {
      * Maximum number of queries we will be storing
      */
     protected int  maxQueries= 1000; //don't store more than this amount of queries
-
-    /**
-     * Flag to enable disable logging of slow queries
-     */
-    protected boolean logSlow = true;
-
-    /**
-     * Flag to enable disable logging of failed queries
-     */
-    protected boolean logFailed = true;
 
     /**
      * Returns the query stats for a given pool
@@ -96,7 +87,7 @@ public class SlowQueryReport extends AbstractQueryReport  {
             long delta = now - start;
             QueryStats qs = this.getQueryStats(sql);
             qs.failure(delta, now);
-            if (isLogFailed() && log.isWarnEnabled()) {
+            if (log.isWarnEnabled()) {
                 log.warn("Failed Query Report SQL="+sql+"; time="+delta+" ms;");
             }
         }
@@ -109,7 +100,7 @@ public class SlowQueryReport extends AbstractQueryReport  {
         if (this.maxQueries > 0 ) {
             QueryStats qs = this.getQueryStats(sql);
             qs.add(delta, start);
-            if (isLogSlow() && log.isWarnEnabled()) {
+            if (log.isWarnEnabled()) {
                 log.warn("Slow Query Report SQL="+sql+"; time="+delta+" ms;");
             }
         }
@@ -149,7 +140,7 @@ public class SlowQueryReport extends AbstractQueryReport  {
             //create the map to hold our stats
             //however TODO we need to improve the eviction
             //selection
-            queries = new ConcurrentHashMap<>();
+            queries = new ConcurrentHashMap<String,QueryStats>();
             if (perPoolStats.putIfAbsent(pool.getName(), queries)!=null) {
                 //there already was one
                 queries = SlowQueryReport.perPoolStats.get(pool.getName());
@@ -209,48 +200,27 @@ public class SlowQueryReport extends AbstractQueryReport  {
     }
 
 
-    public boolean isLogSlow() {
-        return logSlow;
-    }
-
-    public void setLogSlow(boolean logSlow) {
-        this.logSlow = logSlow;
-    }
-
-    public boolean isLogFailed() {
-        return logFailed;
-    }
-
-    public void setLogFailed(boolean logFailed) {
-        this.logFailed = logFailed;
-    }
-
     @Override
     public void setProperties(Map<String, InterceptorProperty> properties) {
         super.setProperties(properties);
         final String threshold = "threshold";
         final String maxqueries= "maxQueries";
-        final String logslow = "logSlow";
-        final String logfailed = "logFailed";
         InterceptorProperty p1 = properties.get(threshold);
         InterceptorProperty p2 = properties.get(maxqueries);
-        InterceptorProperty p3 = properties.get(logslow);
-        InterceptorProperty p4 = properties.get(logfailed);
         if (p1!=null) {
             setThreshold(Long.parseLong(p1.getValue()));
         }
         if (p2!=null) {
             setMaxQueries(Integer.parseInt(p2.getValue()));
         }
-        if (p3!=null) {
-            setLogSlow(Boolean.getBoolean(p3.getValue()));
-        }
-        if (p4!=null) {
-            setLogFailed(Boolean.getBoolean(p4.getValue()));
-        }
     }
 
 
+    /**
+     *
+     * @author fhanik
+     *
+     */
     public static class QueryStats {
         static final String[] FIELD_NAMES = new String[] {
             "query",
@@ -280,7 +250,8 @@ public class SlowQueryReport extends AbstractQueryReport  {
             "The date and time of the last invocation"
         };
 
-        static final OpenType<?>[] FIELD_TYPES = new OpenType[] {
+        @SuppressWarnings("rawtypes")
+        static final OpenType[] FIELD_TYPES = new OpenType[] {
             SimpleType.STRING,
             SimpleType.INTEGER,
             SimpleType.LONG,
@@ -314,7 +285,8 @@ public class SlowQueryReport extends AbstractQueryReport  {
             return FIELD_DESCRIPTIONS;
         }
 
-        public static OpenType<?>[] getFieldTypes() {
+        @SuppressWarnings("rawtypes")
+        public static OpenType[] getFieldTypes() {
             return FIELD_TYPES;
         }
 

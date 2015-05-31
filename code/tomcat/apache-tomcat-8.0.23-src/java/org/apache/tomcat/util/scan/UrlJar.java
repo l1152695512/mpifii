@@ -30,17 +30,12 @@ import java.util.jar.JarEntry;
 public class UrlJar implements Jar {
 
     private NonClosingJarInputStream jarInputStream = null;
-    private final URL url;
+    private URL url = null;
     private JarEntry entry = null;
 
     public UrlJar(URL url) throws IOException {
         this.url = url;
         this.jarInputStream = createJarInputStream();
-    }
-
-    @Override
-    public URL getJarFileURL() {
-        return url;
     }
 
     @Override
@@ -71,33 +66,6 @@ public class UrlJar implements Jar {
         } else {
             return jarInputStream;
         }
-    }
-
-    @Override
-    public long getLastModified(String name) throws IOException {
-        JarEntry entry = jarInputStream.getNextJarEntry();
-        while (entry != null) {
-            if (name.equals(entry.getName())) {
-                break;
-            }
-            entry = jarInputStream.getNextJarEntry();
-        }
-
-        if (entry == null) {
-            return -1;
-        } else {
-            return entry.getTime();
-        }
-    }
-
-    @Override
-    public String getURL(String entry) {
-        StringBuilder result = new StringBuilder("jar:");
-        result.append(getJarFileURL().toExternalForm());
-        result.append("!/");
-        result.append(entry);
-
-        return result.toString();
     }
 
     @Override

@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -81,14 +81,14 @@ public class JspServlet extends HttpServlet implements PeriodicEventListener {
      */
     @Override
     public void init(ServletConfig config) throws ServletException {
-
+        
         super.init(config);
         this.config = config;
         this.context = config.getServletContext();
-
+        
         // Initialize the JSP Runtime Context
         // Check for a custom Options implementation
-        String engineOptionsName =
+        String engineOptionsName = 
             config.getInitParameter("engineOptionsClass");
         if (engineOptionsName != null) {
             // Instantiate the indicated Options implementation
@@ -120,7 +120,7 @@ public class JspServlet extends HttpServlet implements PeriodicEventListener {
             jspFile = config.getInitParameter("jspFile");
             try {
                 if (null == context.getResource(jspFile)) {
-                    return;
+                    throw new ServletException("missing jspFile: [" + jspFile + "]");
                 }
             } catch (MalformedURLException e) {
                 throw new ServletException("Can not locate jsp file", e);
@@ -274,14 +274,13 @@ public class JspServlet extends HttpServlet implements PeriodicEventListener {
         }
 
     }
-
+    
 
     @SuppressWarnings("deprecation") // Use of JSP_FILE to be removed in 9.0.x
     @Override
-    public void service (HttpServletRequest request,
+    public void service (HttpServletRequest request, 
                              HttpServletResponse response)
                 throws ServletException, IOException {
-
         //jspFile may be configured as an init-param for this servlet instance
         String jspUri = jspFile;
 
@@ -314,7 +313,7 @@ public class JspServlet extends HttpServlet implements PeriodicEventListener {
                 }
             } else {
                 /*
-                 * Requested JSP has not been the target of a
+                 * Requested JSP has not been the target of a 
                  * RequestDispatcher.include(). Reconstruct its path from the
                  * request's getServletPath() and getPathInfo()
                  */
@@ -326,7 +325,7 @@ public class JspServlet extends HttpServlet implements PeriodicEventListener {
             }
         }
 
-        if (log.isDebugEnabled()) {
+        if (log.isDebugEnabled()) {    
             log.debug("JspEngine --> " + jspUri);
             log.debug("\t     ServletPath: " + request.getServletPath());
             log.debug("\t        PathInfo: " + request.getPathInfo());

@@ -47,6 +47,7 @@ import org.apache.catalina.tribes.transport.ReplicationTransmitter;
  *
  * <p>Company: </p>
  *
+ * @author fhanik
  * @version 1.0
  */
 public class ChannelCreator {
@@ -99,7 +100,7 @@ public class ChannelCreator {
         boolean frag = false;
         int fragsize = 1024;
         int autoBind = 10;
-        ArrayList<Member> staticMembers = new ArrayList<>();
+        ArrayList<Member> staticMembers = new ArrayList<Member>();
         Properties transportProperties = new Properties();
         String transport = "org.apache.catalina.tribes.transport.nio.PooledParallelSender";
         String receiver = "org.apache.catalina.tribes.transport.nio.NioReceiver";
@@ -132,7 +133,7 @@ public class ChannelCreator {
                 String d = args[++i];
                 String h = d.substring(0,d.indexOf(":"));
                 String p = d.substring(h.length()+1);
-                Member m = new MemberImpl(h,Integer.parseInt(p),2000);
+                MemberImpl m = new MemberImpl(h,Integer.parseInt(p),2000);
                 staticMembers.add(m);
             } else if ("-throughput".equals(args[i])) {
                 throughput = true;

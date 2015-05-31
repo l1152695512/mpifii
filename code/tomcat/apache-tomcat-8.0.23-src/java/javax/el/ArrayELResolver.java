@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,13 +34,33 @@ public class ArrayELResolver extends ELResolver {
     }
 
     @Override
-    public Class<?> getType(ELContext context, Object base, Object property) {
+    public Object getValue(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base != null && base.getClass().isArray()) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
+            int idx = coerce(property);
+            if (idx < 0 || idx >= Array.getLength(base)) {
+                return null;
+            }
+            return Array.get(base, idx);
+        }
+
+        return null;
+    }
+
+    @Override
+    public Class<?> getType(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
+        if (context == null) {
+            throw new NullPointerException();
+        }
+
+        if (base != null && base.getClass().isArray()) {
+            context.setPropertyResolved(true);
             try {
                 int idx = coerce(property);
                 checkBounds(base, idx);
@@ -54,36 +74,21 @@ public class ArrayELResolver extends ELResolver {
     }
 
     @Override
-    public Object getValue(ELContext context, Object base, Object property) {
-        if (context == null) {
-            throw new NullPointerException();
-        }
-
-        if (base != null && base.getClass().isArray()) {
-            context.setPropertyResolved(base, property);
-            int idx = coerce(property);
-            if (idx < 0 || idx >= Array.getLength(base)) {
-                return null;
-            }
-            return Array.get(base, idx);
-        }
-
-        return null;
-    }
-
-    @Override
     public void setValue(ELContext context, Object base, Object property,
-            Object value) {
+            Object value) throws NullPointerException,
+            PropertyNotFoundException, PropertyNotWritableException,
+            ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base != null && base.getClass().isArray()) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
 
             if (this.readOnly) {
                 throw new PropertyNotWritableException(Util.message(context,
-                        "resolverNotWriteable", base.getClass().getName()));
+                        "resolverNotWriteable", new Object[] { base.getClass()
+                                .getName() }));
             }
 
             int idx = coerce(property);
@@ -91,21 +96,23 @@ public class ArrayELResolver extends ELResolver {
             if (value != null && !Util.isAssignableFrom(value.getClass(),
                     base.getClass().getComponentType())) {
                 throw new ClassCastException(Util.message(context,
-                        "objectNotAssignable", value.getClass().getName(),
-                        base.getClass().getComponentType().getName()));
+                        "objectNotAssignable",
+                        new Object[] {value.getClass().getName(),
+                        base.getClass().getComponentType().getName()}));
             }
             Array.set(base, idx, value);
         }
     }
 
     @Override
-    public boolean isReadOnly(ELContext context, Object base, Object property) {
+    public boolean isReadOnly(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base != null && base.getClass().isArray()) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
             try {
                 int idx = coerce(property);
                 checkBounds(base, idx);

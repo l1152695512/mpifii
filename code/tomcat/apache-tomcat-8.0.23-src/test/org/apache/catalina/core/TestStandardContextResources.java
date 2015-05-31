@@ -25,6 +25,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.naming.directory.DirContext;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -34,18 +35,20 @@ import javax.servlet.http.HttpServletResponse;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleEvent;
 import org.apache.catalina.LifecycleListener;
+import org.apache.catalina.deploy.WebXml;
 import org.apache.catalina.startup.Constants;
 import org.apache.catalina.startup.ContextConfig;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
+import org.apache.naming.resources.ProxyDirContext;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.descriptor.web.WebXml;
 
 public class TestStandardContextResources extends TomcatBaseTest {
 
@@ -67,7 +70,7 @@ public class TestStandardContextResources extends TomcatBaseTest {
     public void testResources() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir = new File("test/webapp-fragments");
+        File appDir = new File("test/webapp-3.0-fragments");
         // app dir is relative to server home
         Context ctx = tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
 
@@ -105,7 +108,7 @@ public class TestStandardContextResources extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // app dir is relative to server home
-        File appDir = new File("test/webapp-fragments");
+        File appDir = new File("test/webapp-3.0-fragments");
 
         // Need to cast to be able to set StandardContext specific attribute
         StandardContext ctxt = (StandardContext)
@@ -132,7 +135,7 @@ public class TestStandardContextResources extends TomcatBaseTest {
     public void testResourcesAbsoluteOrdering() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir = new File("test/webapp-fragments");
+        File appDir = new File("test/webapp-3.0-fragments");
         // app dir is relative to server home
         StandardContext ctx = (StandardContext) tomcat.addWebapp(null, "/test",
                 appDir.getAbsolutePath());
@@ -202,7 +205,7 @@ public class TestStandardContextResources extends TomcatBaseTest {
     public void testResources2() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir = new File("test/webapp-fragments");
+        File appDir = new File("test/webapp-3.0-fragments");
         // app dir is relative to server home
         StandardContext ctx = (StandardContext) tomcat.addWebapp(null, "/test",
                 appDir.getAbsolutePath());
@@ -225,6 +228,36 @@ public class TestStandardContextResources extends TomcatBaseTest {
         assertPageContains("/test/getresource?path=/folder/resourceE.jsp",
                 "<p>resourceE.jsp in the web application</p>");
     }
+
+
+    @Test
+    public void testResourceCaching() throws Exception {
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir = new File("test/webapp-3.0-fragments");
+        // app dir is relative to server home
+        StandardContext ctx = (StandardContext) tomcat.addWebapp(
+                null, "/test", appDir.getAbsolutePath());
+        ctx.setCachingAllowed(false);
+
+        tomcat.start();
+
+        DirContext resources = ctx.getResources();
+
+        Assert.assertTrue(resources instanceof ProxyDirContext);
+
+        ProxyDirContext proxyResources = (ProxyDirContext) resources;
+
+        // Caching should be disabled
+        Assert.assertNull(proxyResources.getCache());
+
+        ctx.stop();
+        ctx.start();
+
+        // Caching should still be disabled
+        Assert.assertNull(proxyResources.getCache());
+    }
+
 
     /**
      * A servlet that prints the requested resource. The path to the requested
@@ -249,12 +282,16 @@ public class TestStandardContextResources extends TomcatBaseTest {
                 return;
             }
 
-            try (InputStream input = url.openStream();
-                    OutputStream output = resp.getOutputStream()) {
+            InputStream input = url.openStream();
+            OutputStream output = resp.getOutputStream();
+            try {
                 byte[] buffer = new byte[4000];
                 for (int len; (len = input.read(buffer)) > 0;) {
                     output.write(buffer, 0, len);
                 }
+            } finally {
+                input.close();
+                output.close();
             }
         }
     }

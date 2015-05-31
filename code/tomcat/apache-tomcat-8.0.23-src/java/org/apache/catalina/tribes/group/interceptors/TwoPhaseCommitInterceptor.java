@@ -28,13 +28,23 @@ import org.apache.catalina.tribes.group.InterceptorPayload;
 import org.apache.catalina.tribes.util.Arrays;
 import org.apache.catalina.tribes.util.UUIDGenerator;
 
+/**
+ * <p>Title: </p>
+ *
+ * <p>Description: </p>
+ *
+ * <p>Company: </p>
+ *
+ * @author not attributable
+ * @version 1.0
+ */
 public class TwoPhaseCommitInterceptor extends ChannelInterceptorBase {
 
     private static final byte[] START_DATA = new byte[] {113, 1, -58, 2, -34, -60, 75, -78, -101, -12, 32, -29, 32, 111, -40, 4};
     private static final byte[] END_DATA = new byte[] {54, -13, 90, 110, 47, -31, 75, -24, -81, -29, 36, 52, -58, 77, -110, 56};
     private static final org.apache.juli.logging.Log log = org.apache.juli.logging.LogFactory.getLog(TwoPhaseCommitInterceptor.class);
 
-    protected final HashMap<UniqueId, MapEntry> messages = new HashMap<>();
+    protected HashMap<UniqueId, MapEntry> messages = new HashMap<UniqueId, MapEntry>();
     protected long expire = 1000 * 60; //one minute expiration
     protected boolean deepclone = true;
 
@@ -124,9 +134,9 @@ public class TwoPhaseCommitInterceptor extends ChannelInterceptorBase {
     }
 
     public static class MapEntry {
-        public final ChannelMessage msg;
-        public final UniqueId id;
-        public final long timestamp;
+        public ChannelMessage msg;
+        public UniqueId id;
+        public long timestamp;
 
         public MapEntry(ChannelMessage msg, UniqueId id, long timestamp) {
             this.msg = msg;

@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.catalina.core;
 
 import java.io.File;
@@ -51,99 +52,47 @@ import org.junit.Test;
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.authenticator.BasicAuthenticator;
-import org.apache.catalina.startup.TesterMapRealm;
+import org.apache.catalina.deploy.LoginConfig;
+import org.apache.catalina.startup.TestTomcat.MapRealm;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.descriptor.web.LoginConfig;
 
 public class TestStandardWrapper extends TomcatBaseTest {
 
     @Test
     public void testSecurityAnnotationsSimple() throws Exception {
-        doTest(DenyAllServlet.class.getName(), false, false, false, false);
+        doTest(DenyAllServlet.class.getName(), false, false, false);
     }
 
     @Test
     public void testSecurityAnnotationsSubclass1() throws Exception {
-        doTest(SubclassDenyAllServlet.class.getName(),
-                false, false, false,false);
+        doTest(SubclassDenyAllServlet.class.getName(), false, false, false);
     }
 
     @Test
     public void testSecurityAnnotationsSubclass2() throws Exception {
-        doTest(SubclassAllowAllServlet.class.getName(),
-                false, false, true, false);
+        doTest(SubclassAllowAllServlet.class.getName(), false, false, true);
     }
 
     @Test
     public void testSecurityAnnotationsMethods1() throws Exception {
-        doTest(MethodConstraintServlet.class.getName(),
-                false, false, false, false);
+        doTest(MethodConstraintServlet.class.getName(), false, false, false);
     }
 
     @Test
     public void testSecurityAnnotationsMethods2() throws Exception {
-        doTest(MethodConstraintServlet.class.getName(),
-                true, false, true, false);
+        doTest(MethodConstraintServlet.class.getName(), true, false, true);
     }
 
     @Test
     public void testSecurityAnnotationsRole1() throws Exception {
-        doTest(RoleAllowServlet.class.getName(), false, true, true, false);
+        doTest(RoleAllowServlet.class.getName(), false, true, true);
     }
 
     @Test
     public void testSecurityAnnotationsRole2() throws Exception {
-        doTest(RoleDenyServlet.class.getName(), false, true, false, false);
-    }
-
-    @Test
-    public void testSecurityAnnotationsUncoveredGet01() throws Exception {
-        // Use a POST with role - should be allowed
-        doTest(UncoveredGetServlet.class.getName(), true, true, true, false);
-    }
-
-    @Test
-    public void testSecurityAnnotationsUncoveredGet02() throws Exception {
-        // Use a POST with role - should be allowed
-        doTest(UncoveredGetServlet.class.getName(), true, true, true, true);
-    }
-
-    @Test
-    public void testSecurityAnnotationsUncoveredGet03() throws Exception {
-        // Use a POST no role - should be blocked
-        doTest(UncoveredGetServlet.class.getName(), true, false, false, false);
-    }
-
-    @Test
-    public void testSecurityAnnotationsUncoveredGet04() throws Exception {
-        // Use a POST no role - should be blocked
-        doTest(UncoveredGetServlet.class.getName(), true, false, false, true);
-    }
-
-    @Test
-    public void testSecurityAnnotationsUncoveredGet05() throws Exception {
-        // Use a GET with role - should be allowed as denyUncovered is false
-        doTest(UncoveredGetServlet.class.getName(), false, true, true, false);
-    }
-
-    @Test
-    public void testSecurityAnnotationsUncoveredGet06() throws Exception {
-        // Use a GET with role - should be blocked as denyUncovered is true
-        doTest(UncoveredGetServlet.class.getName(), false, true, false, true);
-    }
-
-    @Test
-    public void testSecurityAnnotationsUncoveredGet07() throws Exception {
-        // Use a GET no role - should be allowed as denyUncovered is false
-        doTest(UncoveredGetServlet.class.getName(), false, false, true, false);
-    }
-
-    @Test
-    public void testSecurityAnnotationsUncoveredGet08() throws Exception {
-        // Use a GET no role - should be blocked as denyUncovered is true
-        doTest(UncoveredGetServlet.class.getName(), true, false, false, true);
+        doTest(RoleDenyServlet.class.getName(), false, true, false);
     }
 
     @Test
@@ -152,7 +101,7 @@ public class TestStandardWrapper extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir = new File("test/webapp-fragments");
+        File appDir = new File("test/webapp-3.0-fragments");
         tomcat.addWebapp(null, "", appDir.getAbsolutePath());
 
         tomcat.start();
@@ -169,12 +118,19 @@ public class TestStandardWrapper extends TomcatBaseTest {
 
     @Test
     public void testSecurityAnnotationsMetaDataPriority() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+
+        // Setup Tomcat instance
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir = new File("test/webapp-3.0");
+        tomcat.addWebapp(null, "", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         ByteChunk bc = new ByteChunk();
         int rc;
         rc = getUrl("http://localhost:" + getPort() +
-                "/test/testStandardWrapper/securityAnnotationsMetaDataPriority",
+                "/testStandardWrapper/securityAnnotationsMetaDataPriority",
                 bc, null, null);
 
         assertEquals("OK", bc.toString());
@@ -196,7 +152,7 @@ public class TestStandardWrapper extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir = new File("test/webapp-servletsecurity");
+        File appDir = new File("test/webapp-3.0-servletsecurity");
         tomcat.addWebapp(null, "", appDir.getAbsolutePath());
 
         tomcat.start();
@@ -215,7 +171,7 @@ public class TestStandardWrapper extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir = new File("test/webapp-servletsecurity2");
+        File appDir = new File("test/webapp-3.0-servletsecurity2");
         tomcat.addWebapp(null, "", appDir.getAbsolutePath());
 
         tomcat.start();
@@ -243,8 +199,9 @@ public class TestStandardWrapper extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Servlet s = new DenyAllServlet();
         ServletContainerInitializer sci = new SCI(s, useCreateServlet);
@@ -266,23 +223,21 @@ public class TestStandardWrapper extends TomcatBaseTest {
     }
 
     private void doTest(String servletClassName, boolean usePost,
-            boolean useRole, boolean expect200, boolean denyUncovered)
-            throws Exception {
+            boolean useRole, boolean expect200) throws Exception {
 
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
-
-        ctx.setDenyUncoveredHttpMethods(denyUncovered);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Wrapper wrapper = Tomcat.addServlet(ctx, "servlet", servletClassName);
         wrapper.setAsyncSupported(true);
         ctx.addServletMapping("/", "servlet");
 
         if (useRole) {
-            TesterMapRealm realm = new TesterMapRealm();
+            MapRealm realm = new MapRealm();
             realm.addUser("testUser", "testPwd");
             realm.addUserRole("testUser", "testRole");
             ctx.setRealm(realm);
@@ -296,8 +251,8 @@ public class TestStandardWrapper extends TomcatBaseTest {
         ByteChunk bc = new ByteChunk();
         Map<String,List<String>> reqHeaders = null;
         if (useRole) {
-            reqHeaders = new HashMap<>();
-            List<String> authHeaders = new ArrayList<>();
+            reqHeaders = new HashMap<String,List<String>>();
+            List<String> authHeaders = new ArrayList<String>();
             // testUser, testPwd
             authHeaders.add("Basic dGVzdFVzZXI6dGVzdFB3ZA==");
             reqHeaders.put("Authorization", authHeaders);
@@ -363,14 +318,6 @@ public class TestStandardWrapper extends TomcatBaseTest {
         private static final long serialVersionUID = 1L;
     }
 
-    @ServletSecurity(httpMethodConstraints = {
-            @HttpMethodConstraint(value="POST",rolesAllowed = "testRole")
-        }
-    )
-    public static class UncoveredGetServlet extends TestServlet {
-        private static final long serialVersionUID = 1L;
-    }
-
     @ServletSecurity(@HttpConstraint(rolesAllowed = "testRole"))
     public static class RoleAllowServlet extends TestServlet {
         private static final long serialVersionUID = 1L;
@@ -412,19 +359,16 @@ public class TestStandardWrapper extends TomcatBaseTest {
     public static CountDownLatch latch = null;
     public static AtomicInteger counter = new AtomicInteger(0);
 
-    public static void initLatch() {
-        latch = new CountDownLatch(BUG51445_THREAD_COUNT);
-    }
-
     @Test
     public void testBug51445AddServlet() throws Exception {
 
-        initLatch();
+        latch = new CountDownLatch(BUG51445_THREAD_COUNT);
 
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        StandardContext ctx = (StandardContext)
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "Bug51445", new Bug51445Servlet());
         ctx.addServletMapping("/", "Bug51445");
@@ -443,7 +387,7 @@ public class TestStandardWrapper extends TomcatBaseTest {
             threads[i].join();
         }
 
-        Set<String> servlets = new HashSet<>();
+        Set<String> servlets = new HashSet<String>();
         // Output the result
         for (int i = 0; i < BUG51445_THREAD_COUNT; i ++) {
             System.out.println(threads[i].getResult());
@@ -462,12 +406,13 @@ public class TestStandardWrapper extends TomcatBaseTest {
     @Test
     public void testBug51445AddChild() throws Exception {
 
-        initLatch();
+        latch = new CountDownLatch(BUG51445_THREAD_COUNT);
 
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        StandardContext ctx = (StandardContext)
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         StandardWrapper wrapper = new StandardWrapper();
         wrapper.setServletName("Bug51445");
@@ -489,7 +434,7 @@ public class TestStandardWrapper extends TomcatBaseTest {
             threads[i].join();
         }
 
-        Set<String> servlets = new HashSet<>();
+        Set<String> servlets = new HashSet<String>();
         // Output the result
         for (int i = 0; i < BUG51445_THREAD_COUNT; i ++) {
             System.out.println(threads[i].getResult());

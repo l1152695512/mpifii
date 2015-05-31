@@ -18,7 +18,6 @@ package org.apache.tomcat.util.buf;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Locale;
 
@@ -52,7 +51,7 @@ public final class MessageBytes implements Cloneable, Serializable {
     public static final int T_CHARS = 3;
 
     private int hashCode=0;
-    // did we compute the hashcode ?
+    // did we computed the hashcode ?
     private boolean hasHashCode=false;
 
     // Internal objects to represent array + offset, and specific methods
@@ -79,6 +78,18 @@ public final class MessageBytes implements Cloneable, Serializable {
         return factory.newInstance();
     }
 
+    /**
+     * @deprecated Unused. Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public MessageBytes getClone() {
+        try {
+            return (MessageBytes)this.clone();
+        } catch( Exception ex) {
+            return null;
+        }
+    }
+
     public boolean isNull() {
         // should we check also hasStrValue ???
         return byteC.isNull() && charC.isNull() && ! hasStrValue;
@@ -97,7 +108,8 @@ public final class MessageBytes implements Cloneable, Serializable {
 
         hasStrValue=false;
         hasHashCode=false;
-        hasLongValue=false;
+        hasIntValue=false;
+    hasLongValue=false;
     }
 
 
@@ -113,7 +125,23 @@ public final class MessageBytes implements Cloneable, Serializable {
         type=T_BYTES;
         hasStrValue=false;
         hasHashCode=false;
+        hasIntValue=false;
         hasLongValue=false;
+    }
+
+    /** Set the encoding. If the object was constructed from bytes[]. any
+     *  previous conversion is reset.
+     *  If no encoding is set, we'll use 8859-1.
+     * @deprecated Unused. Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public void setCharset(Charset charset) {
+        if( !byteC.isNull() ) {
+            // if the encoding changes we need to reset the conversion results
+            charC.recycle();
+            hasStrValue=false;
+        }
+        byteC.setCharset(charset);
     }
 
     /**
@@ -128,6 +156,7 @@ public final class MessageBytes implements Cloneable, Serializable {
         type=T_CHARS;
         hasStrValue=false;
         hasHashCode=false;
+        hasIntValue=false;
         hasLongValue=false;
     }
 
@@ -137,6 +166,7 @@ public final class MessageBytes implements Cloneable, Serializable {
     public void setString( String s ) {
         strValue=s;
         hasHashCode=false;
+        hasIntValue=false;
         hasLongValue=false;
         if (s == null) {
             hasStrValue=false;
@@ -202,32 +232,17 @@ public final class MessageBytes implements Cloneable, Serializable {
         return strValue;
     }
 
-    /**
-     * Get the Charset used for string&lt;-&gt;byte conversions.
-     */
-    public Charset getCharset() {
-        return byteC.getCharset();
-    }
-
-    /**
-     * Set the Charset used for string&lt;-&gt;byte conversions.
-     */
-    public void setCharset(Charset charset) {
-        byteC.setCharset(charset);
-    }
-
-    /** Do a char-&gt;byte conversion.
+    /** Do a char->byte conversion.
      */
     public void toBytes() {
-        if (!byteC.isNull()) {
+        if( ! byteC.isNull() ) {
             type=T_BYTES;
             return;
         }
         toString();
         type=T_BYTES;
-        Charset charset = byteC.getCharset();
-        ByteBuffer result = charset.encode(strValue);
-        byteC.setBytes(result.array(), result.arrayOffset(), result.limit());
+        byte bb[] = strValue.getBytes(Charset.defaultCharset());
+        byteC.setBytes(bb, 0, bb.length);
     }
 
     /** Convert to char[] and fill the CharChunk.
@@ -356,6 +371,25 @@ public final class MessageBytes implements Cloneable, Serializable {
     /**
      * Returns true if the message bytes starts with the specified string.
      * @param s the string
+     * @deprecated Unused. Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public boolean startsWith(String s) {
+        switch (type) {
+        case T_STR:
+            return strValue.startsWith( s );
+        case T_CHARS:
+            return charC.startsWith( s );
+        case T_BYTES:
+            return byteC.startsWith( s );
+        default:
+            return false;
+        }
+    }
+
+    /**
+     * Returns true if the message bytes starts with the specified string.
+     * @param s the string
      * @param pos The start position
      */
     public boolean startsWithIgnoreCase(String s, int pos) {
@@ -418,6 +452,14 @@ public final class MessageBytes implements Cloneable, Serializable {
         }
     }
 
+    /**
+     * @deprecated Unused. Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public int indexOf(char c) {
+        return indexOf( c, 0);
+    }
+
     // Inefficient initial implementation. Will be replaced on the next
     // round of tune-up
     public int indexOf(String s, int starting) {
@@ -436,6 +478,26 @@ public final class MessageBytes implements Cloneable, Serializable {
         String upper=strValue.toUpperCase(Locale.ENGLISH);
         String sU=s.toUpperCase(Locale.ENGLISH);
         return upper.indexOf( sU, starting );
+    }
+
+    /**
+     * Returns true if the message bytes starts with the specified string.
+     * @param c the character
+     * @param starting The start position
+     * @deprecated Unused. Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public int indexOf(char c, int starting) {
+        switch (type) {
+        case T_STR:
+            return strValue.indexOf( c, starting );
+        case T_CHARS:
+            return charC.indexOf( c, starting);
+        case T_BYTES:
+            return byteC.indexOf( c, starting );
+        default:
+            return -1;
+        }
     }
 
     /** Copy the src into this MessageBytes, allocating more space if
@@ -465,10 +527,58 @@ public final class MessageBytes implements Cloneable, Serializable {
     }
 
     // -------------------- Deprecated code --------------------
-    // efficient long
-    // XXX used only for headers - shouldn't be stored here.
+    // efficient int, long and date
+    // XXX used only for headers - shouldn't be
+    // stored here.
+    private int intValue;
+    private boolean hasIntValue=false;
     private long longValue;
     private boolean hasLongValue=false;
+
+    /**
+     * Set the buffer to the representation of an int
+     * @deprecated Unused. Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public void setInt(int i) {
+        byteC.allocate(16, 32);
+        int current = i;
+        byte[] buf = byteC.getBuffer();
+        int start = 0;
+        int end = 0;
+        if (i == 0) {
+            buf[end++] = (byte) '0';
+        }
+        if (i < 0) {
+            current = -i;
+            buf[end++] = (byte) '-';
+        }
+        while (current > 0) {
+            int digit = current % 10;
+            current = current / 10;
+            buf[end++] = HexUtils.getHex(digit);
+        }
+        byteC.setOffset(0);
+        byteC.setEnd(end);
+        // Inverting buffer
+        end--;
+        if (i < 0) {
+            start++;
+        }
+        while (end > start) {
+            byte temp = buf[start];
+            buf[start] = buf[end];
+            buf[end] = temp;
+            start++;
+            end--;
+        }
+        intValue=i;
+        hasStrValue=false;
+        hasHashCode=false;
+        hasIntValue=true;
+        hasLongValue=false;
+        type=T_BYTES;
+    }
 
     /** Set the buffer to the representation of an long
      */
@@ -507,8 +617,32 @@ public final class MessageBytes implements Cloneable, Serializable {
         longValue=l;
         hasStrValue=false;
         hasHashCode=false;
+        hasIntValue=false;
         hasLongValue=true;
         type=T_BYTES;
+    }
+
+    // Used for headers conversion
+    /**
+     * Convert the buffer to an int, cache the value
+     * @deprecated Unused. Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public int getInt()
+    {
+        if( hasIntValue ) {
+            return intValue;
+        }
+
+        switch (type) {
+        case T_BYTES:
+            intValue=byteC.getInt();
+            break;
+        default:
+            intValue=Integer.parseInt(toString());
+        }
+        hasIntValue=true;
+        return intValue;
     }
 
     // Used for headers conversion
@@ -534,9 +668,17 @@ public final class MessageBytes implements Cloneable, Serializable {
 
     // -------------------- Future may be different --------------------
 
-    private static final MessageBytesFactory factory=new MessageBytesFactory();
+    private static MessageBytesFactory factory=new MessageBytesFactory();
 
-    private static class MessageBytesFactory {
+    /**
+     * @deprecated Unused. Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public static void setFactory( MessageBytesFactory mbf ) {
+        factory=mbf;
+    }
+
+    public static class MessageBytesFactory {
         protected MessageBytesFactory() {
         }
         public MessageBytes newInstance() {

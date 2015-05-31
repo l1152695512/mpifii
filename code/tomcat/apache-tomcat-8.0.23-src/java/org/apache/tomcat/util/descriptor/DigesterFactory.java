@@ -68,8 +68,8 @@ public class DigesterFactory {
     public static final Map<String,String> SERVLET_API_SYSTEM_IDS;
 
     static {
-        Map<String, String> publicIds = new HashMap<>();
-        Map<String, String> systemIds = new HashMap<>();
+        Map<String, String> publicIds = new HashMap<String, String>();
+        Map<String, String> systemIds = new HashMap<String, String>();
 
         // W3C
         add(publicIds, XmlIdentifiers.XSD_10_PUBLIC, locationFor("XMLSchema.dtd"));
@@ -110,15 +110,6 @@ public class DigesterFactory {
         addSelf(systemIds, "jsp_2_2.xsd");
         addSelf(systemIds, "javaee_web_services_1_3.xsd");
         addSelf(systemIds, "javaee_web_services_client_1_3.xsd");
-
-        // from JavaEE 7
-        add(systemIds, XmlIdentifiers.WEB_31_XSD, locationFor("web-app_3_1.xsd"));
-        add(systemIds, XmlIdentifiers.WEB_FRAGMENT_31_XSD, locationFor("web-fragment_3_1.xsd"));
-        addSelf(systemIds, "web-common_3_1.xsd");
-        addSelf(systemIds, "javaee_7.xsd");
-        addSelf(systemIds, "jsp_2_3.xsd");
-        addSelf(systemIds, "javaee_web_services_1_4.xsd");
-        addSelf(systemIds, "javaee_web_services_client_1_4.xsd");
 
         SERVLET_API_PUBLIC_IDS = Collections.unmodifiableMap(publicIds);
         SERVLET_API_SYSTEM_IDS = Collections.unmodifiableMap(systemIds);

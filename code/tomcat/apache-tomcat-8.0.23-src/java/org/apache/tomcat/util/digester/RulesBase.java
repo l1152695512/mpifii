@@ -5,15 +5,15 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ */ 
 
 
 package org.apache.tomcat.util.digester;
@@ -53,7 +53,8 @@ public class RulesBase implements Rules {
      * Each value is a List containing the Rules for that pattern, in the
      * order that they were originally registered.
      */
-    protected HashMap<String,List<Rule>> cache = new HashMap<>();
+    protected HashMap<String,List<Rule>> cache =
+        new HashMap<String,List<Rule>>();
 
 
     /**
@@ -74,7 +75,7 @@ public class RulesBase implements Rules {
      * The set of registered Rule instances, in the order that they were
      * originally registered.
      */
-    protected ArrayList<Rule> rules = new ArrayList<>();
+    protected ArrayList<Rule> rules = new ArrayList<Rule>();
 
 
     // ------------------------------------------------------------- Properties
@@ -154,11 +155,11 @@ public class RulesBase implements Rules {
         if (patternLength>1 && pattern.endsWith("/")) {
             pattern = pattern.substring(0, patternLength-1);
         }
-
-
+        
+        
         List<Rule> list = cache.get(pattern);
         if (list == null) {
-            list = new ArrayList<>();
+            list = new ArrayList<Rule>();
             cache.put(pattern, list);
         }
         list.add(rule);
@@ -220,7 +221,7 @@ public class RulesBase implements Rules {
             }
         }
         if (rulesList == null) {
-            rulesList = new ArrayList<>();
+            rulesList = new ArrayList<Rule>();
         }
         return (rulesList);
 
@@ -266,7 +267,7 @@ public class RulesBase implements Rules {
         }
 
         // Select only Rules that match on the specified namespace URI
-        ArrayList<Rule> results = new ArrayList<>();
+        ArrayList<Rule> results = new ArrayList<Rule>();
         Iterator<Rule> items = list.iterator();
         while (items.hasNext()) {
             Rule item = items.next();

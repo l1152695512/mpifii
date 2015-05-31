@@ -41,17 +41,14 @@ import org.junit.Test;
 
 import static org.apache.catalina.startup.SimpleHttpClient.CRLF;
 
-import org.apache.catalina.Context;
-import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.SimpleHttpClient;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.websocket.server.WsContextListener;
 
 public class TestDefaultServlet extends TomcatBaseTest {
 
-    /*
+    /**
      * Test attempting to access special paths (WEB-INF/META-INF) using
      * DefaultServlet.
      */
@@ -91,62 +88,7 @@ public class TestDefaultServlet extends TomcatBaseTest {
 
     }
 
-    /*
-     * Verify serving of gzipped resources from context root.
-     */
-    @Test
-    public void testGzippedFile() throws Exception {
-
-        Tomcat tomcat = getTomcatInstance();
-
-        File appDir = new File("test/webapp");
-
-        File gzipIndex = new File(appDir, "index.html.gz");
-        long gzipSize = gzipIndex.length();
-
-        File index = new File(appDir, "index.html");
-        long indexSize = index.length();
-
-        // app dir is relative to server home
-        Context ctxt = tomcat.addContext("", appDir.getAbsolutePath());
-        Wrapper defaultServlet = Tomcat.addServlet(ctxt, "default",
-                "org.apache.catalina.servlets.DefaultServlet");
-        defaultServlet.addInitParameter("gzip", "true");
-        ctxt.addServletMapping("/", "default");
-
-        ctxt.addMimeMapping("html", "text/html");
-
-        tomcat.start();
-
-        TestGzipClient gzipClient = new TestGzipClient(getPort());
-
-        gzipClient.reset();
-        gzipClient.setRequest(new String[] {
-                "GET /index.html HTTP/1.1" + CRLF +
-                "Host: localhost" + CRLF +
-                "Connection: Close" + CRLF +
-                "Accept-Encoding: gzip" + CRLF + CRLF });
-        gzipClient.connect();
-        gzipClient.processRequest();
-        assertTrue(gzipClient.isResponse200());
-        List<String> responseHeaders = gzipClient.getResponseHeaders();
-        assertTrue(responseHeaders.contains("Content-Length: " + gzipSize));
-
-        gzipClient.reset();
-        gzipClient.setRequest(new String[] {
-                "GET /index.html HTTP/1.1" + CRLF +
-                "Host: localhost" + CRLF +
-                "Connection: Close" + CRLF+ CRLF });
-        gzipClient.connect();
-        gzipClient.processRequest();
-        assertTrue(gzipClient.isResponse200());
-        responseHeaders = gzipClient.getResponseHeaders();
-        assertTrue(responseHeaders.contains("Content-Type: text/html"));
-        assertFalse(responseHeaders.contains("Content-Encoding: gzip"));
-        assertTrue(responseHeaders.contains("Content-Length: " + indexSize));
-    }
-
-    /*
+    /**
      * Test https://bz.apache.org/bugzilla/show_bug.cgi?id=50026
      * Verify serving of resources from context root with subpath mapping.
      */
@@ -160,7 +102,6 @@ public class TestDefaultServlet extends TomcatBaseTest {
         // app dir is relative to server home
         org.apache.catalina.Context ctx =
             tomcat.addWebapp(null, "/examples", appDir.getAbsolutePath());
-        ctx.addApplicationListener(WsContextListener.class.getName());
 
         // Override the default servlet with our own mappings
         Tomcat.addServlet(ctx, "default2", new DefaultServlet());
@@ -217,7 +158,7 @@ public class TestDefaultServlet extends TomcatBaseTest {
 
     }
 
-    /*
+    /**
      * Test https://bz.apache.org/bugzilla/show_bug.cgi?id=50413 Serving a
      * custom error page
      */
@@ -229,10 +170,9 @@ public class TestDefaultServlet extends TomcatBaseTest {
         if (!webInf.mkdirs() && !webInf.isDirectory()) {
             fail("Unable to create directory [" + webInf + "]");
         }
-
-        File webxml = new File(appDir, "WEB-INF/web.xml");
-        try (FileOutputStream fos = new FileOutputStream(webxml);
-                Writer w = new OutputStreamWriter(fos, "UTF-8");) {
+        Writer w = new OutputStreamWriter(new FileOutputStream(new File(appDir,
+                "WEB-INF/web.xml")), "UTF-8");
+        try {
             w.write("<?xml version='1.0' encoding='UTF-8'?>\n"
                     + "<web-app xmlns='http://java.sun.com/xml/ns/j2ee' "
                     + " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
@@ -242,12 +182,17 @@ public class TestDefaultServlet extends TomcatBaseTest {
                     + "<error-page>\n<error-code>404</error-code>\n"
                     + "<location>/404.html</location>\n</error-page>\n"
                     + "</web-app>\n");
+            w.flush();
+        } finally {
+            w.close();
         }
-
-        File error404 = new File(appDir, "404.html");
-        try (FileOutputStream fos = new FileOutputStream(error404);
-                Writer w = new OutputStreamWriter(fos, "ISO-8859-1")) {
+        w = new OutputStreamWriter(new FileOutputStream(new File(appDir,
+                "404.html")), "ISO-8859-1");
+        try {
             w.write("It is 404.html");
+            w.flush();
+        } finally {
+            w.close();
         }
 
         Tomcat tomcat = getTomcatInstance();
@@ -299,7 +244,7 @@ public class TestDefaultServlet extends TomcatBaseTest {
         assertEquals("It is 404.html", client.getResponseBody());
     }
 
-    /*
+    /**
      * Test what happens if a custom 404 page is configured,
      * but its file is actually missing.
      */
@@ -311,10 +256,9 @@ public class TestDefaultServlet extends TomcatBaseTest {
         if (!webInf.mkdirs() && !webInf.isDirectory()) {
             fail("Unable to create directory [" + webInf + "]");
         }
-
-        File webxml = new File(appDir, "WEB-INF/web.xml");
-        try (FileOutputStream fos = new FileOutputStream(webxml);
-                Writer w = new OutputStreamWriter(fos, "UTF-8");) {
+        Writer w = new OutputStreamWriter(new FileOutputStream(new File(appDir,
+                "WEB-INF/web.xml")), "UTF-8");
+        try {
             w.write("<?xml version='1.0' encoding='UTF-8'?>\n"
                     + "<web-app xmlns='http://java.sun.com/xml/ns/j2ee' "
                     + " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
@@ -324,6 +268,9 @@ public class TestDefaultServlet extends TomcatBaseTest {
                     + "<error-page>\n<error-code>404</error-code>\n"
                     + "<location>/404-absent.html</location>\n</error-page>\n"
                     + "</web-app>\n");
+            w.flush();
+        } finally {
+            w.close();
         }
 
         Tomcat tomcat = getTomcatInstance();
@@ -349,9 +296,14 @@ public class TestDefaultServlet extends TomcatBaseTest {
      */
     @Test
     public void testBug57601() throws Exception {
-        Tomcat tomcat = getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+        
+        File appDir = new File("test/webapp-3.0");
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
 
-        Map<String,List<String>> resHeaders= new HashMap<>();
+        tomcat.start();
+        
+        Map<String,List<String>> resHeaders= new HashMap<String,List<String>>();
         String path = "http://localhost:" + getPort() + "/test/bug5nnnn/bug57601.jsp";
         ByteChunk out = new ByteChunk();
 
@@ -378,18 +330,6 @@ public class TestDefaultServlet extends TomcatBaseTest {
     private static class TestCustomErrorClient extends SimpleHttpClient {
 
         public TestCustomErrorClient(int port) {
-            setPort(port);
-        }
-
-        @Override
-        public boolean isResponseBodyOK() {
-            return true;
-        }
-    }
-
-    private static class TestGzipClient extends SimpleHttpClient {
-
-        public TestGzipClient(int port) {
             setPort(port);
         }
 

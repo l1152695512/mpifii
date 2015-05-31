@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -142,9 +142,9 @@
       <attribute name="fileDateFormat" required="false">
         <p>Allows a customized timestamp in the access log file name.
            The file is rotated whenever the formatted timestamp changes.
-           The default value is <code>.yyyy-MM-dd</code>.
+           The default value is <code>yyyy-MM-dd</code>.
            If you wish to rotate every hour, then set this value
-           to <code>.yyyy-MM-dd.HH</code>.
+           to <code>yyyy-MM-dd.HH</code>.
            The date format will always be localized
            using the locale <code>en_US</code>.
         </p>
@@ -243,13 +243,6 @@
            If set to <code>false</code>, then access logging will be written after each
            request. Default value: <code>true</code>
         </p>
-      </attribute>
-
-      <attribute name="maxLogMessageBufferSize" required="false">
-        <p>Log message buffers are usually recycled and re-used. To prevent
-           excessive memory usage, if a buffer grows beyond this size it will be
-           discarded. The default is <code>256</code> characters. This should be
-           set to larger than the typical access log message size.</p>
       </attribute>
 
       <attribute name="resolveHosts" required="false">
@@ -772,7 +765,7 @@
         Internal proxies that appear in the <strong>remoteIpHeader</strong> will
         be trusted and will not appear in the <strong>proxiesHeader</strong>
         value. If not specified the default value of <code>
-        10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|169\.254\.\d{1,3}\.\d{1,3}|127\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.1[6-9]{1}\.\d{1,3}\.\d{1,3}|172\.2[0-9]{1}\.\d{1,3}\.\d{1,3}|172\.3[0-1]{1}\.\d{1,3}\.\d{1,3}
+        10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|169\.254\.\d{1,3}\.\d{1,3}|127\.\d{1,3}\.\d{1,3}\.\d{1,3}
         </code> will be used.</p>
       </attribute>
 
@@ -881,30 +874,6 @@
         <p>Java class name of the implementation to use.  This MUST be set to
         <strong>org.apache.catalina.valves.SSLValve</strong>.
         </p>
-      </attribute>
-
-      <attribute name="sslClientCertHeader" required="false">
-        <p>Allows setting a custom name for the ssl_client_cert header.
-        If not specified, the default of <code>ssl_client_cert</code> is
-        used.</p>
-      </attribute>
-
-      <attribute name="sslCipherHeader" required="false">
-        <p>Allows setting a custom name for the ssl_cipher header.
-        If not specified, the default of <code>ssl_cipher</code> is
-        used.</p>
-      </attribute>
-
-      <attribute name="sslSessionIdHeader" required="false">
-        <p>Allows setting a custom name for the ssl_session_id header.
-        If not specified, the default of <code>ssl_session_id</code> is
-        used.</p>
-      </attribute>
-
-      <attribute name="sslCipherUserKeySizeHeader" required="false">
-        <p>Allows setting a custom name for the ssl_cipher_usekeysize header.
-        If not specified, the default of <code>ssl_cipher_usekeysize</code> is
-        used.</p>
       </attribute>
 
     </attributes>
@@ -1437,17 +1406,6 @@
     configuration attributes:</p>
 
     <attributes>
-
-      <attribute name="applyJava8u40Fix" required="false">
-        <p>A fix introduced in Java 8 update 40 (
-        <a href="https://bugs.openjdk.java.net/browse/JDK-8048194">JDK-8048194</a>)
-        onwards broke SPNEGO authentication for IE with Tomcat running on
-        Windows 2008 R2 servers. This option enables a work-around that allows
-        SPNEGO authentication to continue working. The work-around should not
-        impact other configurations so it is enabled by default. If necessary,
-        the workaround can be disabled by setting this attribute to
-        <code>false</code>.</p>
-      </attribute>
 
       <attribute name="alwaysUseSession" required="false">
         <p>Should a session always be used once a user is authenticated? This

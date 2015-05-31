@@ -32,9 +32,20 @@ import org.apache.catalina.connector.Response;
  *
  * @author Craig R. McClanahan
  */
-public final class RemoteAddrValve extends RequestFilterValve {
+
+public final class RemoteAddrValve
+    extends RequestFilterValve {
+
 
     // ----------------------------------------------------- Instance Variables
+
+
+    /**
+     * The descriptive information related to this implementation.
+     */
+    private static final String info =
+        "org.apache.catalina.valves.RemoteAddrValve/1.0";
+
 
     /**
      * Flag deciding whether we add the server connector port to the property
@@ -43,7 +54,19 @@ public final class RemoteAddrValve extends RequestFilterValve {
      */
     protected volatile boolean addConnectorPort = false;
 
+
     // ------------------------------------------------------------- Properties
+
+
+    /**
+     * Return descriptive information about this Valve implementation.
+     */
+    @Override
+    public String getInfo() {
+
+        return (info);
+
+    }
 
 
     /**
@@ -70,6 +93,7 @@ public final class RemoteAddrValve extends RequestFilterValve {
 
     // --------------------------------------------------------- Public Methods
 
+
     /**
      * Extract the desired request property, and pass it (along with the
      * specified request and response objects) to the protected
@@ -95,4 +119,6 @@ public final class RemoteAddrValve extends RequestFilterValve {
         process(property, request, response);
 
     }
+
+
 }

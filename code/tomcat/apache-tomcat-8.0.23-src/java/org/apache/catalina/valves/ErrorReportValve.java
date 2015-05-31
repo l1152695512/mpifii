@@ -57,8 +57,32 @@ public class ErrorReportValve extends ValveBase {
         super(true);
     }
 
+    // ----------------------------------------------------- Instance Variables
+
+
+    /**
+     * The descriptive information related to this implementation.
+     */
+    private static final String info =
+        "org.apache.catalina.valves.ErrorReportValve/1.0";
+
+
+    // ------------------------------------------------------------- Properties
+
+
+    /**
+     * Return descriptive information about this Valve implementation.
+     */
+    @Override
+    public String getInfo() {
+
+        return (info);
+
+    }
+
 
     // --------------------------------------------------------- Public Methods
+
 
     /**
      * Invoke the next Valve in the sequence. When the invoke returns, check
@@ -183,7 +207,7 @@ public class ErrorReportValve extends ValveBase {
 
         StringBuilder sb = new StringBuilder();
 
-        sb.append("<!DOCTYPE html><html><head>");
+        sb.append("<html><head>");
         if(showServerInfo || showReport){
             sb.append("<title>");
             if(showServerInfo) {
@@ -191,9 +215,9 @@ public class ErrorReportValve extends ValveBase {
             }
             sb.append(smClient.getString("errorReportValve.errorReport"));
             sb.append("</title>");
-            sb.append("<style type=\"text/css\">");
+            sb.append("<style><!--");
             sb.append(org.apache.catalina.util.TomcatCSS.TOMCAT_CSS);
-            sb.append("</style> ");
+            sb.append("--></style> ");
         } else {
             sb.append("<title>");
             sb.append(smClient.getString("errorReportValve.errorReport"));
@@ -204,7 +228,7 @@ public class ErrorReportValve extends ValveBase {
         sb.append(smClient.getString("errorReportValve.statusHeader",
                 String.valueOf(statusCode), message)).append("</h1>");
         if (showReport) {
-            sb.append("<div class=\"line\"></div>");
+            sb.append("<HR size=\"1\" noshade=\"noshade\">");
             sb.append("<p><b>type</b> ");
             if (throwable != null) {
                 sb.append(smClient.getString("errorReportValve.exceptionReport"));
@@ -226,9 +250,9 @@ public class ErrorReportValve extends ValveBase {
                 String stackTrace = getPartialServletStackTrace(throwable);
                 sb.append("<p><b>");
                 sb.append(smClient.getString("errorReportValve.exception"));
-                sb.append("</b></p><pre>");
+                sb.append("</b> <pre>");
                 sb.append(RequestUtil.filter(stackTrace));
-                sb.append("</pre>");
+                sb.append("</pre></p>");
 
                 int loops = 0;
                 Throwable rootCause = throwable.getCause();
@@ -236,9 +260,9 @@ public class ErrorReportValve extends ValveBase {
                     stackTrace = getPartialServletStackTrace(rootCause);
                     sb.append("<p><b>");
                     sb.append(smClient.getString("errorReportValve.rootCause"));
-                    sb.append("</b></p><pre>");
+                    sb.append("</b> <pre>");
                     sb.append(RequestUtil.filter(stackTrace));
-                    sb.append("</pre>");
+                    sb.append("</pre></p>");
                     // In case root cause is somehow heavily nested
                     rootCause = rootCause.getCause();
                     loops++;
@@ -252,7 +276,7 @@ public class ErrorReportValve extends ValveBase {
                 sb.append("</u></p>");
 
             }
-            sb.append("<hr class=\"line\">");
+            sb.append("<HR size=\"1\" noshade=\"noshade\">");
         }
         if (showServerInfo) {
             sb.append("<h3>").append(ServerInfo.getServerInfo()).append("</h3>");

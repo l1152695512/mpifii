@@ -38,8 +38,8 @@ import org.apache.tomcat.util.net.SocketWrapper;
  * @author Costin Manolache
  */
 public class AjpProtocol extends AbstractAjpProtocol<Socket> {
-
-
+    
+    
     private static final Log log = LogFactory.getLog(AjpProtocol.class);
 
     @Override
@@ -64,14 +64,14 @@ public class AjpProtocol extends AbstractAjpProtocol<Socket> {
         setTcpNoDelay(Constants.DEFAULT_TCP_NO_DELAY);
     }
 
-
+    
     // ----------------------------------------------------- Instance Variables
 
-
+    
     /**
      * Connection handler for AJP.
      */
-    private final AjpConnectionHandler cHandler;
+    private AjpConnectionHandler cHandler;
 
 
     // ----------------------------------------------------- JMX related methods
@@ -89,12 +89,12 @@ public class AjpProtocol extends AbstractAjpProtocol<Socket> {
             extends AbstractAjpConnectionHandler<Socket,AjpProcessor>
             implements Handler {
 
-        protected final AjpProtocol proto;
+        protected AjpProtocol proto;
 
         public AjpConnectionHandler(AjpProtocol proto) {
             this.proto = proto;
         }
-
+        
         @Override
         protected AbstractProtocol<Socket> getProtocol() {
             return proto;
@@ -114,7 +114,7 @@ public class AjpProtocol extends AbstractAjpProtocol<Socket> {
         /**
          * Expected to be used by the handler once the processor is no longer
          * required.
-         *
+         * 
          * @param socket            Ignored for BIO
          * @param processor
          * @param isSocketClosing
@@ -125,20 +125,21 @@ public class AjpProtocol extends AbstractAjpProtocol<Socket> {
                 Processor<Socket> processor, boolean isSocketClosing,
                 boolean addToPoller) {
             processor.recycle(isSocketClosing);
-            recycledProcessors.push(processor);
+            recycledProcessors.offer(processor);
         }
 
 
         @Override
         protected AjpProcessor createProcessor() {
             AjpProcessor processor = new AjpProcessor(proto.packetSize, (JIoEndpoint)proto.endpoint);
-            proto.configureProcessor(processor);
+            processor.setAdapter(proto.adapter);
+            processor.setTomcatAuthentication(proto.tomcatAuthentication);
+            processor.setTomcatAuthorization(proto.getTomcatAuthorization());
+            processor.setRequiredSecret(proto.requiredSecret);
+            processor.setKeepAliveTimeout(proto.getKeepAliveTimeout());
+            processor.setClientCertProvider(proto.getClientCertProvider());
             register(processor);
             return processor;
-        }
-
-        @Override
-        public void beforeHandshake(SocketWrapper<Socket> socket) {
         }
     }
 }

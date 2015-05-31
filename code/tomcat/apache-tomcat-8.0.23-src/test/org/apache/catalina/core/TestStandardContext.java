@@ -14,20 +14,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.catalina.core;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
 import javax.servlet.HttpConstraintElement;
-import javax.servlet.HttpMethodConstraintElement;
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContainerInitializer;
@@ -55,7 +54,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import org.apache.catalina.Context;
-import org.apache.catalina.Host;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleEvent;
 import org.apache.catalina.LifecycleException;
@@ -63,17 +61,15 @@ import org.apache.catalina.LifecycleListener;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.authenticator.BasicAuthenticator;
+import org.apache.catalina.deploy.FilterDef;
+import org.apache.catalina.deploy.FilterMap;
+import org.apache.catalina.deploy.LoginConfig;
 import org.apache.catalina.loader.WebappLoader;
 import org.apache.catalina.startup.SimpleHttpClient;
-import org.apache.catalina.startup.TesterMapRealm;
-import org.apache.catalina.startup.TesterServlet;
+import org.apache.catalina.startup.TestTomcat.MapRealm;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
-import org.apache.jasper.servlet.JasperInitializer;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.descriptor.web.FilterDef;
-import org.apache.tomcat.util.descriptor.web.FilterMap;
-import org.apache.tomcat.util.descriptor.web.LoginConfig;
 
 
 public class TestStandardContext extends TomcatBaseTest {
@@ -94,7 +90,7 @@ public class TestStandardContext extends TomcatBaseTest {
         // Set up a container
         Tomcat tomcat = getTomcatInstance();
 
-        File docBase = new File(tomcat.getHost().getAppBaseFile(), "ROOT");
+        File docBase = new File(tomcat.getHost().getAppBase(), "ROOT");
         if (!docBase.mkdirs() && !docBase.isDirectory()) {
             fail("Unable to create docBase");
         }
@@ -200,7 +196,7 @@ public class TestStandardContext extends TomcatBaseTest {
         ((ContainerBase) tomcat.getHost()).setStartChildren(false);
 
         FailingWebappLoader loader = new FailingWebappLoader();
-        File root = new File("test/webapp");
+        File root = new File("test/webapp-3.0");
         Context context = tomcat.addWebapp("", root.getAbsolutePath());
         context.setLoader(loader);
 
@@ -236,7 +232,7 @@ public class TestStandardContext extends TomcatBaseTest {
         ((ContainerBase) tomcat.getHost()).setStartChildren(false);
 
         FailingLifecycleListener listener = new FailingLifecycleListener();
-        File root = new File("test/webapp");
+        File root = new File("test/webapp-3.0");
         Context context = tomcat.addWebapp("", root.getAbsolutePath());
         context.addLifecycleListener(listener);
 
@@ -293,45 +289,50 @@ public class TestStandardContext extends TomcatBaseTest {
         // called only once, even if is selected by several mapping
         // url-patterns or by both a url-pattern and a servlet-name.
 
-        getTomcatInstanceTestWebapp(false, true);
+        // Set up a container
+        Tomcat tomcat = getTomcatInstance();
 
+        File root = new File("test/webapp-3.0");
+        tomcat.addWebapp("", root.getAbsolutePath());
+
+        tomcat.start();
         ByteChunk result = new ByteChunk();
 
         // Check filter and servlet aren't called
         int rc = getUrl("http://localhost:" + getPort() +
-                "/test/bug49922/foo", result, null);
+                "/bug49922/foo", result, null);
         assertEquals(HttpServletResponse.SC_NOT_FOUND, rc);
         assertTrue(result.getLength() > 0);
 
         // Check extension mapping works
-        result = getUrl("http://localhost:" + getPort() + "/test/foo.do");
+        result = getUrl("http://localhost:" + getPort() + "/foo.do");
         assertEquals("FilterServlet", result.toString());
 
         // Check path mapping works
-        result = getUrl("http://localhost:" + getPort() + "/test/bug49922/servlet");
+        result = getUrl("http://localhost:" + getPort() + "/bug49922/servlet");
         assertEquals("FilterServlet", result.toString());
 
         // Check servlet name mapping works
-        result = getUrl("http://localhost:" + getPort() + "/test/foo.od");
+        result = getUrl("http://localhost:" + getPort() + "/foo.od");
         assertEquals("FilterServlet", result.toString());
 
         // Check filter is only called once
         result = getUrl("http://localhost:" + getPort() +
-                "/test/bug49922/servlet/foo.do");
+                "/bug49922/servlet/foo.do");
         assertEquals("FilterServlet", result.toString());
         result = getUrl("http://localhost:" + getPort() +
-                "/test/bug49922/servlet/foo.od");
+                "/bug49922/servlet/foo.od");
         assertEquals("FilterServlet", result.toString());
 
         // Check dispatcher mapping
         result = getUrl("http://localhost:" + getPort() +
-                "/test/bug49922/target");
+                "/bug49922/target");
         assertEquals("Target", result.toString());
         result = getUrl("http://localhost:" + getPort() +
-                "/test/bug49922/forward");
+                "/bug49922/forward");
         assertEquals("FilterTarget", result.toString());
         result = getUrl("http://localhost:" + getPort() +
-                "/test/bug49922/include");
+                "/bug49922/include");
         assertEquals("IncludeFilterTarget", result.toString());
     }
 
@@ -417,11 +418,12 @@ public class TestStandardContext extends TomcatBaseTest {
         // Set up a container
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         // Setup realm
-        TesterMapRealm realm = new TesterMapRealm();
+        MapRealm realm = new MapRealm();
         realm.addUser("tomcat", "tomcat");
         realm.addUserRole("tomcat", "tomcat");
         ctx.setRealm(realm);
@@ -456,7 +458,7 @@ public class TestStandardContext extends TomcatBaseTest {
         public void onStartup(Set<Class<?>> c, ServletContext ctx)
                 throws ServletException {
             // Register and map servlet
-            Servlet s = new TesterServlet();
+            Servlet s = new Bug50015Servlet();
             ServletRegistration.Dynamic sr = ctx.addServlet("bug50015", s);
             sr.addMapping("/bug50015");
 
@@ -468,85 +470,17 @@ public class TestStandardContext extends TomcatBaseTest {
         }
     }
 
-    @Test
-    public void testDenyUncoveredHttpMethodsSCITrue() throws Exception {
-        doTestDenyUncoveredHttpMethodsSCI(true);
-    }
+    public static final class Bug50015Servlet extends HttpServlet {
 
-    @Test
-    public void testDenyUncoveredHttpMethodsSCIFalse() throws Exception {
-        doTestDenyUncoveredHttpMethodsSCI(false);
-    }
-
-    private void doTestDenyUncoveredHttpMethodsSCI(boolean enableDeny)
-            throws Exception {
-        // Test that denying uncovered HTTP methods when adding servlet security
-        // constraints programmatically does work.
-
-        // Set up a container
-        Tomcat tomcat = getTomcatInstance();
-
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
-
-        ctx.setDenyUncoveredHttpMethods(enableDeny);
-
-        // Setup realm
-        TesterMapRealm realm = new TesterMapRealm();
-        realm.addUser("tomcat", "tomcat");
-        realm.addUserRole("tomcat", "tomcat");
-        ctx.setRealm(realm);
-
-        // Configure app for BASIC auth
-        LoginConfig lc = new LoginConfig();
-        lc.setAuthMethod("BASIC");
-        ctx.setLoginConfig(lc);
-        ctx.getPipeline().addValve(new BasicAuthenticator());
-
-        // Add ServletContainerInitializer
-        ServletContainerInitializer sci = new DenyUncoveredHttpMethodsSCI();
-        ctx.addServletContainerInitializer(sci, null);
-
-        // Start the context
-        tomcat.start();
-
-        // Request the first servlet
-        ByteChunk bc = new ByteChunk();
-        int rc = getUrl("http://localhost:" + getPort() + "/test",
-                bc, null);
-
-        // Check for a 401
-        if (enableDeny) {
-            // Should be default error page
-            Assert.assertTrue(bc.toString().contains("403"));
-            Assert.assertEquals(403, rc);
-        } else {
-            Assert.assertEquals("OK", bc.toString());
-            Assert.assertEquals(200, rc);
-        }
-    }
-
-    public static final class DenyUncoveredHttpMethodsSCI
-            implements ServletContainerInitializer {
+        private static final long serialVersionUID = 1L;
 
         @Override
-        public void onStartup(Set<Class<?>> c, ServletContext ctx)
-                throws ServletException {
-            // Register and map servlet
-            Servlet s = new TesterServlet();
-            ServletRegistration.Dynamic sr = ctx.addServlet("test", s);
-            sr.addMapping("/test");
-
-            // Add a constraint with uncovered methods
-            HttpConstraintElement hce = new HttpConstraintElement(
-                    TransportGuarantee.NONE, "tomcat");
-            HttpMethodConstraintElement hmce =
-                    new HttpMethodConstraintElement("POST", hce);
-            Set<HttpMethodConstraintElement> hmces = new HashSet<>();
-            hmces.add(hmce);
-            ServletSecurityElement sse = new ServletSecurityElement(hmces);
-            sr.setServletSecurity(sse);
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+                throws ServletException, IOException {
+            resp.setContentType("text/plain");
+            resp.getWriter().write("OK");
         }
+
     }
 
     @Test
@@ -567,8 +501,9 @@ public class TestStandardContext extends TomcatBaseTest {
         // Set up a container
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         // Add ServletContainerInitializer
         Bug51376SCI sci = new Bug51376SCI(loadOnStartUp);
@@ -671,8 +606,9 @@ public class TestStandardContext extends TomcatBaseTest {
         // Make sure non-multipart works properly
         client.doRequest("/regular", false, false);
 
-        // Servlet attempts to read parts which will trigger an ISE
-        assertTrue(client.isResponse500());
+        assertEquals("Incorrect response for GET request",
+                     "parts=0",
+                     client.getResponseBody());
 
         client.reset();
 
@@ -686,11 +622,12 @@ public class TestStandardContext extends TomcatBaseTest {
         client.reset();
 
         // Make casual multipart request to "regular" servlet w/o config
-        // We expect an error
+        // We expect that no parts will be available
         client.doRequest("/regular", false, true); // send multipart request
 
-        // Servlet attempts to read parts which will trigger an ISE
-        assertTrue(client.isResponse500());
+        assertEquals("Incorrect response for non-configured casual multipart request",
+                     "parts=0", // multipart request should be ignored
+                     client.getResponseBody());
 
         client.reset();
 
@@ -863,7 +800,6 @@ public class TestStandardContext extends TomcatBaseTest {
 
         File docBase = new File("test/webapp-3.0");
         Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
-        ctx.addServletContainerInitializer(new JasperInitializer(), null);
 
         // Start the context
         tomcat.start();
@@ -930,69 +866,10 @@ public class TestStandardContext extends TomcatBaseTest {
     }
 
     @Test
-    public void testBug56085() throws Exception {
-        Tomcat tomcat = getTomcatInstanceTestWebapp(false, true);
-
-        String realPath = ((Context) tomcat.getHost().findChildren()[0]).getRealPath("\\");
-
-        Assert.assertNull(realPath);
-    }
-
-    /*
-     * Check real path for directories ends with File.separator for consistency
-     * with previous major versions.
-     */
-    @Test
-    public void testBug57556a() throws Exception {
-        Tomcat tomcat = getTomcatInstanceTestWebapp(false, true);
-        Context testContext = ((Context) tomcat.getHost().findChildren()[0]);
-
-        File f = new File(testContext.getDocBase());
-        if (!f.isAbsolute()) {
-            f = new File(((Host) testContext.getParent()).getAppBaseFile(), f.getPath());
-        }
-        String base = f.getCanonicalPath();
-
-
-        doTestBug57556(testContext, "", base + File.separatorChar);
-        doTestBug57556(testContext, "/", base + File.separatorChar);
-        doTestBug57556(testContext, "/jsp", base + File.separatorChar+ "jsp");
-        doTestBug57556(testContext, "/jsp/", base + File.separatorChar+ "jsp" + File.separatorChar);
-        doTestBug57556(testContext, "/index.html", base + File.separatorChar + "index.html");
-        doTestBug57556(testContext, "/foo", base + File.separatorChar + "foo");
-        doTestBug57556(testContext, "/foo/", base + File.separatorChar + "foo" + File.separatorChar);
-    }
-
-    @Test
-    public void testBug57556b() throws Exception {
-        Tomcat tomcat = getTomcatInstance();
-        File docBase = new File("/");
-        Context testContext = tomcat.addContext("", docBase.getAbsolutePath());
-        tomcat.start();
-
-        File f = new File(testContext.getDocBase());
-        if (!f.isAbsolute()) {
-            f = new File(((Host) testContext.getParent()).getAppBaseFile(), f.getPath());
-        }
-        String base = f.getCanonicalPath();
-
-        doTestBug57556(testContext, "", base);
-        doTestBug57556(testContext, "/", base);
-    }
-
-    private void doTestBug57556(Context testContext, String path, String expected) throws Exception {
-        String realPath = testContext.getRealPath(path);
-        Assert.assertNotNull(realPath);
-        Assert.assertEquals(expected, realPath);
-    }
-
-    @Test
     public void testBug56903() {
         Context context = new StandardContext();
 
         context.setResourceOnlyServlets("a,b,c");
-        Assert.assertThat(Arrays.asList(context.getResourceOnlyServlets().split(",")),
-                CoreMatchers.hasItems("a", "b", "c"));
     }
 
     @Test

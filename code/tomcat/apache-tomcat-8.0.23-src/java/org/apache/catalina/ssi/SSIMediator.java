@@ -32,7 +32,7 @@ import org.apache.tomcat.util.http.HttpMessages;
 /**
  * Allows the different SSICommand implementations to share data/talk to each
  * other
- *
+ * 
  * @author Bip Thelin
  * @author Amy Roh
  * @author Paul Speed
@@ -43,15 +43,16 @@ public class SSIMediator {
     protected static final String DEFAULT_CONFIG_ERR_MSG = "[an error occurred while processing this directive]";
     protected static final String DEFAULT_CONFIG_TIME_FMT = "%A, %d-%b-%Y %T %Z";
     protected static final String DEFAULT_CONFIG_SIZE_FMT = "abbrev";
-    protected static final URLEncoder urlEncoder;
+    protected static URLEncoder urlEncoder;
     protected String configErrMsg = DEFAULT_CONFIG_ERR_MSG;
     protected String configTimeFmt = DEFAULT_CONFIG_TIME_FMT;
     protected String configSizeFmt = DEFAULT_CONFIG_SIZE_FMT;
-    protected final String className = getClass().getName();
-    protected final SSIExternalResolver ssiExternalResolver;
-    protected final long lastModifiedDate;
+    protected String className = getClass().getName();
+    protected SSIExternalResolver ssiExternalResolver;
+    protected long lastModifiedDate;
+    protected int debug;
     protected Strftime strftime;
-    protected final SSIConditionalState conditionalState = new SSIConditionalState();
+    protected SSIConditionalState conditionalState = new SSIConditionalState();
     static {
         //We try to encode only the same characters that apache does
         urlEncoder = new URLEncoder();
@@ -71,9 +72,10 @@ public class SSIMediator {
 
 
     public SSIMediator(SSIExternalResolver ssiExternalResolver,
-            long lastModifiedDate) {
+            long lastModifiedDate, int debug) {
         this.ssiExternalResolver = ssiExternalResolver;
         this.lastModifiedDate = lastModifiedDate;
+        this.debug = debug;
         setConfigTimeFmt(DEFAULT_CONFIG_TIME_FMT, true);
     }
 
@@ -124,7 +126,7 @@ public class SSIMediator {
 
 
     public Collection<String> getVariableNames() {
-        Set<String> variableNames = new HashSet<>();
+        Set<String> variableNames = new HashSet<String>();
         //These built-in variables are supplied by the mediator ( if not
         // over-written by
         // the user ) and always exist
@@ -206,7 +208,7 @@ public class SSIMediator {
         // If it has no references or HTML entities then no work
         // need to be done
         if (val.indexOf('$') < 0 && val.indexOf('&') < 0) return val;
-
+        
         // HTML decoding
         val = val.replace("&lt;", "<");
         val = val.replace("&gt;", ">");

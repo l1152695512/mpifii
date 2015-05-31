@@ -30,6 +30,7 @@ import org.apache.catalina.Valve;
 import org.apache.catalina.comet.CometEvent;
 import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
+import org.apache.catalina.mbeans.MBeanUtils;
 import org.apache.catalina.util.LifecycleMBeanBase;
 import org.apache.juli.logging.Log;
 import org.apache.tomcat.util.res.StringManager;
@@ -73,6 +74,14 @@ public abstract class ValveBase extends LifecycleMBeanBase
      * Container log
      */
     protected Log containerLog = null;
+
+
+    /**
+     * Descriptive information about this Valve implementation.  This value
+     * should be overridden by subclasses.
+     */
+    protected static final String info =
+        "org.apache.catalina.core.ValveBase/1.0";
 
 
     /**
@@ -122,6 +131,17 @@ public abstract class ValveBase extends LifecycleMBeanBase
     public void setContainer(Container container) {
 
         this.container = container;
+
+    }
+
+
+    /**
+     * Return descriptive information about this Valve implementation.
+     */
+    @Override
+    public String getInfo() {
+
+        return (info);
 
     }
 
@@ -263,7 +283,7 @@ public abstract class ValveBase extends LifecycleMBeanBase
 
         Container container = getContainer();
 
-        name.append(container.getMBeanKeyProperties());
+        name.append(MBeanUtils.getContainerKeyProperties(container));
 
         int seq = 0;
 
@@ -305,11 +325,6 @@ public abstract class ValveBase extends LifecycleMBeanBase
 
     @Override
     public String getDomainInternal() {
-        Container c = getContainer();
-        if (c == null) {
-            return null;
-        } else {
-            return c.getDomain();
-        }
+        return MBeanUtils.getDomain(getContainer());
     }
 }

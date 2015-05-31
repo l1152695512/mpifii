@@ -34,6 +34,7 @@ import org.apache.catalina.tribes.group.ChannelInterceptorBase;
 import org.apache.catalina.tribes.group.InterceptorPayload;
 import org.apache.catalina.tribes.io.ChannelData;
 import org.apache.catalina.tribes.io.XByteBuffer;
+import org.apache.catalina.tribes.membership.MemberImpl;
 import org.apache.catalina.tribes.membership.Membership;
 import org.apache.catalina.tribes.membership.StaticMember;
 
@@ -54,17 +55,21 @@ import org.apache.catalina.tribes.membership.StaticMember;
  * 2. It catches send errors
  * </p>
  *
+ * @author Filip Hanik
  * @version 1.0
  */
 public class TcpFailureDetector extends ChannelInterceptorBase {
 
     private static final org.apache.juli.logging.Log log = org.apache.juli.logging.LogFactory.getLog( TcpFailureDetector.class );
 
-    protected static final byte[] TCP_FAIL_DETECT = new byte[] {
+    protected static byte[] TCP_FAIL_DETECT = new byte[] {
         79, -89, 115, 72, 121, -126, 67, -55, -97, 111, -119, -128, -95, 91, 7, 20,
         125, -39, 82, 91, -21, -15, 67, -102, -73, 126, -66, -113, -127, 103, 30, -74,
         55, 21, -66, -121, 69, 126, 76, -88, -65, 10, 77, 19, 83, 56, 21, 50,
         85, -10, -108, -73, 58, -6, 64, 120, -111, 4, 125, -41, 114, -124, -64, -43};
+
+    @Deprecated
+    protected boolean performConnectTest = true;//Unused - will be removed in Tomcat 8.0.x
 
     protected long connectTimeout = 1000;//1 second default
 
@@ -76,9 +81,9 @@ public class TcpFailureDetector extends ChannelInterceptorBase {
 
     protected Membership membership = null;
 
-    protected final HashMap<Member, Long> removeSuspects = new HashMap<>();
+    protected HashMap<Member, Long> removeSuspects = new HashMap<Member, Long>();
 
-    protected final HashMap<Member, Long> addSuspects = new HashMap<>();
+    protected HashMap<Member, Long> addSuspects = new HashMap<Member, Long>();
 
     protected int removeSuspectsTimeout = 300; // 5 minutes
 
@@ -126,7 +131,7 @@ public class TcpFailureDetector extends ChannelInterceptorBase {
                 //if we add it here, then add it upwards too
                 //check to see if it is alive
                 if (memberAlive(member)) {
-                    membership.memberAlive(member);
+                    membership.memberAlive( (MemberImpl) member);
                     notify = true;
                 } else {
                     addSuspects.put(member, Long.valueOf(System.currentTimeMillis()));
@@ -154,7 +159,7 @@ public class TcpFailureDetector extends ChannelInterceptorBase {
             //if the payload is not a shutdown message
             if (shutdown || !memberAlive(member)) {
                 //not correct, we need to maintain the map
-                membership.removeMember(member);
+                membership.removeMember( (MemberImpl) member);
                 removeSuspects.remove(member);
                 if (member instanceof StaticMember) {
                     addSuspects.put(member, Long.valueOf(System.currentTimeMillis()));
@@ -204,16 +209,18 @@ public class TcpFailureDetector extends ChannelInterceptorBase {
         super.heartbeat();
         checkMembers(false);
     }
-
     public void checkMembers(boolean checkAll) {
+
         try {
             if (membership == null) setupMembership();
             synchronized (membership) {
-                if (!checkAll) performBasicCheck();
+                if ( !checkAll ) performBasicCheck();
                 else performForcedCheck();
             }
-        } catch (Exception x) {
+        }catch ( Exception x ) {
             log.warn("Unable to perform heartbeat on the TcpFailureDetector.",x);
+        } finally {
+
         }
     }
 
@@ -222,11 +229,11 @@ public class TcpFailureDetector extends ChannelInterceptorBase {
         Member[] members = super.getMembers();
         for (int i = 0; members != null && i < members.length; i++) {
             if (memberAlive(members[i])) {
-                if (membership.memberAlive(members[i])) super.memberAdded(members[i]);
+                if (membership.memberAlive((MemberImpl)members[i])) super.memberAdded(members[i]);
                 addSuspects.remove(members[i]);
             } else {
                 if (membership.getMember(members[i])!=null) {
-                    membership.removeMember(members[i]);
+                    membership.removeMember((MemberImpl)members[i]);
                     removeSuspects.remove(members[i]);
                     if (members[i] instanceof StaticMember) {
                         addSuspects.put(members[i], Long.valueOf(System.currentTimeMillis()));
@@ -246,22 +253,22 @@ public class TcpFailureDetector extends ChannelInterceptorBase {
                 // avoid temporary adding member.
                 continue;
             }
-            if (membership.memberAlive(members[i])) {
+            if (membership.memberAlive( (MemberImpl) members[i])) {
                 //we don't have this one in our membership, check to see if he/she is alive
                 if (memberAlive(members[i])) {
                     log.warn("Member added, even though we werent notified:" + members[i]);
                     super.memberAdded(members[i]);
                 } else {
-                    membership.removeMember(members[i]);
+                    membership.removeMember( (MemberImpl) members[i]);
                 } //end if
             } //end if
         } //for
 
         //check suspect members if they are still alive,
         //if not, simply issue the memberDisappeared message
-        Member[] keys = removeSuspects.keySet().toArray(new Member[removeSuspects.size()]);
+        MemberImpl[] keys = removeSuspects.keySet().toArray(new MemberImpl[removeSuspects.size()]);
         for (int i = 0; i < keys.length; i++) {
-            Member m = keys[i];
+            MemberImpl m = keys[i];
             if (membership.getMember(m) != null && (!memberAlive(m))) {
                 membership.removeMember(m);
                 super.memberDisappeared(m);
@@ -281,9 +288,9 @@ public class TcpFailureDetector extends ChannelInterceptorBase {
 
         //check add suspects members if they are alive now,
         //if they are, simply issue the memberAdded message
-        keys = addSuspects.keySet().toArray(new Member[addSuspects.size()]);
+        keys = addSuspects.keySet().toArray(new MemberImpl[addSuspects.size()]);
         for (int i = 0; i < keys.length; i++) {
-            Member m = keys[i];
+            MemberImpl m = keys[i];
             if ( membership.getMember(m) == null && (memberAlive(m))) {
                 membership.memberAlive(m);
                 super.memberAdded(m);
@@ -296,7 +303,7 @@ public class TcpFailureDetector extends ChannelInterceptorBase {
 
     protected synchronized void setupMembership() {
         if ( membership == null ) {
-            membership = new Membership(super.getLocalMember(true));
+            membership = new Membership((MemberImpl)super.getLocalMember(true));
         }
 
     }
@@ -312,7 +319,8 @@ public class TcpFailureDetector extends ChannelInterceptorBase {
         //could be a shutdown notification
         if ( Arrays.equals(mbr.getCommand(),Member.SHUTDOWN_PAYLOAD) ) return false;
 
-        try (Socket socket = new Socket()) {
+        Socket socket = new Socket();
+        try {
             InetAddress ia = InetAddress.getByAddress(mbr.getHost());
             InetSocketAddress addr = new InetSocketAddress(ia, mbr.getPort());
             socket.setSoTimeout((int)readTimeout);
@@ -334,14 +342,21 @@ public class TcpFailureDetector extends ChannelInterceptorBase {
                 }
             }//end if
             return true;
-        } catch (SocketTimeoutException sx) {
+        } catch ( SocketTimeoutException sx) {
             //do nothing, we couldn't connect
-        } catch (ConnectException cx) {
+        } catch ( ConnectException cx) {
             //do nothing, we couldn't connect
-        } catch (Exception x) {
+        }catch (Exception x ) {
             log.error("Unable to perform failure detection check, assuming member down.",x);
+        } finally {
+            try {socket.close(); } catch ( Exception ignore ){}
         }
         return false;
+    }
+
+    @Deprecated
+    public boolean getPerformConnectTest() {
+        return performConnectTest;
     }
 
     public long getReadTestTimeout() {
@@ -362,6 +377,11 @@ public class TcpFailureDetector extends ChannelInterceptorBase {
 
     public int getRemoveSuspectsTimeout() {
         return removeSuspectsTimeout;
+    }
+
+    @Deprecated
+    public void setPerformConnectTest(boolean performConnectTest) {
+        this.performConnectTest = performConnectTest;
     }
 
     public void setPerformReadTest(boolean performReadTest) {

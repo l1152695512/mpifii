@@ -22,9 +22,9 @@ import java.io.IOException;
 
 import org.apache.tomcat.util.bcel.Constants;
 
-/**
- * This class is derived from the abstract
- * <A HREF="org.apache.tomcat.util.bcel.classfile.Constant.html">Constant</A> class
+/** 
+ * This class is derived from the abstract 
+ * <A HREF="org.apache.tomcat.util.bcel.classfile.Constant.html">Constant</A> class 
  * and represents a reference to a (external) class.
  *
  * @author  <A HREF="mailto:m.dahm@gmx.de">M. Dahm</A>
@@ -47,7 +47,7 @@ public final class ConstantClass extends Constant {
     }
 
 
-    /**
+    /** 
      * @return Name index in constant pool of class name.
      */
     public final int getNameIndex() {

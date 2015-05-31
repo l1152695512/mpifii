@@ -117,7 +117,7 @@ import org.apache.catalina.util.IOTools;
  *
  * <B>CGI Specification</B>:<br> derived from
  * <a href="http://cgi-spec.golux.com">http://cgi-spec.golux.com</a>.
- * A work-in-progress &amp; expired Internet Draft.  Note no actual RFC describing
+ * A work-in-progress & expired Internet Draft.  Note no actual RFC describing
  * the CGI specification exists.  Where the behavior of this servlet differs
  * from the specification cited above, it is either documented here, a bug,
  * or an instance where the specification cited differs from Best
@@ -160,6 +160,7 @@ import org.apache.catalina.util.IOTools;
  * </p>
  * [end excerpt]
  *
+ * </p>
  * <h2> Implementation notes</h2>
  * <p>
  *
@@ -228,6 +229,7 @@ import org.apache.catalina.util.IOTools;
  *      not needed
  * <li> [add more to this TODO list]
  * </ul>
+ * </p>
  *
  * @author Martin T Dengler [root@martindengler.com]
  * @author Amy Roh
@@ -267,10 +269,10 @@ public final class CGIServlet extends HttpServlet {
     private long stderrTimeout = 2000;
 
     /** object used to ensure multiple threads don't try to expand same file */
-    private static final Object expandFileLock = new Object();
+    static Object expandFileLock = new Object();
 
     /** the shell environment variables to be passed to the CGI script */
-    private final Hashtable<String,String> shellEnv = new Hashtable<>();
+    Hashtable<String,String> shellEnv = new Hashtable<String,String>();
 
     /**
      * Sets instance variables.
@@ -308,7 +310,7 @@ public final class CGIServlet extends HttpServlet {
         }
 
         if (getServletConfig().getInitParameter("executable-arg-1") != null) {
-            List<String> args = new ArrayList<>();
+            List<String> args = new ArrayList<String>();
             for (int i = 1;; i++) {
                 String arg = getServletConfig().getInitParameter(
                         "executable-arg-" + i);
@@ -670,13 +672,13 @@ public final class CGIServlet extends HttpServlet {
         private String command = null;
 
         /** cgi command's desired working directory */
-        private final File workingDirectory;
+        private File workingDirectory = null;
 
         /** cgi command's command line parameters */
-        private final ArrayList<String> cmdLineParameters = new ArrayList<>();
+        private ArrayList<String> cmdLineParameters = new ArrayList<String>();
 
         /** whether or not this object is valid or not */
-        private final boolean valid;
+        private boolean valid = false;
 
 
         /**
@@ -699,9 +701,8 @@ public final class CGIServlet extends HttpServlet {
             if (this.valid) {
                 workingDirectory = new File(command.substring(0,
                       command.lastIndexOf(File.separator)));
-            } else {
-                workingDirectory = null;
             }
+
         }
 
 
@@ -783,7 +784,6 @@ public final class CGIServlet extends HttpServlet {
          *
          * <p>
          * Example URI:
-         * </p>
          * <PRE> /servlet/cgigateway/dir1/realCGIscript/pathinfo1 </PRE>
          * <ul>
          * <LI><b>path</b> = $CATALINA_HOME/mywebapp/dir1/realCGIscript
@@ -791,6 +791,7 @@ public final class CGIServlet extends HttpServlet {
          * <LI><b>cgiName</b> = /dir1/realCGIscript
          * <LI><b>name</b> = realCGIscript
          * </ul>
+         * </p>
          * <p>
          * CGI search algorithm: search the real path below
          *    &lt;my-webapp-root&gt; and find the first non-directory in
@@ -926,7 +927,7 @@ public final class CGIServlet extends HttpServlet {
              * (apologies to Marv Albert regarding MJ)
              */
 
-            Hashtable<String,String> envp = new Hashtable<>();
+            Hashtable<String,String> envp = new Hashtable<String,String>();
 
             // Add the shell environment variables (if any)
             envp.putAll(shellEnv);
@@ -1386,16 +1387,16 @@ public final class CGIServlet extends HttpServlet {
     protected class CGIRunner {
 
         /** script/command to be executed */
-        private final String command;
+        private String command = null;
 
         /** environment used when invoking the cgi script */
-        private final Hashtable<String,String> env;
+        private Hashtable<String,String> env = null;
 
         /** working directory used when invoking the cgi script */
-        private final File wd;
+        private File wd = null;
 
         /** command line parameters to be passed to the invoked script */
-        private final ArrayList<String> params;
+        private ArrayList<String> params = null;
 
         /** stdin to be passed to cgi script */
         private InputStream stdin = null;
@@ -1432,7 +1433,7 @@ public final class CGIServlet extends HttpServlet {
 
 
         /**
-         * Checks and sets ready status
+         * Checks & sets ready status
          */
         protected void updateReadyStatus() {
             if (command != null
@@ -1497,7 +1498,7 @@ public final class CGIServlet extends HttpServlet {
          */
         protected String[] hashToStringArray(Hashtable<String,?> h)
             throws NullPointerException {
-            Vector<String> v = new Vector<>();
+            Vector<String> v = new Vector<String>();
             Enumeration<String> e = h.keys();
             while (e.hasMoreElements()) {
                 String k = e.nextElement();
@@ -1515,7 +1516,6 @@ public final class CGIServlet extends HttpServlet {
          *
          * <p>
          * This implements the following CGI specification recommedations:
-         * </p>
          * <UL>
          * <LI> Servers SHOULD provide the "<code>query</code>" component of
          *      the script-URI as command-line arguments to scripts if it
@@ -1555,6 +1555,7 @@ public final class CGIServlet extends HttpServlet {
          *             container's implementation of the Servlet API methods.
          *     </ul>
          * </UL>
+         * </p>
          *
          * @exception IOException if problems during reading/writing occur
          *
@@ -1598,7 +1599,7 @@ public final class CGIServlet extends HttpServlet {
             Process proc = null;
             int bufRead = -1;
 
-            List<String> cmdAndArgs = new ArrayList<>();
+            List<String> cmdAndArgs = new ArrayList<String>();
             if (cgiExecutable.length() != 0) {
                 cmdAndArgs.add(cgiExecutable);
             }
@@ -1844,7 +1845,7 @@ public final class CGIServlet extends HttpServlet {
         private static final int STATE_SECOND_CR = 3;
         private static final int STATE_HEADER_END = 4;
 
-        private final InputStream input;
+        private InputStream input;
         private int state;
 
         HTTPHeaderInputStream(InputStream theInput) {

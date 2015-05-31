@@ -23,16 +23,14 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 
-import javax.servlet.ReadListener;
-
 import org.apache.catalina.security.SecurityUtil;
 import org.apache.coyote.ActionCode;
-import org.apache.coyote.ContainerThreadMarker;
 import org.apache.coyote.Request;
 import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.buf.CharChunk;
 import org.apache.tomcat.util.res.StringManager;
+
 
 /**
  * The buffer used by Tomcat request. This is a derivative of the Tomcat 3.3
@@ -108,7 +106,8 @@ public class InputBuffer extends Reader
     /**
      * List of encoders.
      */
-    protected final HashMap<String,B2CConverter> encoders = new HashMap<>();
+    protected HashMap<String,B2CConverter> encoders =
+        new HashMap<String,B2CConverter>();
 
 
     /**
@@ -132,7 +131,7 @@ public class InputBuffer extends Reader
     /**
      * Buffer size.
      */
-    private final int size;
+    private int size = -1;
 
 
     // ----------------------------------------------------------- Constructors
@@ -181,7 +180,19 @@ public class InputBuffer extends Reader
     }
 
 
+    /**
+     * Get associated Coyote request.
+     *
+     * @return the associated Coyote request
+     */
+    @Deprecated
+    public Request getRequest() {
+        return this.coyoteRequest;
+    }
+
+
     // --------------------------------------------------------- Public Methods
+
 
     /**
      * Recycle the output buffer.
@@ -210,6 +221,7 @@ public class InputBuffer extends Reader
 
         gotEnc = false;
         enc = null;
+
     }
 
 
@@ -248,68 +260,8 @@ public class InputBuffer extends Reader
     }
 
 
-    public void setReadListener(ReadListener listener) {
-        coyoteRequest.setReadListener(listener);
-
-        // The container is responsible for the first call to
-        // listener.onDataAvailable(). If isReady() returns true, the container
-        // needs to call listener.onDataAvailable() from a new thread. If
-        // isReady() returns false, the socket will be registered for read and
-        // the container will call listener.onDataAvailable() once data arrives.
-        // Must call isFinished() first as a call to isReady() if the request
-        // has been finished will register the socket for read interest and that
-        // is not required.
-        if (!coyoteRequest.isFinished() && isReady()) {
-            coyoteRequest.action(ActionCode.DISPATCH_READ, null);
-        }
-    }
-
-
-    public boolean isFinished() {
-        int available = 0;
-        if (state == BYTE_STATE) {
-            available = bb.getLength();
-        } else if (state == CHAR_STATE) {
-            available = cb.getLength();
-        }
-        if (available > 0) {
-            return false;
-        } else {
-            return coyoteRequest.isFinished();
-        }
-    }
-
-
-    public boolean isReady() {
-        if (coyoteRequest.getReadListener() == null) {
-            throw new IllegalStateException("not in non blocking mode.");
-        }
-        // Need to check is finished before we check available() as BIO always
-        // returns 1 for isAvailable()
-        if (isFinished()) {
-            // If this is a non-container thread, need to trigger a read
-            // which will eventually lead to a call to onAllDataRead() via a
-            // container thread.
-            if (!ContainerThreadMarker.isContainerThread()) {
-                coyoteRequest.action(ActionCode.DISPATCH_READ, null);
-                coyoteRequest.action(ActionCode.DISPATCH_EXECUTE, null);
-            }
-            return false;
-        }
-        boolean result = available() > 0;
-        if (!result) {
-            coyoteRequest.action(ActionCode.NB_READ_INTEREST, null);
-        }
-        return result;
-    }
-
-
-    boolean isBlocking() {
-        return coyoteRequest.getReadListener() == null;
-    }
-
-
     // ------------------------------------------------- Bytes Handling Methods
+
 
     /**
      * Reads new bytes in the byte chunk.
@@ -511,9 +463,7 @@ public class InputBuffer extends Reader
         if (closed) {
             throw new IOException(sm.getString("inputBuffer.streamClosed"));
         }
-        if (state == INITIAL_STATE) {
-            state = CHAR_STATE;
-        }
+
         return (available() > 0);
     }
 

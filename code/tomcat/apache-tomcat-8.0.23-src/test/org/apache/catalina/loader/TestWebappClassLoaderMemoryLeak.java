@@ -40,8 +40,9 @@ public class TestWebappClassLoaderMemoryLeak extends TomcatBaseTest {
     public void testTimerThreadLeak() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         if (ctx instanceof StandardContext) {
             ((StandardContext) ctx).setClearReferencesStopTimerThreads(true);
@@ -72,7 +73,7 @@ public class TestWebappClassLoaderMemoryLeak extends TomcatBaseTest {
 
     /*
      * Get the set of current threads as an array.
-     * Copied from WebappClassLoaderBase
+     * Copied from WebappClassLoader
      */
     private Thread[] getThreads() {
         // Get the current thread group

@@ -18,16 +18,13 @@ package org.apache.coyote.http11;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.nio.ByteBuffer;
 import java.util.Locale;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpUpgradeHandler;
 
 import org.apache.coyote.AbstractProcessor;
 import org.apache.coyote.ActionCode;
@@ -43,6 +40,7 @@ import org.apache.coyote.http11.filters.IdentityOutputFilter;
 import org.apache.coyote.http11.filters.SavedRequestInputFilter;
 import org.apache.coyote.http11.filters.VoidInputFilter;
 import org.apache.coyote.http11.filters.VoidOutputFilter;
+import org.apache.coyote.http11.upgrade.servlet31.HttpUpgradeHandler;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.buf.Ascii;
 import org.apache.tomcat.util.buf.ByteChunk;
@@ -53,7 +51,6 @@ import org.apache.tomcat.util.http.MimeHeaders;
 import org.apache.tomcat.util.log.UserDataHelper;
 import org.apache.tomcat.util.net.AbstractEndpoint;
 import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
-import org.apache.tomcat.util.net.DispatchType;
 import org.apache.tomcat.util.net.SocketStatus;
 import org.apache.tomcat.util.net.SocketWrapper;
 import org.apache.tomcat.util.res.StringManager;
@@ -62,27 +59,13 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
     private final UserDataHelper userDataHelper;
 
-
     /**
      * The string manager for this package.
      */
     protected static final StringManager sm =
         StringManager.getManager(Constants.Package);
 
-
-    /**
-     * Input.
-     */
-    protected AbstractInputBuffer<S> inputBuffer ;
-
-
-    /**
-     * Output.
-     */
-    protected AbstractOutputBuffer<S> outputBuffer;
-
-
-    /**
+    /*
      * Tracks how many internal filters are in the filter library so they
      * are skipped when looking for pluggable filters.
      */
@@ -174,6 +157,42 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
     protected int keepAliveTimeout = -1;
 
     /**
+     * Remote Address associated with the current connection.
+     */
+    protected String remoteAddr = null;
+
+
+    /**
+     * Remote Host associated with the current connection.
+     */
+    protected String remoteHost = null;
+
+
+    /**
+     * Local Host associated with the current connection.
+     */
+    protected String localName = null;
+
+
+    /**
+     * Local port to which the socket is connected
+     */
+    protected int localPort = -1;
+
+
+    /**
+     * Remote port to which the socket is connected
+     */
+    protected int remotePort = -1;
+
+
+    /**
+     * The local Host address.
+     */
+    protected String localAddr = null;
+
+
+    /**
      * Maximum timeout on uploads. 5 minutes as in Apache HTTPD server.
      */
     protected int connectionUploadTimeout = 300000;
@@ -195,6 +214,12 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
      * Minimum content size to make compression.
      */
     protected int compressionMinSize = 2048;
+
+
+    /**
+     * Socket buffering.
+     */
+    protected int socketBuffer = -1;
 
 
     /**
@@ -228,12 +253,22 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
 
     /**
+     * Listener to which data available events are passed once the associated
+     * connection has completed the proprietary Tomcat HTTP upgrade process.
+     * 
+     * @deprecated  Will be removed in Tomcat 8.0.x.
+     */
+    @Deprecated
+    protected org.apache.coyote.http11.upgrade.UpgradeInbound upgradeInbound = null;
+
+
+    /**
      * Instance of the new protocol to use after the HTTP connection has been
-     * upgraded.
+     * upgraded using the Servlet 3.1 based upgrade process.
      */
     protected HttpUpgradeHandler httpUpgradeHandler = null;
-
-
+    
+    
     public AbstractHttp11Processor(AbstractEndpoint<S> endpoint) {
         super(endpoint);
         userDataHelper = new UserDataHelper(getLog());
@@ -467,14 +502,14 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
      * Set the socket buffer flag.
      */
     public void setSocketBuffer(int socketBuffer) {
-        outputBuffer.setSocketBuffer(socketBuffer);
+        this.socketBuffer = socketBuffer;
     }
 
     /**
      * Get the socket buffer flag.
      */
     public int getSocketBuffer() {
-        return outputBuffer.getSocketBuffer();
+        return socketBuffer;
     }
 
     /**
@@ -717,6 +752,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
      * @param param Action parameter
      */
     @Override
+    @SuppressWarnings("deprecation") // Inbound/Outbound based upgrade mechanism
     public final void action(ActionCode actionCode, Object param) {
 
         switch (actionCode) {
@@ -785,6 +821,11 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             getOutputBuffer().reset();
             break;
         }
+        case CUSTOM: {
+            // Do nothing
+            // TODO Remove this action
+            break;
+        }
         case REQ_SET_BODY_REPLAY: {
             ByteChunk body = (ByteChunk) param;
 
@@ -844,70 +885,16 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             ((AtomicBoolean) param).set(asyncStateMachine.isAsyncError());
             break;
         }
-        case ASYNC_COMPLETE: {
-            socketWrapper.clearDispatches();
-            if (asyncStateMachine.asyncComplete()) {
-                endpoint.processSocket(this.socketWrapper, SocketStatus.OPEN_READ, true);
-            }
-            break;
-        }
-        case ASYNC_SETTIMEOUT: {
-            if (param == null || socketWrapper == null) {
-                return;
-            }
-            long timeout = ((Long)param).longValue();
-            // If we are not piggy backing on a worker thread, set the timeout
-            socketWrapper.setTimeout(timeout);
-            break;
-        }
-        case ASYNC_DISPATCH: {
-            if (asyncStateMachine.asyncDispatch()) {
-                endpoint.processSocket(this.socketWrapper, SocketStatus.OPEN_READ, true);
-            }
+        case UPGRADE_TOMCAT: {
+            upgradeInbound = (org.apache.coyote.http11.upgrade.UpgradeInbound) param;
+            // Stop further HTTP output
+            getOutputBuffer().finished = true;
             break;
         }
         case UPGRADE: {
             httpUpgradeHandler = (HttpUpgradeHandler) param;
             // Stop further HTTP output
             getOutputBuffer().finished = true;
-            break;
-        }
-        case AVAILABLE: {
-            request.setAvailable(inputBuffer.available());
-            break;
-        }
-        case NB_WRITE_INTEREST: {
-            AtomicBoolean isReady = (AtomicBoolean)param;
-            try {
-                isReady.set(getOutputBuffer().isReady());
-            } catch (IOException e) {
-                getLog().debug("isReady() failed", e);
-                setErrorState(ErrorState.CLOSE_NOW, e);
-            }
-            break;
-        }
-        case NB_READ_INTEREST: {
-            registerForEvent(true, false);
-            break;
-        }
-        case REQUEST_BODY_FULLY_READ: {
-            AtomicBoolean result = (AtomicBoolean) param;
-            result.set(getInputBuffer().isFinished());
-            break;
-        }
-        case DISPATCH_READ: {
-            socketWrapper.addDispatch(DispatchType.NON_BLOCKING_READ);
-            break;
-        }
-        case DISPATCH_WRITE: {
-            socketWrapper.addDispatch(DispatchType.NON_BLOCKING_WRITE);
-            break;
-        }
-        case DISPATCH_EXECUTE: {
-            SocketWrapper<S> wrapper = socketWrapper;
-            if (wrapper != null) {
-                getEndpoint().executeNonBlockingDispatches(wrapper);
-            }
             break;
         }
         case CLOSE_NOW: {
@@ -996,6 +983,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         }
 
         while (!getErrorState().isError() && keepAlive && !comet && !isAsync() &&
+                upgradeInbound == null &&
                 httpUpgradeHandler == null && !endpoint.isPaused()) {
 
             // Parsing the request header
@@ -1088,7 +1076,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             if (!getErrorState().isError()) {
                 try {
                     rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
-                    getAdapter().service(request, response);
+                    adapter.service(request, response);
                     // Handle when the response was committed before a serious
                     // error occurred.  Throwing a ServletException should both
                     // set the status to 500 and set the errorException.
@@ -1182,6 +1170,8 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             return SocketState.LONG;
         } else if (isUpgrade()) {
             return SocketState.UPGRADING;
+        } else if (getUpgradeInbound() != null) {
+            return SocketState.UPGRADING_TOMCAT;
         } else {
             if (sendfileInProgress) {
                 return SocketState.SENDFILE;
@@ -1290,7 +1280,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         }
 
         // Check user-agent header
-        if (restrictedUserAgents != null && (http11 || keepAlive)) {
+        if ((restrictedUserAgents != null) && ((http11) || (keepAlive))) {
             MessageBytes userAgentValueMB = headers.getValue("user-agent");
             // Check in the restricted list, and adjust the http11
             // and keepAlive flags accordingly
@@ -1328,6 +1318,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
                 hostMB.setBytes(uriB, uriBCStart + pos + 3,
                                 slashPos - pos - 3);
             }
+
         }
 
         // Input filter setup
@@ -1396,8 +1387,27 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             contentDelimitation = true;
         }
 
+        // Advertise sendfile support through a request attribute
+        if (endpoint.getUseSendfile()) {
+            request.setAttribute(
+                    org.apache.coyote.Constants.SENDFILE_SUPPORTED_ATTR,
+                    Boolean.TRUE);
+        }
+
+        // Advertise comet support through a request attribute
+        if (endpoint.getUseComet()) {
+            request.setAttribute(
+                    org.apache.coyote.Constants.COMET_SUPPORTED_ATTR,
+                    Boolean.TRUE);
+        }
+        // Advertise comet timeout support
+        if (endpoint.getUseCometTimeout()) {
+            request.setAttribute(
+                    org.apache.coyote.Constants.COMET_TIMEOUT_SUPPORTED_ATTR,
+                    Boolean.TRUE);
+        }
         if (getErrorState().isError()) {
-            getAdapter().log(request, response, 0);
+            adapter.log(request, response, 0);
         }
     }
 
@@ -1469,7 +1479,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             response.setContentLength(-1);
         }
         // A SC_NO_CONTENT response may include entity headers
-        if (entityBody || statusCode == HttpServletResponse.SC_NO_CONTENT) {
+        if (entityBody || statusCode == 204) {
             String contentType = response.getContentType();
             if (contentType != null) {
                 headers.setValue("Content-Type").setString(contentType);
@@ -1658,51 +1668,6 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
     @Override
     public SocketState asyncDispatch(SocketStatus status) {
 
-        if (status == SocketStatus.OPEN_WRITE && response.getWriteListener() != null) {
-            try {
-                asyncStateMachine.asyncOperation();
-
-                if (outputBuffer.hasDataToWrite()) {
-                    if (outputBuffer.flushBuffer(false)) {
-                        // The buffer wasn't fully flushed so re-register the
-                        // socket for write. Note this does not go via the
-                        // Response since the write registration state at
-                        // that level should remain unchanged. Once the buffer
-                        // has been emptied then the code below will call
-                        // Adaptor.asyncDispatch() which will enable the
-                        // Response to respond to this event.
-                        outputBuffer.registerWriteInterest();
-                        return SocketState.LONG;
-                    }
-                }
-            } catch (IOException | IllegalStateException x) {
-                // IOE - Problem writing to socket
-                // ISE - Request/Response not in correct state for async write
-                if (getLog().isDebugEnabled()) {
-                    getLog().debug("Unable to write async data.",x);
-                }
-                status = SocketStatus.ASYNC_WRITE_ERROR;
-                request.setAttribute(RequestDispatcher.ERROR_EXCEPTION, x);
-            }
-        } else if (status == SocketStatus.OPEN_READ && request.getReadListener() != null) {
-            try {
-                // Check of asyncStateMachine.isAsyncStarted() is to avoid issue
-                // with BIO. Because it can't do a non-blocking read, BIO always
-                // returns available() == 1. This causes a problem here at the
-                // end of a non-blocking read. See BZ 57481.
-                if (inputBuffer.available() > 0 && asyncStateMachine.isAsyncStarted()) {
-                    asyncStateMachine.asyncOperation();
-                }
-            } catch (IllegalStateException x) {
-                // ISE - Request/Response not in correct state for async read
-                if (getLog().isDebugEnabled()) {
-                    getLog().debug("Unable to read async data.",x);
-                }
-                status = SocketStatus.ASYNC_READ_ERROR;
-                request.setAttribute(RequestDispatcher.ERROR_EXCEPTION, x);
-            }
-        }
-
         RequestInfo rp = request.getRequestProcessor();
         try {
             rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
@@ -1716,6 +1681,12 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             ExceptionUtils.handleThrowable(t);
             setErrorState(ErrorState.CLOSE_NOW, t);
             getLog().error(sm.getString("http11processor.request.process"), t);
+        } finally {
+            if (getErrorState().isError()) {
+                // 500 - Internal Server Error
+                response.setStatus(500);
+                adapter.log(request, response, 0);
+            }
         }
 
         rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
@@ -1743,17 +1714,35 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
 
 
     @Override
-    public boolean isUpgrade() {
-        return httpUpgradeHandler != null;
+    public SocketState upgradeDispatch() throws IOException {
+        // Should never reach this code but in case we do...
+        // TODO
+        throw new IOException(
+                sm.getString("TODO"));
     }
 
 
+    /**
+     * @deprecated  Will be removed in Tomcat 8.0.x.
+     */
+    @Deprecated
+    @Override
+    public org.apache.coyote.http11.upgrade.UpgradeInbound getUpgradeInbound() {
+        return upgradeInbound;
+    }
 
+
+    @Override
+    public boolean isUpgrade() {
+        return httpUpgradeHandler != null;
+    }
+    
+    
     @Override
     public SocketState upgradeDispatch(SocketStatus status) throws IOException {
         // Should never reach this code but in case we do...
-        throw new IllegalStateException(
-                sm.getString("http11Processor.upgrade"));
+        throw new IOException(
+                sm.getString("ajpprocessor.httpupgrade.notsupported"));
     }
 
 
@@ -1761,8 +1750,8 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
     public HttpUpgradeHandler getHttpUpgradeHandler() {
         return httpUpgradeHandler;
     }
-
-
+    
+    
     /**
      * Provides a mechanism for those connector implementations (currently only
      * NIO) that need to reset timeouts from Async timeouts to standard HTTP
@@ -1819,6 +1808,7 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
             SocketWrapper<S> socketWrapper);
 
 
+
     @Override
     public final void recycle(boolean isSocketClosing) {
         getAdapter().checkRecycled(request, response);
@@ -1832,18 +1822,18 @@ public abstract class AbstractHttp11Processor<S> extends AbstractProcessor<S> {
         if (asyncStateMachine != null) {
             asyncStateMachine.recycle();
         }
+        upgradeInbound = null;
         httpUpgradeHandler = null;
+        remoteAddr = null;
+        remoteHost = null;
+        localAddr = null;
+        localName = null;
+        remotePort = -1;
+        localPort = -1;
         comet = false;
         resetErrorState();
         recycleInternal();
     }
 
     protected abstract void recycleInternal();
-
-
-    @Override
-    public ByteBuffer getLeftoverInput() {
-        return inputBuffer.getLeftover();
-    }
-
 }

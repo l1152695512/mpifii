@@ -16,6 +16,7 @@
  */
 package org.apache.tomcat.util.net;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,18 +31,14 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
 
-import org.apache.catalina.Context;
-import org.apache.catalina.Wrapper;
-import org.apache.catalina.startup.TesterServlet;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.websocket.server.WsContextListener;
 
 /**
  * The keys and certificates used in this file are all available in svn and were
@@ -57,9 +54,7 @@ public class TestSsl extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         File appDir = new File(getBuildDirectory(), "webapps/examples");
-        org.apache.catalina.Context ctxt  = tomcat.addWebapp(
-                null, "/examples", appDir.getAbsolutePath());
-        ctxt.addApplicationListener(WsContextListener.class.getName());
+        tomcat.addWebapp(null, "/examples", appDir.getAbsolutePath());
 
         TesterSupport.initSsl(tomcat);
 
@@ -76,9 +71,7 @@ public class TestSsl extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         File appDir = new File(getBuildDirectory(), "webapps/examples");
-        org.apache.catalina.Context ctxt  = tomcat.addWebapp(
-                null, "/examples", appDir.getAbsolutePath());
-        ctxt.addApplicationListener(WsContextListener.class.getName());
+        tomcat.addWebapp(null, "/examples", appDir.getAbsolutePath());
 
         TesterSupport.initSsl(tomcat, "localhost-copy1.jks", "changeit",
                 "tomcatpass");
@@ -90,18 +83,84 @@ public class TestSsl extends TomcatBaseTest {
     }
 
 
+    boolean handshakeDone = false;
+
+    @Test
+    public void testRenegotiateFail() throws Exception {
+
+        // If RFC5746 is supported, renegotiation will always work (and will
+        // always be secure)
+        if (TesterSupport.RFC_5746_SUPPORTED) {
+            return;
+        }
+
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir = new File(getBuildDirectory(), "webapps/examples");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/examples", appDir.getAbsolutePath());
+
+        TesterSupport.initSsl(tomcat);
+
+        // Default - MITM attack prevented
+
+        tomcat.start();
+        SSLContext sslCtx = SSLContext.getInstance("TLS");
+        sslCtx.init(null, TesterSupport.getTrustManagers(), null);
+        SSLSocketFactory socketFactory = sslCtx.getSocketFactory();
+        SSLSocket socket = (SSLSocket) socketFactory.createSocket("localhost", getPort());
+
+        socket.addHandshakeCompletedListener(new HandshakeCompletedListener() {
+            @Override
+            public void handshakeCompleted(HandshakeCompletedEvent event) {
+                handshakeDone = true;
+            }
+        });
+
+        OutputStream os = socket.getOutputStream();
+        os.write("GET /examples/servlets/servlet/HelloWorldExample HTTP/1.0\n".getBytes());
+        os.flush();
+
+
+        InputStream is = socket.getInputStream();
+
+        // Make sure the NIO connector has read the request before the handshake
+        Thread.sleep(100);
+
+        socket.startHandshake();
+
+        os = socket.getOutputStream();
+
+        try {
+            os.write("Host: localhost\n\n".getBytes());
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            fail("Re-negotiation failed");
+        }
+        Reader r = new InputStreamReader(is);
+        BufferedReader br = new BufferedReader(r);
+        String line = br.readLine();
+        while (line != null) {
+            // For testing System.out.println(line);
+            line = br.readLine();
+        }
+
+        if (!handshakeDone) {
+            // success - we timed-out without handshake
+            return;
+        }
+
+        fail("Re-negotiation worked");
+    }
+
     @Test
     public void testRenegotiateWorks() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        Assume.assumeTrue("SSL renegotiation has to be supported for this test",
-                TesterSupport.isRenegotiationSupported(getTomcatInstance()));
 
-        Context root = tomcat.addContext("", TEMP_DIR);
-        Wrapper w =
-            Tomcat.addServlet(root, "tester", new TesterServlet());
-        w.setAsyncSupported(true);
-        root.addServletMapping("/", "tester");
+        File appDir = new File(getBuildDirectory(), "webapps/examples");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/examples", appDir.getAbsolutePath());
 
         TesterSupport.initSsl(tomcat);
 
@@ -114,82 +173,35 @@ public class TestSsl extends TomcatBaseTest {
                 getPort());
 
         OutputStream os = socket.getOutputStream();
-        InputStream is = socket.getInputStream();
-        Reader r = new InputStreamReader(is);
 
-        doRequest(os, r);
-
-        TesterHandshakeListener listener = new TesterHandshakeListener();
-        socket.addHandshakeCompletedListener(listener);
+        os.write("GET /examples/servlets/servlet/HelloWorldExample HTTP/1.1\n".getBytes());
+        os.flush();
 
         socket.startHandshake();
 
-        // One request should be sufficient
-        int requestCount = 0;
-        int listenerComplete = 0;
         try {
-            while (requestCount < 10) {
-                requestCount++;
-                doRequest(os, r);
-                if (listener.isComplete() && listenerComplete == 0) {
-                    listenerComplete = requestCount;
-                }
-            }
-        } catch (AssertionError | IOException e) {
-            String message = "Failed on request number " + requestCount
-                    + " after startHandshake(). " + e.getMessage();
-            log.error(message, e);
-            Assert.fail(message);
+            os.write("Host: localhost\n\n".getBytes());
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            fail("Re-negotiation failed");
         }
 
-        Assert.assertTrue(listener.isComplete());
-        System.out.println("Renegotiation completed after " + listenerComplete + " requests");
-    }
-
-    private void doRequest(OutputStream os, Reader r) throws IOException {
-        char[] expectedResponseLine = "HTTP/1.1 200 OK\r\n".toCharArray();
-
-        os.write("GET /tester HTTP/1.1\r\n".getBytes());
-        os.write("Host: localhost\r\n".getBytes());
-        os.write("Connection: Keep-Alive\r\n\r\n".getBytes());
-        os.flush();
-
-        // First check we get the expected response line
-        for (char c : expectedResponseLine) {
-            int read = r.read();
-            Assert.assertEquals(c, read);
-        }
-
-        // Skip to the end of the headers
-        char[] endOfHeaders ="\r\n\r\n".toCharArray();
-        int found = 0;
-        while (found != endOfHeaders.length) {
-            if (r.read() == endOfHeaders[found]) {
-                found++;
-            } else {
-                found = 0;
-            }
-        }
-
-        // Read the body
-        char[] expectedBody = "OK".toCharArray();
-        for (char c : expectedBody) {
-            int read = r.read();
-            Assert.assertEquals(c, read);
+        InputStream is = socket.getInputStream();
+        Reader r = new InputStreamReader(is);
+        BufferedReader br = new BufferedReader(r);
+        String line = br.readLine();
+        while (line != null) {
+            // For testing System.out.println(line);
+            line = br.readLine();
         }
     }
 
-    private static class TesterHandshakeListener implements HandshakeCompletedListener {
-
-        private volatile boolean complete = false;
-
-        @Override
-        public void handshakeCompleted(HandshakeCompletedEvent event) {
-            complete = true;
+    @Override
+    public void setUp() throws Exception {
+        if (!TesterSupport.RFC_5746_SUPPORTED) {
+            // Make sure SSL renegotiation is not disabled in the JVM
+            System.setProperty("sun.security.ssl.allowUnsafeRenegotiation", "true");
         }
-
-        public boolean isComplete() {
-            return complete;
-        }
+        super.setUp();
     }
 }

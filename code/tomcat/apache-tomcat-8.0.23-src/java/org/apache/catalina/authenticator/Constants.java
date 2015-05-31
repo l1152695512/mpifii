@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,32 @@ public class Constants {
     public static final String Package = "org.apache.catalina.authenticator";
 
     // Authentication methods for login configuration
-    // Servlet spec schemes are defined in HttpServletRequest
+    // Servlet spec schemes
+
+    /**
+     * @deprecated Replaced by HttpServletRequest.BASIC_AUTH
+     */
+    @Deprecated
+    public static final String BASIC_METHOD = "BASIC";
+
+    /**
+     * @deprecated Replaced by HttpServletRequest.CLIENT_CERT_AUTH
+     */
+    @Deprecated
+    public static final String CERT_METHOD = "CLIENT_CERT";
+
+    /**
+     * @deprecated Replaced by HttpServletRequest.DIGEST_AUTH
+     */
+    @Deprecated
+    public static final String DIGEST_METHOD = "DIGEST";
+
+    /**
+     * @deprecated Replaced by HttpServletRequest.FORM_AUTH
+     */
+    @Deprecated
+    public static final String FORM_METHOD = "FORM";
+
     // Vendor specific schemes
     public static final String SPNEGO_METHOD = "SPNEGO";
 

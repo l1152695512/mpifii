@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ package org.apache.catalina.tribes.transport.bio.util;
  * but the queue is empty, it will block (poll)
  * until an add threads adds an entry to the queue and
  * releases the lock.
- *
+ * 
  * If the remove thread and add threads compete for
  * the lock and an add thread releases the lock, then
  * the remove thread will get the lock first.
@@ -44,20 +44,21 @@ package org.apache.catalina.tribes.transport.bio.util;
  * threads must release an owned lock before competing
  * for the lock again!
  *
+ * @author Rainer Jung
  * @author Peter Rossbach
  * @version 1.1
  */
-
+ 
 public class SingleRemoveSynchronizedAddLock {
-
+    
     public SingleRemoveSynchronizedAddLock() {
         // NO-OP
     }
-
+    
     public SingleRemoveSynchronizedAddLock(boolean dataAvailable) {
         this.dataAvailable=dataAvailable;
     }
-
+    
     /**
      * Time in milliseconds after which threads
      * waiting for an add lock are woken up.
@@ -212,7 +213,7 @@ public class SingleRemoveSynchronizedAddLock {
         }
         if ( removeEnabled ) {
             removeLocked=true;
-        }
+        } 
         return removeLocked;
     }
 

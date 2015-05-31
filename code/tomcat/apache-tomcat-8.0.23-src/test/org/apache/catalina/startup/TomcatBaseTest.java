@@ -44,23 +44,18 @@ import org.junit.Assert;
 import org.junit.Before;
 
 import org.apache.catalina.Container;
-import org.apache.catalina.Context;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.LifecycleState;
 import org.apache.catalina.Manager;
 import org.apache.catalina.Server;
 import org.apache.catalina.Service;
-import org.apache.catalina.WebResourceRoot;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.AprLifecycleListener;
 import org.apache.catalina.core.StandardServer;
 import org.apache.catalina.session.ManagerBase;
 import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.valves.AccessLogValve;
-import org.apache.catalina.webresources.StandardRoot;
-import org.apache.coyote.http11.Http11NioProtocol;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.websocket.CaseInsensitiveKeyMap;
 
 /**
  * Base test case that provides a Tomcat instance for each test - mainly so we
@@ -73,53 +68,20 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
     public static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
 
     /**
-     * Make the Tomcat instance available to sub-classes.
-     *
-     * @return A Tomcat instance without any pre-configured web applications
+     * Make Tomcat instance accessible to sub-classes.
      */
     public Tomcat getTomcatInstance() {
         return tomcat;
     }
 
     /**
-     * Make the Tomcat instance preconfigured with test/webapp available to
-     * sub-classes.
-     * @param addJstl Should JSTL support be added to the test webapp
-     * @param start   Should the Tomcat instance be started
-     *
-     * @return A Tomcat instance pre-configured with the web application located
-     *         at test/webapp
-     *
-     * @throws LifecycleException If a problem occurs while starting the
-     *                            instance
-     */
-    public Tomcat getTomcatInstanceTestWebapp(boolean addJstl, boolean start)
-            throws LifecycleException {
-        File appDir = new File("test/webapp");
-        Context ctx = tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
-
-        if (addJstl) {
-            File lib = new File("webapps/examples/WEB-INF/lib");
-            ctx.setResources(new StandardRoot(ctx));
-            ctx.getResources().createWebResourceSet(
-                    WebResourceRoot.ResourceSetType.POST, "/WEB-INF/lib",
-                    lib.getAbsolutePath(), null, "/");
-        }
-
-        if (start) {
-            tomcat.start();
-        }
-        return tomcat;
-    }
-
-    /*
      * Sub-classes need to know port so they can connect
      */
     public int getPort() {
         return tomcat.getConnector().getLocalPort();
     }
 
-    /*
+    /**
      * Sub-classes may want to check, whether an AccessLogValve is active
      */
     public boolean isAccessLogEnabled() {
@@ -191,9 +153,9 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
         // Has a protocol been specified
         String protocol = System.getProperty("tomcat.test.protocol");
 
-        // Use NIO by default starting with Tomcat 8
+        // Use BIO by default
         if (protocol == null) {
-            protocol = Http11NioProtocol.class.getName();
+            protocol = "org.apache.coyote.http11.Http11Protocol";
         }
 
         return protocol;
@@ -239,13 +201,20 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
 
     public static final class RequestDescriptor {
 
-        private final Map<String, String> requestInfo = new HashMap<>();
-        private final Map<String, String> contextInitParameters = new HashMap<>();
-        private final Map<String, String> contextAttributes = new HashMap<>();
-        private final Map<String, String> headers = new CaseInsensitiveKeyMap<>();
-        private final Map<String, String> attributes = new HashMap<>();
-        private final Map<String, String> params = new HashMap<>();
-        private final Map<String, String> sessionAttributes = new HashMap<>();
+        private final Map<String, String> requestInfo =
+            new HashMap<String, String>();
+        private final Map<String, String> contextInitParameters =
+            new HashMap<String, String>();
+        private final Map<String, String> contextAttributes =
+            new HashMap<String, String>();
+        private final Map<String, String> headers =
+            new CaseInsensitiveKeyMap<String>();
+        private final Map<String, String> attributes =
+            new HashMap<String, String>();
+        private final Map<String, String> params =
+            new HashMap<String, String>();
+        private final Map<String, String> sessionAttributes =
+            new HashMap<String, String>();
 
         public Map<String, String> getRequestInfo() {
             return requestInfo;
@@ -384,8 +353,9 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
             String name;
 
             RequestDescriptor request = new RequestDescriptor();
+            String lineSeparator = System.getProperty("line.separator");
 
-            for (String line: body.split(System.lineSeparator())) {
+            for (String line: body.split(lineSeparator)) {
                 n = line.indexOf(": ");
                 if (n > 0) {
                     key = line.substring(0, n);
@@ -593,11 +563,31 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
             // reading any of the response. They may cause this test to lock up.
             byte[] buffer = new byte[8096];
             int read = 0;
-            try (InputStream is = req.getInputStream();
-                    OutputStream os = resp.getOutputStream()) {
+            InputStream is = null;
+            OutputStream os = null;
+            try {
+                is = req.getInputStream();
+                os = resp.getOutputStream();
                 while (read > -1) {
                     os.write(buffer, 0, read);
                     read = is.read(buffer);
+                }
+            } catch (IOException ex) {
+                // Ignore
+            } finally {
+                if (os != null) {
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                        // Ignore
+                    }
+                }
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        // Ignore
+                    }
                 }
             }
         }
@@ -672,11 +662,21 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
             is = connection.getErrorStream();
         }
         if (is != null) {
-            try (BufferedInputStream bis = new BufferedInputStream(is)) {
+            BufferedInputStream bis = null;
+            try {
+                bis = new BufferedInputStream(is);
                 byte[] buf = new byte[2048];
                 int rd = 0;
                 while((rd = bis.read(buf)) > 0) {
                     out.append(buf, 0, rd);
+                }
+            } finally {
+                if (bis != null) {
+                    try {
+                        bis.close();
+                    } catch (IOException e) {
+                        // Ignore
+                    }
                 }
             }
         }
@@ -695,36 +695,9 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
         return postUrl(body, path, out, null, resHead);
     }
 
-    public static int postUrl(final byte[] body, String path, ByteChunk out,
+    public static int postUrl(byte[] body, String path, ByteChunk out,
             Map<String, List<String>> reqHead,
             Map<String, List<String>> resHead) throws IOException {
-            BytesStreamer s = new BytesStreamer() {
-            boolean done = false;
-            @Override
-            public byte[] next() {
-                done = true;
-                return body;
-
-            }
-
-            @Override
-            public int getLength() {
-                return body!=null?body.length:0;
-            }
-
-            @Override
-            public int available() {
-                if (done) return 0;
-                else return getLength();
-            }
-        };
-        return postUrl(false,s,path,out,reqHead,resHead);
-    }
-
-
-    public static int postUrl(boolean stream, BytesStreamer streamer, String path, ByteChunk out,
-                Map<String, List<String>> reqHead,
-                Map<String, List<String>> resHead) throws IOException {
 
         URL url = new URL(path);
         HttpURLConnection connection =
@@ -744,27 +717,27 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
                         valueList.toString());
             }
         }
-        if (streamer != null && stream) {
-            if (streamer.getLength()>0) {
-                connection.setFixedLengthStreamingMode(streamer.getLength());
-            } else {
-                connection.setChunkedStreamingMode(1024);
-            }
-        }
-
         connection.connect();
 
         // Write the request body
-        try (OutputStream os = connection.getOutputStream()) {
-            while (streamer != null && streamer.available() > 0) {
-                byte[] next = streamer.next();
-                os.write(next);
-                os.flush();
+        OutputStream os = null;
+        try {
+            os = connection.getOutputStream();
+            if (body != null) {
+                os.write(body, 0, body.length);
             }
         } catch (IOException ioe) {
             // Failed to write the request body. Server may have closed the
             // connection.
             ioe.printStackTrace();
+        } finally {
+            if (os != null) {
+                try {
+                    os.close();
+                } catch (IOException ioe) {
+                    // Ignore
+                }
+            }
         }
 
         int rc = connection.getResponseCode();
@@ -772,29 +745,27 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
             Map<String, List<String>> head = connection.getHeaderFields();
             resHead.putAll(head);
         }
-        InputStream is;
-        if (rc < 400) {
-            is = connection.getInputStream();
-        } else {
-            is = connection.getErrorStream();
-        }
-
-        try (BufferedInputStream bis = new BufferedInputStream(is)) {
-            byte[] buf = new byte[2048];
-            int rd = 0;
-            while((rd = bis.read(buf)) > 0) {
-                out.append(buf, 0, rd);
+        if (rc == HttpServletResponse.SC_OK) {
+            InputStream is = connection.getInputStream();
+            BufferedInputStream bis = null;
+            try {
+                bis = new BufferedInputStream(is);
+                byte[] buf = new byte[2048];
+                int rd = 0;
+                while((rd = bis.read(buf)) > 0) {
+                    out.append(buf, 0, rd);
+                }
+            } finally {
+                if (bis != null) {
+                    try {
+                        bis.close();
+                    } catch (IOException e) {
+                        // Ignore
+                    }
+                }
             }
         }
         return rc;
-    }
-
-    protected static String getStatusCode(String statusLine) {
-        if (statusLine == null || statusLine.length() < 12) {
-            return statusLine;
-        } else {
-            return statusLine.substring(9, 12);
-        }
     }
 
     private static class TomcatWithFastSessionIDs extends Tomcat {
@@ -807,10 +778,10 @@ public abstract class TomcatBaseTest extends LoggingBaseTest {
                 Container e = service.getContainer();
                 for (Container h : e.findChildren()) {
                     for (Container c : h.findChildren()) {
-                        Manager m = ((Context) c).getManager();
+                        Manager m = c.getManager();
                         if (m == null) {
                             m = new StandardManager();
-                            ((Context) c).setManager(m);
+                            c.setManager(m);
                         }
                         if (m instanceof ManagerBase) {
                             ((ManagerBase) m).setSecureRandomClass(

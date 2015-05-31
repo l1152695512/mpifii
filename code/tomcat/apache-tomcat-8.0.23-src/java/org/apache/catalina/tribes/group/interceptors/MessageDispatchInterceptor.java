@@ -5,15 +5,16 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.catalina.tribes.group.interceptors;
 
 import org.apache.catalina.tribes.Channel;
@@ -31,17 +32,19 @@ import org.apache.juli.logging.LogFactory;
 /**
  *
  * The message dispatcher is a way to enable asynchronous communication
- * through a channel. The dispatcher will look for the
- * <code>Channel.SEND_OPTIONS_ASYNCHRONOUS</code> flag to be set, if it is, it
- * will queue the message for delivery and immediately return to the sender.
- *
+ * through a channel. The dispatcher will look for the <code>Channel.SEND_OPTIONS_ASYNCHRONOUS</code>
+ * flag to be set, if it is, it will queue the message for delivery and immediately return to the sender.
+ * 
+ * 
+ * 
+ * @author Filip Hanik
  * @version 1.0
  */
 public class MessageDispatchInterceptor extends ChannelInterceptorBase implements Runnable {
     private static final Log log = LogFactory.getLog(MessageDispatchInterceptor.class);
 
     protected long maxQueueSize = 1024*1024*64; //64MB
-    protected final FastQueue queue = new FastQueue();
+    protected FastQueue queue = new FastQueue();
     protected volatile boolean run = false;
     protected Thread msgDispatchThread = null;
     protected long currentSize = 0;
@@ -53,41 +56,36 @@ public class MessageDispatchInterceptor extends ChannelInterceptorBase implement
     }
 
     @Override
-    public void sendMessage(Member[] destination, ChannelMessage msg, InterceptorPayload payload)
-            throws ChannelException {
-        boolean async = (msg.getOptions() &
-                Channel.SEND_OPTIONS_ASYNCHRONOUS) == Channel.SEND_OPTIONS_ASYNCHRONOUS;
+    public void sendMessage(Member[] destination, ChannelMessage msg, InterceptorPayload payload) throws ChannelException {
+        boolean async = (msg.getOptions() & Channel.SEND_OPTIONS_ASYNCHRONOUS) == Channel.SEND_OPTIONS_ASYNCHRONOUS;
         if ( async && run ) {
             if ( (getCurrentSize()+msg.getMessage().getLength()) > maxQueueSize ) {
                 if ( alwaysSend ) {
                     super.sendMessage(destination,msg,payload);
                     return;
                 } else {
-                    throw new ChannelException("Asynchronous queue is full, reached its limit of " +
-                            maxQueueSize +" bytes, current:" + getCurrentSize() + " bytes.");
+                    throw new ChannelException("Asynchronous queue is full, reached its limit of " + maxQueueSize +" bytes, current:" + getCurrentSize() + " bytes.");
                 }//end if
             }//end if
             //add to queue
             if ( useDeepClone ) msg = (ChannelMessage)msg.deepclone();
             if (!addToQueue(msg, destination, payload) ) {
-                throw new ChannelException(
-                        "Unable to add the message to the async queue, queue bug?");
+                throw new ChannelException("Unable to add the message to the async queue, queue bug?");
             }
             addAndGetCurrentSize(msg.getMessage().getLength());
         } else {
             super.sendMessage(destination, msg, payload);
         }
     }
-
-    public boolean addToQueue(ChannelMessage msg, Member[] destination,
-            InterceptorPayload payload) {
+    
+    public boolean addToQueue(ChannelMessage msg, Member[] destination, InterceptorPayload payload) {
         return queue.add(msg,destination,payload);
     }
-
+    
     public LinkObject removeFromQueue() {
         return queue.remove();
     }
-
+    
     public void startQueue() {
         msgDispatchThread = new Thread(this);
         msgDispatchThread.setName("MessageDispatchInterceptor.MessageDispatchThread");
@@ -97,22 +95,18 @@ public class MessageDispatchInterceptor extends ChannelInterceptorBase implement
         run = true;
         msgDispatchThread.start();
     }
-
+    
     public void stopQueue() {
         run = false;
         msgDispatchThread.interrupt();
         queue.setEnabled(false);
         setAndGetCurrentSize(0);
     }
-
-
+    
+    
     @Override
     public void setOptionFlag(int flag) {
-        if ( flag != Channel.SEND_OPTIONS_ASYNCHRONOUS ) {
-            log.warn("Warning, you are overriding the asynchronous option " +
-                    "flag, this will disable the Channel.SEND_OPTIONS_ASYNCHRONOUS " +
-                    "that other apps might use.");
-        }
+        if ( flag != Channel.SEND_OPTIONS_ASYNCHRONOUS ) log.warn("Warning, you are overriding the asynchronous option flag, this will disable the Channel.SEND_OPTIONS_ASYNCHRONOUS that other apps might use.");
         super.setOptionFlag(flag);
     }
 
@@ -131,18 +125,18 @@ public class MessageDispatchInterceptor extends ChannelInterceptorBase implement
     public boolean getUseDeepClone() {
         return useDeepClone;
     }
-
+    
     public long getCurrentSize() {
         return currentSize;
     }
-
+    
     public long addAndGetCurrentSize(long inc) {
         synchronized (this) {
             currentSize += inc;
             return currentSize;
         }
     }
-
+    
     public long setAndGetCurrentSize(long value) {
         synchronized (this) {
             currentSize = value;
@@ -155,8 +149,7 @@ public class MessageDispatchInterceptor extends ChannelInterceptorBase implement
         //start the thread
         if (!run ) {
             synchronized (this) {
-                // only start with the sender
-                if ( !run && ((svc & Channel.SND_TX_SEQ)==Channel.SND_TX_SEQ) ) {
+                if ( !run && ((svc & Channel.SND_TX_SEQ)==Channel.SND_TX_SEQ) ) {//only start with the sender
                     startQueue();
                 }//end if
             }//sync
@@ -164,7 +157,7 @@ public class MessageDispatchInterceptor extends ChannelInterceptorBase implement
         super.start(svc);
     }
 
-
+    
     @Override
     public void stop(int svc) throws ChannelException {
         //stop the thread
@@ -196,9 +189,7 @@ public class MessageDispatchInterceptor extends ChannelInterceptorBase implement
         try {
             super.sendMessage(destination,msg,null);
             try {
-                if (link.getHandler() != null) {
-                    link.getHandler().handleCompletion(new UniqueId(msg.getUniqueId()));
-                }
+                if ( link.getHandler() != null ) link.getHandler().handleCompletion(new UniqueId(msg.getUniqueId())); 
             } catch ( Exception ex ) {
                 log.error("Unable to report back completed message.",ex);
             }
@@ -208,9 +199,7 @@ public class MessageDispatchInterceptor extends ChannelInterceptorBase implement
             else cx = new ChannelException(x);
             if ( log.isDebugEnabled() ) log.debug("Error while processing async message.",x);
             try {
-                if (link.getHandler() != null) {
-                    link.getHandler().handleError(cx, new UniqueId(msg.getUniqueId()));
-                }
+                if (link.getHandler() != null) link.getHandler().handleError(cx, new UniqueId(msg.getUniqueId()));
             } catch ( Exception ex ) {
                 log.error("Unable to report back error message.",ex);
             }
@@ -228,4 +217,6 @@ public class MessageDispatchInterceptor extends ChannelInterceptorBase implement
     public void setAlwaysSend(boolean alwaysSend) {
         this.alwaysSend = alwaysSend;
     }
+
+
 }

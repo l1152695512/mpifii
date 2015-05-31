@@ -47,6 +47,7 @@ import javax.servlet.ServletException;
  * <br>
  *
  * @author Remy Maucherat
+ * @author Filip Hanik
  */
 public interface CometFilter extends Filter {
 

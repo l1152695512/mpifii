@@ -17,13 +17,11 @@
 package org.apache.coyote.http11;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
-
-import javax.servlet.http.HttpUpgradeHandler;
 
 import org.apache.coyote.AbstractProtocol;
 import org.apache.coyote.Processor;
 import org.apache.coyote.http11.upgrade.AprProcessor;
+import org.apache.coyote.http11.upgrade.servlet31.HttpUpgradeHandler;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.net.AbstractEndpoint;
@@ -45,6 +43,7 @@ import org.apache.tomcat.util.net.SocketWrapper;
 public class Http11AprProtocol extends AbstractHttp11Protocol<Long> {
 
     private static final Log log = LogFactory.getLog(Http11AprProtocol.class);
+
 
     @Override
     protected Log getLog() { return log; }
@@ -75,7 +74,7 @@ public class Http11AprProtocol extends AbstractHttp11Protocol<Long> {
 
     private final Http11ConnectionHandler cHandler;
 
-    public boolean getUseSendfile() { return endpoint.getUseSendfile(); }
+    public boolean getUseSendfile() { return ((AprEndpoint)endpoint).getUseSendfile(); }
     public void setUseSendfile(boolean useSendfile) { ((AprEndpoint)endpoint).setUseSendfile(useSendfile); }
 
     public int getPollTime() { return ((AprEndpoint)endpoint).getPollTime(); }
@@ -86,7 +85,7 @@ public class Http11AprProtocol extends AbstractHttp11Protocol<Long> {
 
     public int getSendfileSize() { return ((AprEndpoint)endpoint).getSendfileSize(); }
     public void setSendfileSize(int sendfileSize) { ((AprEndpoint)endpoint).setSendfileSize(sendfileSize); }
-
+    
     public void setSendfileThreadCount(int sendfileThreadCount) { ((AprEndpoint)endpoint).setSendfileThreadCount(sendfileThreadCount); }
     public int getSendfileThreadCount() { return ((AprEndpoint)endpoint).getSendfileThreadCount(); }
 
@@ -115,7 +114,7 @@ public class Http11AprProtocol extends AbstractHttp11Protocol<Long> {
      */
     public String getSSLCipherSuite() { return ((AprEndpoint)endpoint).getSSLCipherSuite(); }
     public void setSSLCipherSuite(String SSLCipherSuite) { ((AprEndpoint)endpoint).setSSLCipherSuite(SSLCipherSuite); }
-    public String[] getCiphersUsed() { return endpoint.getCiphersUsed();}
+
 
     /**
      * SSL honor cipher order.
@@ -189,19 +188,12 @@ public class Http11AprProtocol extends AbstractHttp11Protocol<Long> {
      */
     public int getSSLVerifyDepth() { return ((AprEndpoint)endpoint).getSSLVerifyDepth(); }
     public void setSSLVerifyDepth(int SSLVerifyDepth) { ((AprEndpoint)endpoint).setSSLVerifyDepth(SSLVerifyDepth); }
-
+    
     /**
      * Disable SSL compression.
      */
     public boolean getSSLDisableCompression() { return ((AprEndpoint)endpoint).getSSLDisableCompression(); }
     public void setSSLDisableCompression(boolean disable) { ((AprEndpoint)endpoint).setSSLDisableCompression(disable); }
-
-    /**
-     * Disable TLS Session Tickets (RFC 4507).
-     */
-    public boolean getSSLDisableSessionTickets() { return ((AprEndpoint)endpoint).getSSLDisableSessionTickets(); }
-    public void setSSLDisableSessionTickets(boolean enable) { ((AprEndpoint)endpoint).setSSLDisableSessionTickets(enable); }
-
 
     // ----------------------------------------------------- JMX related methods
 
@@ -215,9 +207,9 @@ public class Http11AprProtocol extends AbstractHttp11Protocol<Long> {
 
     protected static class Http11ConnectionHandler
             extends AbstractConnectionHandler<Long,Http11AprProcessor> implements Handler {
-
+        
         protected Http11AprProtocol proto;
-
+        
         Http11ConnectionHandler(Http11AprProtocol proto) {
             this.proto = proto;
         }
@@ -231,11 +223,16 @@ public class Http11AprProtocol extends AbstractHttp11Protocol<Long> {
         protected Log getLog() {
             return log;
         }
+        
+        @Override
+        public void recycle() {
+            recycledProcessors.clear();
+        }
 
         /**
          * Expected to be used by the handler once the processor is no longer
          * required.
-         *
+         * 
          * @param socket
          * @param processor
          * @param isSocketClosing   Not used in HTTP
@@ -246,9 +243,11 @@ public class Http11AprProtocol extends AbstractHttp11Protocol<Long> {
                 Processor<Long> processor, boolean isSocketClosing,
                 boolean addToPoller) {
             processor.recycle(isSocketClosing);
-            recycledProcessors.push(processor);
+            recycledProcessors.offer(processor);
             if (addToPoller && proto.endpoint.isRunning()) {
-                socket.registerforEvent(proto.endpoint.getKeepAliveTimeout(), true, false);
+                ((AprEndpoint)proto.endpoint).getPoller().add(
+                        socket.getSocket().longValue(),
+                        proto.endpoint.getKeepAliveTimeout(), true, false);
             }
         }
 
@@ -258,6 +257,7 @@ public class Http11AprProtocol extends AbstractHttp11Protocol<Long> {
             // NOOP for APR
         }
 
+        @SuppressWarnings("deprecation") // Inbound/Outbound based upgrade
         @Override
         protected void longPoll(SocketWrapper<Long> socket,
                 Processor<Long> processor) {
@@ -269,22 +269,30 @@ public class Http11AprProtocol extends AbstractHttp11Protocol<Long> {
                 // Comet
                 if (proto.endpoint.isRunning()) {
                     socket.setComet(true);
-                    socket.registerforEvent(proto.endpoint.getSoTimeout(), true, false);
+                    ((AprEndpoint) proto.endpoint).getPoller().add(
+                            socket.getSocket().longValue(),
+                            proto.endpoint.getSoTimeout(), true, false);
                 } else {
                     // Process a STOP directly
                     ((AprEndpoint) proto.endpoint).processSocket(
                             socket.getSocket().longValue(),
                             SocketStatus.STOP);
                 }
-            } else {
+            } else if (processor.isUpgrade()) {
                 // Upgraded
                 Poller p = ((AprEndpoint) proto.endpoint).getPoller();
                 if (p == null) {
                     // Connector has been stopped
                     release(socket, processor, true, false);
                 } else {
-                    socket.registerforEvent(-1, true, false);
+                    p.add(socket.getSocket().longValue(), -1, true, false);
                 }
+            } else {
+                // Tomcat 7 proprietary upgrade
+                ((AprEndpoint) proto.endpoint).getPoller().add(
+                        socket.getSocket().longValue(),
+                        processor.getUpgradeInbound().getReadTimeout(),
+                        true, false);
             }
         }
 
@@ -294,20 +302,45 @@ public class Http11AprProtocol extends AbstractHttp11Protocol<Long> {
                     proto.getMaxHttpHeaderSize(), (AprEndpoint)proto.endpoint,
                     proto.getMaxTrailerSize(), proto.getAllowedTrailerHeadersAsSet(),
                     proto.getMaxExtensionSize(), proto.getMaxSwallowSize());
-            proto.configureProcessor(processor);
-            // APR specific configuration
+            processor.setAdapter(proto.adapter);
+            processor.setMaxKeepAliveRequests(proto.getMaxKeepAliveRequests());
+            processor.setKeepAliveTimeout(proto.getKeepAliveTimeout());
+            processor.setConnectionUploadTimeout(
+                    proto.getConnectionUploadTimeout());
+            processor.setDisableUploadTimeout(proto.getDisableUploadTimeout());
+            processor.setCompressionMinSize(proto.getCompressionMinSize());
+            processor.setCompression(proto.getCompression());
+            processor.setNoCompressionUserAgents(proto.getNoCompressionUserAgents());
+            processor.setCompressableMimeTypes(proto.getCompressableMimeTypes());
+            processor.setRestrictedUserAgents(proto.getRestrictedUserAgents());
+            processor.setSocketBuffer(proto.getSocketBuffer());
+            processor.setMaxSavePostSize(proto.getMaxSavePostSize());
+            processor.setServer(proto.getServer());
             processor.setClientCertProvider(proto.getClientCertProvider());
             register(processor);
             return processor;
         }
 
+        /**
+         * @deprecated  Will be removed in Tomcat 8.0.x.
+         */
+        @Deprecated
         @Override
         protected Processor<Long> createUpgradeProcessor(
-                SocketWrapper<Long> socket, ByteBuffer leftoverInput,
+                SocketWrapper<Long> socket,
+                org.apache.coyote.http11.upgrade.UpgradeInbound inbound)
+                throws IOException {
+            return new org.apache.coyote.http11.upgrade.UpgradeAprProcessor(
+                    socket, inbound);
+        }
+        
+        @Override
+        protected Processor<Long> createUpgradeProcessor(
+                SocketWrapper<Long> socket,
                 HttpUpgradeHandler httpUpgradeProcessor)
                 throws IOException {
-            return new AprProcessor(socket, leftoverInput,
-                    httpUpgradeProcessor, (AprEndpoint) proto.endpoint,
+            return new AprProcessor(socket, httpUpgradeProcessor,
+                    (AprEndpoint) proto.endpoint,
                     proto.getUpgradeAsyncWriteBufferSize());
         }
     }

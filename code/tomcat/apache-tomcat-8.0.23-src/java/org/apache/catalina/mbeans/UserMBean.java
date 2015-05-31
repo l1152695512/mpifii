@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -68,13 +68,13 @@ public class UserMBean extends BaseModelMBean {
     /**
      * The configuration information registry for our managed beans.
      */
-    protected final Registry registry = MBeanUtils.createRegistry();
+    protected Registry registry = MBeanUtils.createRegistry();
 
 
     /**
      * The <code>ManagedBean</code> information describing this MBean.
      */
-    protected final ManagedBean managed =
+    protected ManagedBean managed =
         registry.findManagedBean("User");
 
 
@@ -87,7 +87,7 @@ public class UserMBean extends BaseModelMBean {
     public String[] getGroups() {
 
         User user = (User) this.resource;
-        ArrayList<String> results = new ArrayList<>();
+        ArrayList<String> results = new ArrayList<String>();
         Iterator<Group> groups = user.getGroups();
         while (groups.hasNext()) {
             Group group = null;
@@ -114,7 +114,7 @@ public class UserMBean extends BaseModelMBean {
     public String[] getRoles() {
 
         User user = (User) this.resource;
-        ArrayList<String> results = new ArrayList<>();
+        ArrayList<String> results = new ArrayList<String>();
         Iterator<Role> roles = user.getRoles();
         while (roles.hasNext()) {
             Role role = null;

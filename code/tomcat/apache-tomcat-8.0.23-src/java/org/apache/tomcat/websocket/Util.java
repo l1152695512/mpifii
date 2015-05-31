@@ -62,7 +62,7 @@ public class Util {
     private static final StringManager sm =
             StringManager.getManager(Constants.PACKAGE_NAME);
     private static final Queue<SecureRandom> randoms =
-            new ConcurrentLinkedQueue<>();
+            new ConcurrentLinkedQueue<SecureRandom>();
 
     private Util() {
         // Hide default constructor
@@ -186,7 +186,8 @@ public class Util {
     private static <T> TypeResult getGenericType(Class<T> type,
             Class<? extends T> clazz) {
 
-        // Look to see if this class implements the interface of interest
+        // Look to see if this class implements the generic MessageHandler<>
+        // interface
 
         // Get all the interfaces
         Type[] interfaces = clazz.getGenericInterfaces();
@@ -194,7 +195,7 @@ public class Util {
             // Only need to check interfaces that use generics
             if (iface instanceof ParameterizedType) {
                 ParameterizedType pi = (ParameterizedType) iface;
-                // Look for the interface of interest
+                // Look for the MessageHandler<> interface
                 if (pi.getRawType() instanceof Class) {
                     if (type.isAssignableFrom((Class<?>) pi.getRawType())) {
                         return getTypeParameter(
@@ -217,13 +218,13 @@ public class Util {
         int dimension = superClassTypeResult.getDimension();
         if (superClassTypeResult.getIndex() == -1 && dimension == 0) {
             // Superclass implements interface and defines explicit type for
-            // the interface of interest
+            // MessageHandler<>
             return superClassTypeResult;
         }
 
         if (superClassTypeResult.getIndex() > -1) {
             // Superclass implements interface and defines unknown type for
-            // the interface of interest
+            // MessageHandler<>
             // Map that unknown type to the generic types defined in this class
             ParameterizedType superClassType =
                     (ParameterizedType) clazz.getGenericSuperclass();
@@ -335,24 +336,26 @@ public class Util {
             Class<? extends Decoder>[] decoderClazzes)
                     throws DeploymentException{
 
-        List<DecoderEntry> result = new ArrayList<>();
-        if (decoderClazzes != null) {
-            for (Class<? extends Decoder> decoderClazz : decoderClazzes) {
-                // Need to instantiate decoder to ensure it is valid and that
-                // deployment can be failed if it is not
-                @SuppressWarnings("unused")
-                Decoder instance;
-                try {
-                    instance = decoderClazz.newInstance();
-                } catch (InstantiationException | IllegalAccessException e) {
-                    throw new DeploymentException(
-                            sm.getString("pojoMethodMapping.invalidDecoder",
-                                    decoderClazz.getName()), e);
-                }
-                DecoderEntry entry = new DecoderEntry(
-                        Util.getDecoderType(decoderClazz), decoderClazz);
-                result.add(entry);
+        List<DecoderEntry> result = new ArrayList<DecoderEntry>();
+        for (Class<? extends Decoder> decoderClazz : decoderClazzes) {
+            // Need to instantiate decoder to ensure it is valid and that
+            // deployment can be failed if it is not
+            @SuppressWarnings("unused")
+            Decoder instance;
+            try {
+                instance = decoderClazz.newInstance();
+            } catch (InstantiationException e) {
+                throw new DeploymentException(
+                        sm.getString("pojoMethodMapping.invalidDecoder",
+                                decoderClazz.getName()), e);
+            } catch (IllegalAccessException e) {
+                throw new DeploymentException(
+                        sm.getString("pojoMethodMapping.invalidDecoder",
+                                decoderClazz.getName()), e);
             }
+            DecoderEntry entry = new DecoderEntry(
+                    Util.getDecoderType(decoderClazz), decoderClazz);
+            result.add(entry);
         }
 
         return result;
@@ -364,7 +367,7 @@ public class Util {
             Session session) {
 
         // Will never be more than 2 types
-        Set<MessageHandlerResult> results = new HashSet<>(2);
+        Set<MessageHandlerResult> results = new HashSet<MessageHandlerResult>(2);
 
         // Simple cases - handlers already accepts one of the types expected by
         // the frame handling code
@@ -557,16 +560,23 @@ public class Util {
     private static Method getOnMessageMethod(MessageHandler listener) {
         try {
             return listener.getClass().getMethod("onMessage", Object.class);
-        } catch (NoSuchMethodException | SecurityException e) {
+        } catch (NoSuchMethodException e) {
+            throw new IllegalArgumentException(
+                    sm.getString("util.invalidMessageHandler"), e);
+        } catch ( SecurityException e) {
             throw new IllegalArgumentException(
                     sm.getString("util.invalidMessageHandler"), e);
         }
     }
 
+
     private static Method getOnMessagePartialMethod(MessageHandler listener) {
         try {
             return listener.getClass().getMethod("onMessage", Object.class, Boolean.TYPE);
-        } catch (NoSuchMethodException | SecurityException e) {
+        } catch (NoSuchMethodException e) {
+            throw new IllegalArgumentException(
+                    sm.getString("util.invalidMessageHandler"), e);
+        } catch (SecurityException e) {
             throw new IllegalArgumentException(
                     sm.getString("util.invalidMessageHandler"), e);
         }
@@ -576,10 +586,11 @@ public class Util {
     public static class DecoderMatch {
 
         private final List<Class<? extends Decoder>> textDecoders =
-                new ArrayList<>();
+                new ArrayList<Class<? extends Decoder>>();
         private final List<Class<? extends Decoder>> binaryDecoders =
-                new ArrayList<>();
+                new ArrayList<Class<? extends Decoder>>();
         private final Class<?> target;
+
 
         public DecoderMatch(Class<?> target, List<DecoderEntry> decoderEntries) {
             this.target = target;

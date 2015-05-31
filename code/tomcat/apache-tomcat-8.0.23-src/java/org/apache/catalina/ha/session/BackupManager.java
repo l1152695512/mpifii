@@ -34,6 +34,7 @@ import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
+ *@author Filip Hanik
  *@version 1.0
  */
 public class BackupManager extends ClusterManagerBase
@@ -46,7 +47,14 @@ public class BackupManager extends ClusterManagerBase
      */
     protected static final StringManager sm = StringManager.getManager(Constants.Package);
 
-    protected static final long DEFAULT_REPL_TIMEOUT = 15000;//15 seconds
+    protected static long DEFAULT_REPL_TIMEOUT = 15000;//15 seconds
+
+    /**
+     * Set to true if we don't want the sessions to expire on shutdown
+     * @deprecated  Unused - will be removed in Tomcat 8.0.x
+     */
+    @Deprecated
+    protected boolean mExpireSessionsOnShutdown = true;
 
     /**
      * The name of this manager
@@ -85,6 +93,25 @@ public class BackupManager extends ClusterManagerBase
     public void messageDataReceived(ClusterMessage msg) {
     }
 
+    /**
+     * @deprecated  Unused - will be removed in Tomcat 8.0.x
+     */
+    @Deprecated
+    public void setExpireSessionsOnShutdown(boolean expireSessionsOnShutdown)
+    {
+        mExpireSessionsOnShutdown = expireSessionsOnShutdown;
+    }
+
+    /**
+     * @deprecated  Unused - will be removed in Tomcat 8.0.x
+     */
+    @Deprecated
+    public boolean getExpireSessionsOnShutdown()
+    {
+        return mExpireSessionsOnShutdown;
+    }
+
+
     @Override
     public ClusterMessage requestCompleted(String sessionId) {
         if (!getState().isAvailable()) return null;
@@ -99,7 +126,7 @@ public class BackupManager extends ClusterManagerBase
 // OVERRIDE THESE METHODS TO IMPLEMENT THE REPLICATION
 //=========================================================================
     @Override
-    public void objectMadePrimary(Object key, Object value) {
+    public void objectMadePrimay(Object key, Object value) {
         if (value!=null && value instanceof DeltaSession) {
             DeltaSession session = (DeltaSession)value;
             synchronized (session) {
@@ -140,9 +167,10 @@ public class BackupManager extends ClusterManagerBase
 
         try {
             if (cluster == null) throw new LifecycleException(sm.getString("backupManager.noCluster", getName()));
-            LazyReplicatedMap<String,Session> map = new LazyReplicatedMap<>(
-                    this, cluster.getChannel(), rpcTimeout, getMapName(),
-                    getClassLoaders(), terminateOnStartFailure);
+            LazyReplicatedMap<String,Session> map =
+                    new LazyReplicatedMap<String,Session>(this,
+                            cluster.getChannel(), rpcTimeout, getMapName(),
+                            getClassLoaders(), terminateOnStartFailure);
             map.setChannelSendOptions(mapSendOptions);
             this.sessions = map;
         }  catch ( Exception x ) {
@@ -229,6 +257,7 @@ public class BackupManager extends ClusterManagerBase
     public ClusterManager cloneFromTemplate() {
         BackupManager result = new BackupManager();
         clone(result);
+        result.mExpireSessionsOnShutdown = mExpireSessionsOnShutdown;
         result.mapSendOptions = mapSendOptions;
         result.rpcTimeout = rpcTimeout;
         result.terminateOnStartFailure = terminateOnStartFailure;
@@ -244,7 +273,7 @@ public class BackupManager extends ClusterManagerBase
 
     @Override
     public Set<String> getSessionIdsFull() {
-        Set<String> sessionIds = new HashSet<>();
+        Set<String> sessionIds = new HashSet<String>();
         LazyReplicatedMap<String,Session> map =
                 (LazyReplicatedMap<String,Session>)sessions;
         Iterator<String> keys = map.keySetFull().iterator();

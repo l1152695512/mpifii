@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,10 +33,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.jsp.tagext.TagInfo;
 
+import org.apache.jasper.Constants;
 import org.apache.jasper.JasperException;
 import org.apache.jasper.JspCompilationContext;
 import org.apache.jasper.Options;
 import org.apache.jasper.compiler.ErrorDispatcher;
+import org.apache.jasper.compiler.JarResource;
 import org.apache.jasper.compiler.JavacErrorDetail;
 import org.apache.jasper.compiler.JspRuntimeContext;
 import org.apache.jasper.compiler.Localizer;
@@ -47,7 +49,6 @@ import org.apache.jasper.util.FastRemovalDequeue;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.InstanceManager;
-import org.apache.tomcat.util.scan.Jar;
 
 /**
  * The JSP engine (a.k.a Jasper).
@@ -71,10 +72,10 @@ import org.apache.tomcat.util.scan.Jar;
 public class JspServletWrapper {
 
     private static final Map<String,Long> ALWAYS_OUTDATED_DEPENDENCIES =
-            new HashMap<>();
+        new HashMap<String,Long>();
 
     static {
-        // If this is missing,
+        // If this is missing, 
         ALWAYS_OUTDATED_DEPENDENCIES.put("/WEB-INF/web.xml", Long.valueOf(-1));
     }
 
@@ -82,16 +83,16 @@ public class JspServletWrapper {
     private final Log log = LogFactory.getLog(JspServletWrapper.class);
 
     private Servlet theServlet;
-    private final String jspUri;
+    private String jspUri;
     private Class<?> tagHandlerClass;
-    private final JspCompilationContext ctxt;
+    private JspCompilationContext ctxt;
     private long available = 0L;
-    private final ServletConfig config;
-    private final Options options;
+    private ServletConfig config;
+    private Options options;
     private boolean firstTime = true;
     /** Whether the servlet needs reloading on next access */
     private volatile boolean reload = true;
-    private final boolean isTagFile;
+    private boolean isTagFile;
     private int tripCount;
     private JasperException compileException;
     /** Timestamp of last time servlet resource was modified */
@@ -129,7 +130,7 @@ public class JspServletWrapper {
                              String tagFilePath,
                              TagInfo tagInfo,
                              JspRuntimeContext rctxt,
-                             Jar tagJar) {
+                             JarResource tagJarResource) {
 
         this.isTagFile = true;
         this.config = null;        // not used
@@ -141,7 +142,7 @@ public class JspServletWrapper {
         unloadAllowed = unloadByCount || unloadByIdle ? true : false;
         ctxt = new JspCompilationContext(jspUri, tagInfo, options,
                                          servletContext, this, rctxt,
-                                         tagJar);
+                                         tagJarResource);
     }
 
     public JspCompilationContext getJspEngineContext() {
@@ -154,7 +155,7 @@ public class JspServletWrapper {
 
     public Servlet getServlet() throws ServletException {
         // DCL on 'reload' requires that 'reload' be volatile
-        // (this also forces a read memory barrier, ensuring the
+        // (this also forces a read memory barrier, ensuring the 
         // new servlet object is read consistently)
         if (reload) {
             synchronized (this) {
@@ -163,7 +164,7 @@ public class JspServletWrapper {
                 if (reload) {
                     // This is to maintain the original protocol.
                     destroy();
-
+                    
                     final Servlet servlet;
 
                     try {
@@ -175,7 +176,7 @@ public class JspServletWrapper {
                         ExceptionUtils.handleThrowable(t);
                         throw new JasperException(t);
                     }
-
+                    
                     servlet.init(config);
 
                     if (!firstTime) {
@@ -186,7 +187,7 @@ public class JspServletWrapper {
                     reload = false;
                     // Volatile 'reload' forces in order write of 'theServlet' and new servlet object
                 }
-            }
+            }    
         }
         return theServlet;
     }
@@ -326,11 +327,11 @@ public class JspServletWrapper {
         return unloadHandle;
     }
 
-    public void service(HttpServletRequest request,
+    public void service(HttpServletRequest request, 
                         HttpServletResponse response,
                         boolean precompile)
             throws ServletException, IOException, FileNotFoundException {
-
+        
         Servlet servlet;
 
         try {
@@ -405,6 +406,7 @@ public class JspServletWrapper {
         }
 
         try {
+            
             /*
              * (3) Handle limitation of number of loaded Jsps
              */
@@ -424,7 +426,6 @@ public class JspServletWrapper {
                     }
                 }
             }
-
             /*
              * (4) Service request
              */
@@ -454,7 +455,7 @@ public class JspServletWrapper {
             available = System.currentTimeMillis() +
                 (unavailableSeconds * 1000L);
             response.sendError
-                (HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+                (HttpServletResponse.SC_SERVICE_UNAVAILABLE, 
                  ex.getMessage());
         } catch (ServletException ex) {
             if(options.getDevelopment()) {
@@ -546,7 +547,7 @@ public class JspServletWrapper {
                 }
             }
 
-
+            
             if (jspFrame == null ||
                     this.ctxt.getCompiler().getPageNodes() == null) {
                 // If we couldn't find a frame in the stack trace corresponding
@@ -573,11 +574,11 @@ public class JspServletWrapper {
             if (options.getDisplaySourceFragment()) {
                 return new JasperException(Localizer.getMessage
                         ("jsp.exception", detail.getJspFileName(),
-                                "" + jspLineNumber) + System.lineSeparator() +
-                                System.lineSeparator() + detail.getJspExtract() +
-                                System.lineSeparator() + System.lineSeparator() +
+                                "" + jspLineNumber) + Constants.NEWLINE +
+                                Constants.NEWLINE + detail.getJspExtract() +
+                                Constants.NEWLINE + Constants.NEWLINE + 
                                 "Stacktrace:", ex);
-
+                
             }
 
             return new JasperException(Localizer.getMessage
@@ -591,4 +592,5 @@ public class JspServletWrapper {
             return new JasperException(ex);
         }
     }
+
 }

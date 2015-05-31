@@ -24,6 +24,7 @@ import org.apache.tomcat.jdbc.pool.PoolProperties.InterceptorDefinition;
  * A list of properties that are configurable for a connection pool.
  * The {@link DataSource} object also implements this interface so that it can be easily configured through
  * an IoC container without having to specify a secondary object with a setter method.
+ * @author fhanik
  *
  */
 
@@ -86,7 +87,7 @@ public interface PoolConfiguration {
 
     /**
      * The connection properties that will be sent to the JDBC driver when establishing new connections.
-     * Format of the string is [propertyName=property;] <br>
+     * Format of the string is [propertyName=property;] <br/>
      * NOTE - The "user" and "password" properties will be passed explicitly, so they do not need to be included here.
      * The default value is null.
      */
@@ -665,12 +666,12 @@ public interface PoolConfiguration {
     /**
      * Returns true if the pool sweeper is enabled for the connection pool.
      * The pool sweeper is enabled if any settings that require async intervention in the pool are turned on
-     * <code>
-        boolean result = getTimeBetweenEvictionRunsMillis()&gt;0;
-        result = result &amp;&amp; (isRemoveAbandoned() &amp;&amp; getRemoveAbandonedTimeout()&gt;0);
-        result = result || (isTestWhileIdle() &amp;&amp; getValidationQuery()!=null);
+     * <source>
+        boolean result = getTimeBetweenEvictionRunsMillis()>0;
+        result = result && (isRemoveAbandoned() && getRemoveAbandonedTimeout()>0);
+        result = result || (isTestWhileIdle() && getValidationQuery()!=null);
         return result;
-       </code>
+       </source>
      *
      * @return true if a background thread is or will be enabled for this pool
      */
@@ -698,7 +699,7 @@ public interface PoolConfiguration {
     /**
      * Time in milliseconds to keep this connection alive even when used.
      * When a connection is returned to the pool, the pool will check to see if the
-     * ((now - time-when-connected) &gt; maxAge) has been reached, and if so,
+     * ((now - time-when-connected) > maxAge) has been reached, and if so,
      * it closes the connection rather than returning it to the pool.
      * The default value is 0, which implies that connections will be left open and no
      * age check will be done upon returning the connection to the pool.
@@ -711,7 +712,7 @@ public interface PoolConfiguration {
     /**
      * Time in milliseconds to keep this connection alive even when used.
      * When a connection is returned to the pool, the pool will check to see if the
-     * ((now - time-when-connected) &gt; maxAge) has been reached, and if so,
+     * ((now - time-when-connected) > maxAge) has been reached, and if so,
      * it closes the connection rather than returning it to the pool.
      * The default value is 0, which implies that connections will be left open and no
      * age check will be done upon returning the connection to the pool.

@@ -24,7 +24,7 @@ import javax.el.ExpressionFactory;
  * <p>
  * Stores <i>application</i>-scoped information for the JSP container.
  * </p>
- *
+ * 
  * @since 2.1
  */
 public interface JspApplicationContext {
@@ -36,7 +36,7 @@ public interface JspApplicationContext {
      * At the very least, any <code>ELContext</code> instantiated will have
      * reference to the <code>JspContext</code> under
      * <code>JspContext.class</code>.
-     *
+     * 
      * @param listener The listener to add
      */
     public void addELContextListener(ELContextListener listener);
@@ -48,7 +48,6 @@ public interface JspApplicationContext {
      * </p>
      * <p>
      * JSP has a default set of ELResolvers to chain for all EL evaluation:
-     * </p>
      * <ul>
      * <li><code>ImplicitObjectELResolver</code></li>
      * <li><code>ELResolver</code> instances registered with this method</li>
@@ -58,7 +57,8 @@ public interface JspApplicationContext {
      * <li><code>BeanELResolver</code></li>
      * <li><code>ScopedAttributeELResolver</code></li>
      * </ul>
-     *
+     * </p>
+     * 
      * @param resolver
      *            an additional resolver
      * @throws IllegalStateException
@@ -72,7 +72,7 @@ public interface JspApplicationContext {
      * Returns the JSP container's <code>ExpressionFactory</code> implementation
      * for EL use.
      * </p>
-     *
+     * 
      * @return an <code>ExpressionFactory</code> implementation
      */
     public ExpressionFactory getExpressionFactory();

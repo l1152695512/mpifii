@@ -36,7 +36,6 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
-import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
@@ -52,7 +51,7 @@ import org.apache.juli.logging.LogFactory;
  * <tt>Cache-Control: max-age=</tt>' headers to HTTP response according to its '
  * <tt>Content-Type</tt>'.
  * </p>
- *
+ * 
  * <p>
  * Following documentation is inspired by <tt>mod_expires</tt> .
  * </p>
@@ -80,8 +79,8 @@ import org.apache.juli.logging.LogFactory;
  * <h1>Filter Configuration</h1><h2>Basic configuration to add &#x27;
  * <tt>Expires</tt>&#x27; and &#x27; <tt>Cache-Control: max-age=</tt>&#x27;
  * headers to images, css and javascript</h2>
- *
- * <code>
+ * 
+ * <code><pre>
  * &lt;web-app ...&gt;
  *    ...
  *    &lt;filter&gt;
@@ -108,10 +107,10 @@ import org.apache.juli.logging.LogFactory;
  *    &lt;/filter-mapping&gt;
  *    ...
  * &lt;/web-app&gt;
- * </code>
- *
+ * </pre></code>
+ * 
  * <h2>Configuration Parameters</h2>
- *
+ * 
  * <h3>
  * <tt>ExpiresByType &lt;content-type&gt;</tt></h3>
  * <p>
@@ -146,17 +145,17 @@ import org.apache.juli.logging.LogFactory;
  * <p>
  * <strong>Example:</strong>
  * </p>
- *
- * <code>
+ * 
+ * <code><pre>
  * &lt;init-param&gt;
  *    &lt;param-name&gt;ExpiresByType text/html&lt;/param-name&gt;&lt;param-value&gt;access plus 1 month 15   days 2 hours&lt;/param-value&gt;
  * &lt;/init-param&gt;
- *
+ *  
  * &lt;init-param&gt;
  *    &lt;!-- 2592000 seconds = 30 days --&gt;
  *    &lt;param-name&gt;ExpiresByType image/gif&lt;/param-name&gt;&lt;param-value&gt;A2592000&lt;/param-value&gt;
  * &lt;/init-param&gt;
- * </code>
+ * </pre></code>
  * <p>
  * Note that this directive only has effect if <tt>ExpiresActive On</tt> has
  * been specified. It overrides, for the specified MIME type <i>only</i>, any
@@ -184,13 +183,13 @@ import org.apache.juli.logging.LogFactory;
  * <p>
  * Configuration sample :
  * </p>
- *
- * <code>
+ * 
+ * <code><pre>
  * &lt;init-param&gt;
  *    &lt;param-name&gt;ExpiresExcludedResponseStatusCodes&lt;/param-name&gt;&lt;param-value&gt;302, 500, 503&lt;/param-value&gt;
  * &lt;/init-param&gt;
- * </code>
- *
+ * </pre></code>
+ * 
  * <h3>ExpiresDefault</h3>
  * <p>
  * This directive sets the default algorithm for calculating the expiration time
@@ -204,29 +203,28 @@ import org.apache.juli.logging.LogFactory;
  * The <tt>ExpiresDefault</tt> and <tt>ExpiresByType</tt> directives can also be
  * defined in a more readable syntax of the form:
  * </p>
- *
- * <code>
+ * 
+ * <code><pre>
  * &lt;init-param&gt;
  *    &lt;param-name&gt;ExpiresDefault&lt;/param-name&gt;&lt;param-value&gt;&lt;base&gt; [plus] {&lt;num&gt;   &lt;type&gt;}*&lt;/param-value&gt;
  * &lt;/init-param&gt;
- *
+ *  
  * &lt;init-param&gt;
  *    &lt;param-name&gt;ExpiresByType type/encoding&lt;/param-name&gt;&lt;param-value&gt;&lt;base&gt; [plus]   {&lt;num&gt; &lt;type&gt;}*&lt;/param-value&gt;
  * &lt;/init-param&gt;
- * </code>
+ * </pre></code>
  * <p>
  * where <tt>&lt;base&gt;</tt> is one of:
- * </p>
  * <ul>
  * <li><tt>access</tt></li>
  * <li><tt>now</tt> (equivalent to &#x27;<tt>access</tt>&#x27;)</li>
  * <li><tt>modification</tt></li>
  * </ul>
+ * </p>
  * <p>
  * The <tt>plus</tt> keyword is optional. <tt>&lt;num&gt;</tt> should be an
  * integer value (acceptable to <tt>Integer.parseInt()</tt>), and
  * <tt>&lt;type&gt;</tt> is one of:
- * </p>
  * <ul>
  * <li><tt>years</tt></li>
  * <li><tt>months</tt></li>
@@ -236,38 +234,37 @@ import org.apache.juli.logging.LogFactory;
  * <li><tt>minutes</tt></li>
  * <li><tt>seconds</tt></li>
  * </ul>
- * <p>
  * For example, any of the following directives can be used to make documents
  * expire 1 month after being accessed, by default:
  * </p>
- *
- * <code>
+ * 
+ * <code><pre>
  * &lt;init-param&gt;
  *    &lt;param-name&gt;ExpiresDefault&lt;/param-name&gt;&lt;param-value&gt;access plus 1 month&lt;/param-value&gt;
  * &lt;/init-param&gt;
- *
+ *  
  * &lt;init-param&gt;
  *    &lt;param-name&gt;ExpiresDefault&lt;/param-name&gt;&lt;param-value&gt;access plus 4 weeks&lt;/param-value&gt;
  * &lt;/init-param&gt;
- *
+ *  
  * &lt;init-param&gt;
  *    &lt;param-name&gt;ExpiresDefault&lt;/param-name&gt;&lt;param-value&gt;access plus 30 days&lt;/param-value&gt;
  * &lt;/init-param&gt;
- * </code>
+ * </pre></code>
  * <p>
  * The expiry time can be fine-tuned by adding several &#x27;
  * <tt>&lt;num&gt; &lt;type&gt;</tt>&#x27; clauses:
  * </p>
- *
- * <code>
+ * 
+ * <code><pre>
  * &lt;init-param&gt;
  *    &lt;param-name&gt;ExpiresByType text/html&lt;/param-name&gt;&lt;param-value&gt;access plus 1 month 15   days 2 hours&lt;/param-value&gt;
  * &lt;/init-param&gt;
- *
+ *  
  * &lt;init-param&gt;
  *    &lt;param-name&gt;ExpiresByType image/gif&lt;/param-name&gt;&lt;param-value&gt;modification plus 5 hours 3   minutes&lt;/param-value&gt;
  * &lt;/init-param&gt;
- * </code>
+ * </pre></code>
  * <p>
  * Note that if you use a modification date based setting, the <tt>Expires</tt>
  * header will <strong>not</strong> be added to content that does not come from
@@ -277,7 +274,6 @@ import org.apache.juli.logging.LogFactory;
  * <h1>Expiration headers generation eligibility</h1>
  * <p>
  * A response is eligible to be enriched by <tt>ExpiresFilter</tt> if :
- * </p>
  * <ol>
  * <li>no expiration header is defined (<tt>Expires</tt> header or the
  * <tt>max-age</tt> directive of the <tt>Cache-Control</tt> header),</li>
@@ -287,18 +283,18 @@ import org.apache.juli.logging.LogFactory;
  * defined the in <tt>ExpiresByType</tt> directives or the
  * <tt>ExpiresDefault</tt> directive is defined.</li>
  * </ol>
+ * </p>
  * <p>
  * Note :
- * </p>
  * <ul>
  * <li>If <tt>Cache-Control</tt> header contains other directives than
  * <tt>max-age</tt>, they are concatenated with the <tt>max-age</tt> directive
  * that is added by the <tt>ExpiresFilter</tt>.</li>
  * </ul>
+ * </p>
  * <h1>Expiration configuration selection</h1>
  * <p>
  * The expiration configuration if elected according to the following algorithm:
- * </p>
  * <ol>
  * <li><tt>ExpiresByType</tt> matching the exact content-type returned by
  * <tt>HttpServletResponse.getContentType()</tt> possibly including the charset
@@ -312,6 +308,7 @@ import org.apache.juli.logging.LogFactory;
  * &#x27;),</li>
  * <li><tt>ExpiresDefault</tt></li>
  * </ol>
+ * </p>
  * <h1>Implementation Details</h1><h2>When to write the expiration headers ?</h2>
  * <p>
  * The <tt>ExpiresFilter</tt> traps the &#x27;on before write response
@@ -351,7 +348,6 @@ import org.apache.juli.logging.LogFactory;
  * </p>
  * <p>
  * Key methods to override for extension are :
- * </p>
  * <ul>
  * <li>
  * {@link #isEligibleToExpirationHeaderGeneration(HttpServletRequest, XHttpServletResponse)}
@@ -359,6 +355,7 @@ import org.apache.juli.logging.LogFactory;
  * <li>
  * {@link #getExpirationDate(XHttpServletResponse)}</li>
  * </ul>
+ * </p>
  * <h1>Troubleshooting</h1>
  * <p>
  * To troubleshoot, enable logging on the
@@ -367,42 +364,43 @@ import org.apache.juli.logging.LogFactory;
  * <p>
  * Extract of logging.properties
  * </p>
- *
- * <code>
+ * 
+ * <code><pre>
  * org.apache.catalina.filters.ExpiresFilter.level = FINE
- * </code>
+ * </pre></code>
  * <p>
  * Sample of initialization log message :
  * </p>
- *
- * <code>
+ * 
+ * <code><pre>
  * Mar 26, 2010 2:01:41 PM org.apache.catalina.filters.ExpiresFilter init
  * FINE: Filter initialized with configuration ExpiresFilter[
- *    excludedResponseStatusCode=[304],
- *    default=null,
+ *    excludedResponseStatusCode=[304], 
+ *    default=null, 
  *    byType={
- *       image=ExpiresConfiguration[startingPoint=ACCESS_TIME, duration=[10 MINUTE]],
- *       text/css=ExpiresConfiguration[startingPoint=ACCESS_TIME, duration=[10 MINUTE]],
+ *       image=ExpiresConfiguration[startingPoint=ACCESS_TIME, duration=[10 MINUTE]], 
+ *       text/css=ExpiresConfiguration[startingPoint=ACCESS_TIME, duration=[10 MINUTE]], 
  *       application/javascript=ExpiresConfiguration[startingPoint=ACCESS_TIME, duration=[10 MINUTE]]}]
- * </code>
+ * </pre></code>
  * <p>
  * Sample of per-request log message where <tt>ExpiresFilter</tt> adds an
  * expiration date
  * </p>
- *
- * <code>
+ * 
+ * <code><pre>
  * Mar 26, 2010 2:09:47 PM org.apache.catalina.filters.ExpiresFilter onBeforeWriteResponseBody
  * FINE: Request "/tomcat.gif" with response status "200" content-type "image/gif", set expiration date 3/26/10 2:19 PM
- * </code>
+ * </pre></code>
  * <p>
  * Sample of per-request log message where <tt>ExpiresFilter</tt> does not add
  * an expiration date
  * </p>
- *
- * <code>
+ * 
+ * <code><pre>
  * Mar 26, 2010 2:10:27 PM org.apache.catalina.filters.ExpiresFilter onBeforeWriteResponseBody
  * FINE: Request "/docs/config/manager.html" with response status "200" content-type "text/html", no expiration configured
- * </code>
+ * </pre></code>
+ * 
  */
 public class ExpiresFilter extends FilterBase {
 
@@ -994,26 +992,6 @@ public class ExpiresFilter extends FilterBase {
             servletOutputStream.write(b);
         }
 
-        /**
-         * TODO SERVLET 3.1
-         */
-        @Override
-        public boolean isReady() {
-            // TODO Auto-generated method stub
-            return false;
-        }
-
-        /**
-         * TODO SERVLET 3.1
-         */
-        @Override
-        public void setWriteListener(WriteListener listener) {
-            // TODO Auto-generated method stub
-
-        }
-
-
-
     }
 
     /**
@@ -1038,7 +1016,7 @@ public class ExpiresFilter extends FilterBase {
 
     /**
      * Convert a comma delimited list of numbers into an <tt>int[]</tt>.
-     *
+     * 
      * @param commaDelimitedInts
      *            can be <code>null</code>
      * @return never <code>null</code> array
@@ -1062,7 +1040,7 @@ public class ExpiresFilter extends FilterBase {
 
     /**
      * Convert a given comma delimited list of strings into an array of String
-     *
+     * 
      * @return array of patterns (non <code>null</code>)
      */
     protected static String[] commaDelimitedListToStringArray(
@@ -1120,7 +1098,7 @@ public class ExpiresFilter extends FilterBase {
     /**
      * Return <code>true</code> if the given <code>string</code> starts with the
      * given <code>prefix</code> ignoring case.
-     *
+     * 
      * @param string
      *            can be <code>null</code>
      * @param prefix
@@ -1142,7 +1120,7 @@ public class ExpiresFilter extends FilterBase {
      * occurence of the given <code>separator</code>. Return <code>null</code>
      * if the given <code>str</code> or the given <code>separator</code> is
      * null. Return and empty string if the <code>separator</code> is empty.
-     *
+     * 
      * @param str
      *            can be <code>null</code>
      * @param separator
@@ -1178,7 +1156,7 @@ public class ExpiresFilter extends FilterBase {
     /**
      * Expires configuration by content type. Visible for test.
      */
-    private Map<String, ExpiresConfiguration> expiresConfigurationByContentType = new LinkedHashMap<>();
+    private Map<String, ExpiresConfiguration> expiresConfigurationByContentType = new LinkedHashMap<String, ExpiresConfiguration>();
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response,
@@ -1231,7 +1209,7 @@ public class ExpiresFilter extends FilterBase {
      * <p>
      * <code>protected</code> for extension.
      * </p>
-     *
+     * 
      * @see HttpServletResponse#getContentType()
      */
     protected Date getExpirationDate(XHttpServletResponse response) {
@@ -1388,7 +1366,7 @@ public class ExpiresFilter extends FilterBase {
     }
 
     /**
-     *
+     * 
      * <p>
      * <code>protected</code> for extension.
      * </p>
@@ -1480,7 +1458,7 @@ public class ExpiresFilter extends FilterBase {
      * Parse configuration lines like '
      * <tt>access plus 1 month 15 days 2 hours</tt>' or '
      * <tt>modification 1 day 2 hours 5 seconds</tt>'
-     *
+     * 
      * @param inputLine
      */
     protected ExpiresConfiguration parseExpiresConfiguration(String inputLine) {
@@ -1537,7 +1515,7 @@ public class ExpiresFilter extends FilterBase {
             }
         }
 
-        List<Duration> durations = new ArrayList<>();
+        List<Duration> durations = new ArrayList<Duration>();
 
         while (currentToken != null) {
             int amount;

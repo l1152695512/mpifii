@@ -49,11 +49,7 @@ public interface Manager {
 
     /**
      * Return the Container with which this Manager is associated.
-     *
-     * @deprecated Use {@link #getContext()}. This method will be removed in
-     *             Tomcat 9 onwards.
      */
-    @Deprecated
     public Container getContainer();
 
 
@@ -61,26 +57,8 @@ public interface Manager {
      * Set the Container with which this Manager is associated.
      *
      * @param container The newly associated Container
-     *
-     * @deprecated Use {@link #setContext(Context)}. This method will be removed in
-     *             Tomcat 9 onwards.
      */
-    @Deprecated
     public void setContainer(Container container);
-
-
-    /**
-     * Return the Context with which this Manager is associated.
-     */
-    public Context getContext();
-
-
-    /**
-     * Set the Container with which this Manager is associated.
-     *
-     * @param context The newly associated Context
-     */
-    public void setContext(Context context);
 
 
     /**
@@ -101,6 +79,14 @@ public interface Manager {
 
 
     /**
+     * Return descriptive information about this Manager implementation and
+     * the corresponding version number, in the format
+     * <code>&lt;description&gt;/&lt;version&gt;</code>.
+     */
+    public String getInfo();
+
+
+    /**
      * Return the default maximum inactive interval (in seconds)
      * for Sessions created by this Manager.
      */
@@ -117,29 +103,11 @@ public interface Manager {
 
 
     /**
-     * return the session id generator
-     */
-    public SessionIdGenerator getSessionIdGenerator();
-
-
-    /**
-     * Sets the session id generator
-     *
-     * @param sessionIdGenerator The session id generator
-     */
-    public void setSessionIdGenerator(SessionIdGenerator sessionIdGenerator);
-
-
-    /**
      * Gets the session id length (in bytes) of Sessions created by
      * this Manager.
      *
-     * @deprecated Use {@link SessionIdGenerator#getSessionIdLength()}.
-     *             This method will be removed in Tomcat 9 onwards.
-     *
      * @return The session id length
      */
-    @Deprecated
     public int getSessionIdLength();
 
 
@@ -147,12 +115,8 @@ public interface Manager {
      * Sets the session id length (in bytes) for Sessions created by this
      * Manager.
      *
-     * @deprecated Use {@link SessionIdGenerator#setSessionIdLength(int)}.
-     *             This method will be removed in Tomcat 9 onwards.
-     *
      * @param idLength The session id length
      */
-    @Deprecated
     public void setSessionIdLength(int idLength);
 
 
@@ -297,15 +261,6 @@ public interface Manager {
      * @param session   The session to change the session ID for
      */
     public void changeSessionId(Session session);
-
-
-    /**
-     * Change the session ID of the current session to a specified session ID.
-     *
-     * @param session   The session to change the session ID for
-     * @param newId   new session ID
-     */
-    public void changeSessionId(Session session, String newId);
 
 
     /**

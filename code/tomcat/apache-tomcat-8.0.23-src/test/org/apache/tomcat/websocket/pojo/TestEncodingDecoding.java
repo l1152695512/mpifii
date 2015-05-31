@@ -21,10 +21,10 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.servlet.ServletContextEvent;
@@ -68,9 +68,10 @@ public class TestEncodingDecoding extends TomcatBaseTest {
     @Test
     public void testProgrammaticEndPoints() throws Exception{
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
-        ctx.addApplicationListener(ProgramaticServerEndpointConfig.class.getName());
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext("", System.getProperty("java.io.tmpdir"));
+        ctx.addApplicationListener(
+                ProgramaticServerEndpointConfig.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
 
@@ -117,8 +118,9 @@ public class TestEncodingDecoding extends TomcatBaseTest {
         ServerConfigListener.setPojoClazz(Server.class);
 
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(ServerConfigListener.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -167,7 +169,7 @@ public class TestEncodingDecoding extends TomcatBaseTest {
         i = testEvent(MsgByteDecoder.class.getName()+":destroy", i);
     }
 
-
+    
     @Test
     public void testGenericsCoders() throws Exception {
         // Set up utility classes
@@ -176,8 +178,9 @@ public class TestEncodingDecoding extends TomcatBaseTest {
         ServerConfigListener.setPojoClazz(GenericsServer.class);
 
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(ServerConfigListener.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -191,7 +194,7 @@ public class TestEncodingDecoding extends TomcatBaseTest {
         URI uri = new URI("ws://localhost:" + getPort() + PATH_GENERICS_EP);
         Session session = wsContainer.connectToServer(client, uri);
 
-        ArrayList<String> list = new ArrayList<>(2);
+        ArrayList<String> list = new ArrayList<String>(2);
         list.add("str1");
         list.add("str2");
         session.getBasicRemote().sendObject(list);
@@ -233,7 +236,7 @@ public class TestEncodingDecoding extends TomcatBaseTest {
     @ClientEndpoint(decoders={ListStringDecoder.class},
             encoders={ListStringEncoder.class})
     public static class GenericsClient {
-        private Queue<Object> received = new ConcurrentLinkedQueue<>();
+        private Queue<Object> received = new ConcurrentLinkedQueue<Object>();
 
         @OnMessage
         public void rx(List<String> in) {
@@ -246,7 +249,7 @@ public class TestEncodingDecoding extends TomcatBaseTest {
             encoders={MsgStringEncoder.class, MsgByteEncoder.class})
     public static class Client {
 
-        private Queue<Object> received = new ConcurrentLinkedQueue<>();
+        private Queue<Object> received = new ConcurrentLinkedQueue<Object>();
 
         @OnMessage
         public void rx(MsgString in) {
@@ -266,7 +269,7 @@ public class TestEncodingDecoding extends TomcatBaseTest {
             configurator=SingletonConfigurator.class)
     public static class GenericsServer {
 
-        private Queue<Object> received = new ConcurrentLinkedQueue<>();
+        private Queue<Object> received = new ConcurrentLinkedQueue<Object>();
 
 
         @OnMessage
@@ -284,8 +287,8 @@ public class TestEncodingDecoding extends TomcatBaseTest {
             configurator=SingletonConfigurator.class)
     public static class Server {
 
-        private Queue<Object> received = new ConcurrentLinkedQueue<>();
-        static Map<String, Boolean> lifeCyclesCalled = new ConcurrentHashMap<>(8);
+        private Queue<Object> received = new ConcurrentLinkedQueue<Object>();
+        static HashMap<String, Boolean> lifeCyclesCalled = new HashMap<String, Boolean>(8);
 
         @OnMessage
         public MsgString rx(MsgString in) {
@@ -315,7 +318,7 @@ public class TestEncodingDecoding extends TomcatBaseTest {
     public static class MsgByteMessageHandler implements
             MessageHandler.Whole<MsgByte> {
 
-        public static Queue<Object> received = new ConcurrentLinkedQueue<>();
+        public static Queue<Object> received = new ConcurrentLinkedQueue<Object>();
         private final Session session;
 
         public MsgByteMessageHandler(Session session) {
@@ -330,7 +333,9 @@ public class TestEncodingDecoding extends TomcatBaseTest {
                 MsgByte msg = new MsgByte();
                 msg.setData("got it".getBytes());
                 session.getBasicRemote().sendObject(msg);
-            } catch (IOException | EncodeException e) {
+            } catch (IOException e) {
+                throw new IllegalStateException(e);
+            } catch (EncodeException e) {
                 throw new IllegalStateException(e);
             }
         }
@@ -339,7 +344,7 @@ public class TestEncodingDecoding extends TomcatBaseTest {
 
     public static class MsgStringMessageHandler implements MessageHandler.Whole<MsgString> {
 
-        public static Queue<Object> received = new ConcurrentLinkedQueue<>();
+        public static Queue<Object> received = new ConcurrentLinkedQueue<Object>();
         private final Session session;
 
         public MsgStringMessageHandler(Session session) {
@@ -353,7 +358,9 @@ public class TestEncodingDecoding extends TomcatBaseTest {
                 MsgByte msg = new MsgByte();
                 msg.setData(MESSAGE_ONE.getBytes());
                 session.getBasicRemote().sendObject(msg);
-            } catch (IOException | EncodeException e) {
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (EncodeException e) {
                 e.printStackTrace();
             }
         }
@@ -524,7 +531,7 @@ public class TestEncodingDecoding extends TomcatBaseTest {
 
         @Override
         public List<String> decode(String str) throws DecodeException {
-            List<String> lst = new ArrayList<>(1);
+            List<String> lst = new ArrayList<String>(1);
             str = str.substring(1,str.length()-1);
             String[] strings = str.split(",");
             for (String t : strings){
@@ -557,14 +564,14 @@ public class TestEncodingDecoding extends TomcatBaseTest {
                     }
                     @Override
                     public List<Class<? extends Encoder>> getEncoders() {
-                        List<Class<? extends Encoder>> encoders = new ArrayList<>(2);
+                        List<Class<? extends Encoder>> encoders = new ArrayList<Class<? extends Encoder>>(2);
                         encoders.add(MsgStringEncoder.class);
                         encoders.add(MsgByteEncoder.class);
                         return encoders;
                     }
                     @Override
                     public List<Class<? extends Decoder>> getDecoders() {
-                        List<Class<? extends Decoder>> decoders = new ArrayList<>(2);
+                        List<Class<? extends Decoder>> decoders = new ArrayList<Class<? extends Decoder>>(2);
                         decoders.add(MsgStringDecoder.class);
                         decoders.add(MsgByteDecoder.class);
                         return decoders;
@@ -601,8 +608,8 @@ public class TestEncodingDecoding extends TomcatBaseTest {
     @Test
     public void testUnsupportedObject() throws Exception{
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(ProgramaticServerEndpointConfig.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");

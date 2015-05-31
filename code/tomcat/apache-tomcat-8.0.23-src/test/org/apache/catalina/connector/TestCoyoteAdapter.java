@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
@@ -36,8 +35,8 @@ import org.apache.catalina.Wrapper;
 import org.apache.catalina.startup.SimpleHttpClient;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
+import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.buf.MessageBytes;
 
 public class TestCoyoteAdapter extends TomcatBaseTest {
 
@@ -50,7 +49,7 @@ public class TestCoyoteAdapter extends TomcatBaseTest {
             sb.append("0123456789ABCDEF");
         }
         TEXT_8K = sb.toString();
-        BYTES_8K = TEXT_8K.getBytes(StandardCharsets.UTF_8);
+        BYTES_8K = TEXT_8K.getBytes(B2CConverter.UTF_8);
     }
     @Test
     public void testPathParmsRootNone() throws Exception {
@@ -132,8 +131,9 @@ public class TestCoyoteAdapter extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "servlet", new PathParamServlet());
         ctx.addServletMapping("/", "servlet");
@@ -185,8 +185,9 @@ public class TestCoyoteAdapter extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("/testapp", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("/testapp", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "servlet", new PathParamServlet());
         ctx.addServletMapping("*.txt", "servlet");
@@ -235,8 +236,9 @@ public class TestCoyoteAdapter extends TomcatBaseTest {
 
         tomcat.getConnector().setURIEncoding(encoding);
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         PathInfoServlet servlet = new PathInfoServlet();
         Tomcat.addServlet(ctx, "servlet", servlet);
@@ -276,8 +278,9 @@ public class TestCoyoteAdapter extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         AsyncServlet servlet = new AsyncServlet();
         Wrapper w = Tomcat.addServlet(ctx, "async", servlet);
@@ -321,28 +324,6 @@ public class TestCoyoteAdapter extends TomcatBaseTest {
 
         Assert.assertTrue(servlet.isCompleted());
     }
-
-    @Test
-    public void testNormalize01() {
-        doTestNormalize("/foo/../bar", "/bar");
-    }
-
-    private void doTestNormalize(String input, String expected) {
-        MessageBytes mb = MessageBytes.newInstance();
-        byte[] b = input.getBytes(StandardCharsets.UTF_8);
-        mb.setBytes(b, 0, b.length);
-
-        boolean result = CoyoteAdapter.normalize(mb);
-        mb.toString();
-
-        if (expected == null) {
-            Assert.assertFalse(result);
-        } else {
-            Assert.assertTrue(result);
-            Assert.assertEquals(expected, mb.toString());
-        }
-    }
-
 
     private class AsyncServlet extends HttpServlet {
 

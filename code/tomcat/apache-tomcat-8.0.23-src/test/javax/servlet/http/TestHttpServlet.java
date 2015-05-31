@@ -38,8 +38,9 @@ public class TestHttpServlet extends TomcatBaseTest {
     public void testBug53454() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        StandardContext ctx = (StandardContext) tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        StandardContext ctx = (StandardContext)
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         // Map the test Servlet
         LargeBodyServlet largeBodyServlet = new LargeBodyServlet();
@@ -48,7 +49,8 @@ public class TestHttpServlet extends TomcatBaseTest {
 
         tomcat.start();
 
-        Map<String,List<String>> resHeaders= new HashMap<>();
+        Map<String,List<String>> resHeaders=
+                new HashMap<String, List<String>>();
         int rc = headUrl("http://localhost:" + getPort() + "/", new ByteChunk(),
                resHeaders);
 
@@ -80,7 +82,8 @@ public class TestHttpServlet extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
 
         // No file system docBase required
-        StandardContext ctx = (StandardContext) tomcat.addContext("", null);
+        StandardContext ctx = (StandardContext) tomcat.addContext("",
+                System.getProperty("java.io.tmpdir"));
 
         Bug57602ServletOuter outer = new Bug57602ServletOuter();
         Tomcat.addServlet(ctx, "Bug57602ServletOuter", outer);
@@ -92,7 +95,7 @@ public class TestHttpServlet extends TomcatBaseTest {
 
         tomcat.start();
 
-        Map<String,List<String>> resHeaders= new HashMap<>();
+        Map<String,List<String>> resHeaders= new HashMap<String,List<String>>();
         String path = "http://localhost:" + getPort() + "/outer";
         ByteChunk out = new ByteChunk();
 

@@ -28,7 +28,7 @@ import org.apache.tomcat.util.buf.ByteChunk;
 
 /**
  * Gzip output filter.
- *
+ * 
  * @author Remy Maucherat
  */
 public class GzipOutputFilter implements OutputFilter {
@@ -37,7 +37,7 @@ public class GzipOutputFilter implements OutputFilter {
     /**
      * Logger.
      */
-    protected static final org.apache.juli.logging.Log log =
+    protected static org.apache.juli.logging.Log log =
         org.apache.juli.logging.LogFactory.getLog(GzipOutputFilter.class);
 
 
@@ -59,7 +59,7 @@ public class GzipOutputFilter implements OutputFilter {
     /**
      * Fake internal output stream.
      */
-    protected final OutputStream fakeOutputStream = new FakeOutputStream();
+    protected OutputStream fakeOutputStream = new FakeOutputStream();
 
 
     // --------------------------------------------------- OutputBuffer Methods
@@ -67,16 +67,16 @@ public class GzipOutputFilter implements OutputFilter {
 
     /**
      * Write some bytes.
-     *
+     * 
      * @return number of bytes written by the filter
      */
     @Override
     public int doWrite(ByteChunk chunk, Response res)
         throws IOException {
         if (compressionStream == null) {
-            compressionStream = new GZIPOutputStream(fakeOutputStream, true);
+            compressionStream = new FlushableGZIPOutputStream(fakeOutputStream);
         }
-        compressionStream.write(chunk.getBytes(), chunk.getStart(),
+        compressionStream.write(chunk.getBytes(), chunk.getStart(), 
                                 chunk.getLength());
         return chunk.getLength();
     }
@@ -109,7 +109,7 @@ public class GzipOutputFilter implements OutputFilter {
     }
 
     /**
-     * Some filters need additional parameters from the response. All the
+     * Some filters need additional parameters from the response. All the 
      * necessary reading can occur in that method, as this method is called
      * after the response header processing is complete.
      */
@@ -136,7 +136,7 @@ public class GzipOutputFilter implements OutputFilter {
     public long end()
         throws IOException {
         if (compressionStream == null) {
-            compressionStream = new GZIPOutputStream(fakeOutputStream, true);
+            compressionStream = new FlushableGZIPOutputStream(fakeOutputStream);
         }
         compressionStream.finish();
         compressionStream.close();
@@ -159,12 +159,12 @@ public class GzipOutputFilter implements OutputFilter {
 
     protected class FakeOutputStream
         extends OutputStream {
-        protected final ByteChunk outputChunk = new ByteChunk();
-        protected final byte[] singleByteBuffer = new byte[1];
+        protected ByteChunk outputChunk = new ByteChunk();
+        protected byte[] singleByteBuffer = new byte[1];
         @Override
         public void write(int b)
             throws IOException {
-            // Shouldn't get used for good performance, but is needed for
+            // Shouldn't get used for good performance, but is needed for 
             // compatibility with Sun JDK 1.4.0
             singleByteBuffer[0] = (byte) (b & 0xff);
             outputChunk.setBytes(singleByteBuffer, 0, 1);

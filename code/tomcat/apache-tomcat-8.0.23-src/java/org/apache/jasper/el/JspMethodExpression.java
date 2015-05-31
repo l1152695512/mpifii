@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,11 +48,8 @@ public final class JspMethodExpression extends MethodExpression implements
     public MethodInfo getMethodInfo(ELContext context)
             throws NullPointerException, PropertyNotFoundException,
             MethodNotFoundException, ELException {
-        context.notifyBeforeEvaluation(getExpressionString());
         try {
-            MethodInfo result = this.target.getMethodInfo(context);
-            context.notifyAfterEvaluation(getExpressionString());
-            return result;
+            return this.target.getMethodInfo(context);
         } catch (MethodNotFoundException e) {
             if (e instanceof JspMethodNotFoundException) throw e;
             throw new JspMethodNotFoundException(this.mark, e);
@@ -69,11 +66,8 @@ public final class JspMethodExpression extends MethodExpression implements
     public Object invoke(ELContext context, Object[] params)
             throws NullPointerException, PropertyNotFoundException,
             MethodNotFoundException, ELException {
-        context.notifyBeforeEvaluation(getExpressionString());
         try {
-            Object result = this.target.invoke(context, params);
-            context.notifyAfterEvaluation(getExpressionString());
-            return result;
+            return this.target.invoke(context, params);
         } catch (MethodNotFoundException e) {
             if (e instanceof JspMethodNotFoundException) throw e;
             throw new JspMethodNotFoundException(this.mark, e);

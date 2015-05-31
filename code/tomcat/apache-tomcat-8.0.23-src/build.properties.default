@@ -23,9 +23,9 @@
 # -----------------------------------------------------------------------------
 
 # ----- Version Control Flags -----
-version.major=8
+version.major=7
 version.minor=0
-version.build=23
+version.build=62
 version.patch=0
 version.suffix=
 
@@ -34,7 +34,6 @@ version.suffix=
 execute.validate=false
 execute.test.bio=true
 execute.test.nio=true
-execute.test.nio2=true
 # Still requires APR/native library to be present
 execute.test.apr=true
 # Stop testing if a failure occurs
@@ -45,15 +44,11 @@ test.accesslog=false
 # Note the Cobertura code coverage tool is GPLv2 licensed
 test.cobertura=false
 
+# Location of Java7 JDK
+#java.7.home=/path/to/java7/jdk
+
 # Location of GPG executable (used only for releases)
 gpg.exec=/path/to/gpg
-
-# Code signing of Windows installer
-do.codesigning=false
-codesigning.user=request-via-pmc
-codesigning.pwd=request-via-pmc
-codesigning.partnercode=request-via-pmc
-codesigning.service=Microsoft Signing
 
 # ----- Settings to use when downloading files -----
 trydownload.httpusecaches=true
@@ -66,12 +61,9 @@ base.path=/usr/share/java
 #base.path=C:/path/to/the/repository
 #base.path=/usr/local
 
-compile.source=1.7
-compile.target=1.7
+compile.source=1.6
+compile.target=1.6
 compile.debug=true
-
-# Do not pass -deprecation (-Xlint:deprecation) flag to javac
-compile.deprecation=false
 
 base-apache.loc.1=http://www.apache.org/dist
 base-apache.loc.2=http://archive.apache.org/dist
@@ -154,6 +146,18 @@ tomcat-native.loc.2=${base-tomcat.loc.2}/tomcat-connectors/native/${tomcat-nativ
 tomcat-native.win.1=${base-tomcat.loc.1}/tomcat-connectors/native/${tomcat-native.version}/binaries/tomcat-native-${tomcat-native.version}-win32-bin.zip
 tomcat-native.win.2=${base-tomcat.loc.2}/tomcat-connectors/native/${tomcat-native.version}/binaries/tomcat-native-${tomcat-native.version}-win32-bin.zip
 
+# ----- Commons DBCP, version 1.1 or later -----
+commons-dbcp.version=1.4
+commons-dbcp.home=${base.path}/commons-dbcp-${commons-dbcp.version}-src
+commons-dbcp-src.loc.1=${base-commons.loc.1}/dbcp/source/commons-dbcp-${commons-dbcp.version}-src.tar.gz
+commons-dbcp-src.loc.2=${base-commons.loc.2}/dbcp/source/commons-dbcp-${commons-dbcp.version}-src.tar.gz
+
+# ----- Commons Pool, version 1.1 or later -----
+commons-pool.version=1.5.7
+commons-pool.home=${base.path}/commons-pool-${commons-pool.version}-src
+commons-pool-src.loc.1=${base-commons.loc.1}/pool/source/commons-pool-${commons-pool.version}-src.tar.gz
+commons-pool-src.loc.2=${base-commons.loc.2}/pool/source/commons-pool-${commons-pool.version}-src.tar.gz
+
 # ----- NSIS, version 2.0 or later -----
 nsis.home=${base.path}/nsis-2.46
 nsis.exe=${nsis.home}/makensis.exe
@@ -189,26 +193,8 @@ hamcrest.home=${base.path}/hamcrest-${hamcrest.version}
 hamcrest.jar=${hamcrest.home}/hamcrest-core-${hamcrest.version}.jar
 hamcrest.loc=${base-maven.loc}/org/hamcrest/hamcrest-core/${hamcrest.version}/hamcrest-core-${hamcrest.version}.jar
 
-# ----- EasyMock, version 3.2 or later -----
-easymock.version=3.2
-easymock.home=${base.path}/easymock-${easymock.version}
-easymock.loc=${base-sf.loc}/easymock/easymock-${easymock.version}.zip
-easymock.jar=${easymock.home}/easymock-${easymock.version}.jar
-
-# ----- cglib, used by EasyMock, version 2.2 or later -----
-cglib.version=2.2.3
-cglib.home=${base.path}/cglib-${cglib.version}
-cglib.loc=${base-sf.loc}/cglib/cglib-nodep-${cglib.version}.jar
-cglib.jar=${cglib.home}/cglib-nodep-${cglib.version}.jar
-
-# ----- objenesis, used by EasyMock, version 1.2 or later -----
-objenesis.version=1.2
-objenesis.home=${base.path}/objenesis-${objenesis.version}
-objenesis.loc=https://objenesis.googlecode.com/files/objenesis-${objenesis.version}-bin.zip
-objenesis.jar=${objenesis.home}/objenesis-${objenesis.version}.jar
-
 # ----- Checkstyle, version 6.0 or later -----
-checkstyle.version=6.6
+checkstyle.version=6.1.1
 checkstyle.home=${base.path}/checkstyle-${checkstyle.version}
 checkstyle.loc=${base-sf.loc}/checkstyle/checkstyle/${checkstyle.version}/checkstyle-${checkstyle.version}-all.jar
 checkstyle.jar=${checkstyle.home}/checkstyle-${checkstyle.version}-all.jar
@@ -229,6 +215,3 @@ cobertura.home=${base.path}/cobertura-${cobertura.version}
 cobertura.jar=${cobertura.home}/cobertura-${cobertura.version}.jar
 cobertura.lib=${cobertura.home}/lib
 cobertura.loc=${base-sf.loc}/cobertura/cobertura-2.0.3-bin.tar.gz
-
-# ----- JVM settings for unit tests
-java.net.preferIPv4Stack=false

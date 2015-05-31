@@ -52,8 +52,8 @@ public class StringManager {
     /**
      * The ResourceBundle for this StringManager.
      */
-    private final ResourceBundle bundle;
-    private final Locale locale;
+    private ResourceBundle bundle;
+    private Locale locale;
 
     /**
      * Creates a new StringManager for a given package. This is a
@@ -64,11 +64,9 @@ public class StringManager {
      * @param packageName Name of package to create StringManager for.
      */
     private StringManager(String packageName) {
-        ResourceBundle b = null;
-
         String bundleName = packageName + ".LocalStrings";
         try {
-            b = ResourceBundle.getBundle(bundleName, Locale.getDefault());
+            bundle = ResourceBundle.getBundle(bundleName, Locale.getDefault());
         } catch( MissingResourceException ex ) {
             // Try from the current loader (that's the case for trusted apps)
             // Should only be required if using a TC5 style classloader structure
@@ -76,7 +74,7 @@ public class StringManager {
             ClassLoader cl = Thread.currentThread().getContextClassLoader();
             if( cl != null ) {
                 try {
-                    b = ResourceBundle.getBundle(
+                    bundle = ResourceBundle.getBundle(
                             bundleName, Locale.getDefault(), cl);
                 } catch(MissingResourceException ex2) {
                     // Ignore
@@ -84,22 +82,19 @@ public class StringManager {
             }
         }
         // Get the actual locale, which may be different from the requested one
-        this.bundle = b;
         if (bundle != null) {
             locale = bundle.getLocale();
-        } else {
-            locale = null;
         }
     }
 
     /**
         Get a string from the underlying resource bundle or return
         null if the String is not found.
-
+     
         @param key to desired resource String
         @return resource String matching <i>key</i> from underlying
                 bundle or null if not found.
-        @throws IllegalArgumentException if <i>key</i> is null.
+        @throws IllegalArgumentException if <i>key</i> is null.        
      */
     public String getString(String key) {
         if(key == null){
@@ -151,8 +146,8 @@ public class StringManager {
     // STATIC SUPPORT METHODS
     // --------------------------------------------------------------
 
-    private static final Hashtable<String, StringManager> managers =
-        new Hashtable<>();
+    private static Hashtable<String, StringManager> managers =
+        new Hashtable<String, StringManager>();
 
     /**
      * Get the StringManager for a particular package. If a manager for

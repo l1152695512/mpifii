@@ -16,22 +16,19 @@
  */
 package org.apache.coyote.ajp;
 
-import java.nio.ByteBuffer;
-
-import javax.servlet.http.HttpUpgradeHandler;
-
 import org.apache.coyote.AbstractProtocol;
 import org.apache.coyote.Processor;
+import org.apache.coyote.http11.upgrade.servlet31.HttpUpgradeHandler;
 import org.apache.tomcat.util.net.SocketWrapper;
 import org.apache.tomcat.util.res.StringManager;
 
 public abstract class AbstractAjpProtocol<S> extends AbstractProtocol<S> {
-
+    
     /**
      * The string manager for this package.
      */
     protected static final StringManager sm =
-            StringManager.getManager(Constants.Package);
+        StringManager.getManager(Constants.Package);
 
 
     @Override
@@ -43,7 +40,7 @@ public abstract class AbstractAjpProtocol<S> extends AbstractProtocol<S> {
 
     // ------------------------------------------------- AJP specific properties
     // ------------------------------------------ managed in the ProtocolHandler
-
+    
     /**
      * Should authentication be done in the native web server layer,
      * or in the Servlet container ?
@@ -88,15 +85,6 @@ public abstract class AbstractAjpProtocol<S> extends AbstractProtocol<S> {
         }
     }
 
-    protected void configureProcessor(AbstractAjpProcessor<S> processor) {
-        processor.setAdapter(getAdapter());
-        processor.setTomcatAuthentication(getTomcatAuthentication());
-        processor.setTomcatAuthorization(getTomcatAuthorization());
-        processor.setRequiredSecret(requiredSecret);
-        processor.setKeepAliveTimeout(getKeepAliveTimeout());
-        processor.setClientCertProvider(getClientCertProvider());
-    }
-
     protected abstract static class AbstractAjpConnectionHandler<S,P extends AbstractAjpProcessor<S>>
             extends AbstractConnectionHandler<S, P> {
 
@@ -112,8 +100,19 @@ public abstract class AbstractAjpProtocol<S> extends AbstractProtocol<S> {
             socket.setAsync(true);
         }
 
+        /**
+         * @deprecated  Will be removed in Tomcat 8.0.x.
+         */
+        @Deprecated
         @Override
-        protected P createUpgradeProcessor(SocketWrapper<S> socket, ByteBuffer leftoverInput,
+        protected P createUpgradeProcessor(SocketWrapper<S> socket,
+                org.apache.coyote.http11.upgrade.UpgradeInbound inbound) {
+            // TODO should fail - throw IOE
+            return null;
+        }
+        
+        @Override
+        protected P createUpgradeProcessor(SocketWrapper<S> socket,
                 HttpUpgradeHandler httpUpgradeHandler) {
             // TODO should fail - throw IOE
             return null;

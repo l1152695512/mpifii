@@ -56,16 +56,15 @@ public class StringCache {
             "tomcat.util.buf.StringCache.cacheSize", "200"));
 
 
-    protected static final int maxStringSize =
-            Integer.parseInt(System.getProperty(
-                    "tomcat.util.buf.StringCache.maxStringSize", "128"));
+    protected static int maxStringSize = Integer.parseInt(System.getProperty(
+            "tomcat.util.buf.StringCache.maxStringSize", "128"));
 
 
    /**
      * Statistics hash map for byte chunk.
      */
-    protected static final HashMap<ByteEntry,int[]> bcStats =
-            new HashMap<>(cacheSize);
+    protected static HashMap<ByteEntry,int[]> bcStats =
+        new HashMap<ByteEntry,int[]>(cacheSize);
 
 
     /**
@@ -83,8 +82,8 @@ public class StringCache {
     /**
      * Statistics hash map for char chunk.
      */
-    protected static final HashMap<CharEntry,int[]> ccStats =
-            new HashMap<>(cacheSize);
+    protected static HashMap<CharEntry,int[]> ccStats =
+        new HashMap<CharEntry,int[]>(cacheSize);
 
 
     /**
@@ -233,7 +232,7 @@ public class StringCache {
                         long t1 = System.currentTimeMillis();
                         // Sort the entries according to occurrence
                         TreeMap<Integer,ArrayList<ByteEntry>> tempMap =
-                                new TreeMap<>();
+                            new TreeMap<Integer,ArrayList<ByteEntry>>();
                         for (Entry<ByteEntry,int[]> item : bcStats.entrySet()) {
                             ByteEntry entry = item.getKey();
                             int[] countA = item.getValue();
@@ -242,7 +241,7 @@ public class StringCache {
                             ArrayList<ByteEntry> list = tempMap.get(count);
                             if (list == null) {
                                 // Create list
-                                list = new ArrayList<>();
+                                list = new ArrayList<ByteEntry>();
                                 tempMap.put(count, list);
                             }
                             list.add(entry);
@@ -350,7 +349,7 @@ public class StringCache {
                         long t1 = System.currentTimeMillis();
                         // Sort the entries according to occurrence
                         TreeMap<Integer,ArrayList<CharEntry>> tempMap =
-                                new TreeMap<>();
+                            new TreeMap<Integer,ArrayList<CharEntry>>();
                         for (Entry<CharEntry,int[]> item : ccStats.entrySet()) {
                             CharEntry entry = item.getKey();
                             int[] countA = item.getValue();
@@ -359,7 +358,7 @@ public class StringCache {
                             ArrayList<CharEntry> list = tempMap.get(count);
                             if (list == null) {
                                 // Create list
-                                list = new ArrayList<>();
+                                list = new ArrayList<CharEntry>();
                                 tempMap.put(count, list);
                             }
                             list.add(entry);
@@ -638,11 +637,11 @@ public class StringCache {
     // -------------------------------------------------- ByteEntry Inner Class
 
 
-    private static class ByteEntry {
+    public static class ByteEntry {
 
-        private byte[] name = null;
-        private Charset charset = null;
-        private String value = null;
+        public byte[] name = null;
+        public Charset charset = null;
+        public String value = null;
 
         @Override
         public String toString() {
@@ -666,10 +665,10 @@ public class StringCache {
     // -------------------------------------------------- CharEntry Inner Class
 
 
-    private static class CharEntry {
+    public static class CharEntry {
 
-        private char[] name = null;
-        private String value = null;
+        public char[] name = null;
+        public String value = null;
 
         @Override
         public String toString() {

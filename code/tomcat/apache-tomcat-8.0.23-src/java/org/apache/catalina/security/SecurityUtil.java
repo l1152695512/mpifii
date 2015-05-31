@@ -45,6 +45,8 @@ import org.apache.tomcat.util.res.StringManager;
  * Servlet/Filter.
  *
  * This class uses reflection to invoke the methods.
+ *
+ * @author Jean-Francois Arcand
  */
 
 public final class SecurityUtil{
@@ -69,12 +71,12 @@ public final class SecurityUtil{
     /**
      * Cache every class for which we are creating methods.
      */
-    private static final Map<Class<?>,Method[]> classCache = new ConcurrentHashMap<>();
+    private static final Map<Object,Method[]> classCache = new ConcurrentHashMap<Object,Method[]>();
 
     private static final org.apache.juli.logging.Log log=
         org.apache.juli.logging.LogFactory.getLog( SecurityUtil.class );
 
-    private static final boolean packageDefinitionEnabled =
+    private static boolean packageDefinitionEnabled =
          (System.getProperty("package.definition") == null &&
            System.getProperty("package.access")  == null) ? false : true;
 
@@ -86,7 +88,7 @@ public final class SecurityUtil{
 
 
     /**
-     * Perform work as a particular <code>Subject</code>. Here the work
+     * Perform work as a particular </code>Subject</code>. Here the work
      * will be granted to a <code>null</code> subject.
      *
      * @param methodName the method to apply the security restriction
@@ -100,7 +102,7 @@ public final class SecurityUtil{
 
 
     /**
-     * Perform work as a particular <code>Subject</code>. Here the work
+     * Perform work as a particular </code>Subject</code>. Here the work
      * will be granted to a <code>null</code> subject.
      *
      * @param methodName the method to apply the security restriction
@@ -126,7 +128,7 @@ public final class SecurityUtil{
 
 
     /**
-     * Perform work as a particular <code>Subject</code>. Here the work
+     * Perform work as a particular </code>Subject</code>. Here the work
      * will be granted to a <code>null</code> subject.
      *
      * @param methodName the method to apply the security restriction
@@ -168,7 +170,7 @@ public final class SecurityUtil{
 
 
     /**
-     * Perform work as a particular <code>Subject</code>. Here the work
+     * Perform work as a particular </code>Subject</code>. Here the work
      * will be granted to a <code>null</code> subject.
      *
      * @param methodName the method to apply the security restriction
@@ -248,7 +250,7 @@ public final class SecurityUtil{
 
 
     /**
-     * Perform work as a particular <code>Subject</code>. Here the work
+     * Perform work as a particular </code>Subject</code>. Here the work
      * will be granted to a <code>null</code> subject.
      *
      * @param methodName the method to apply the security restriction

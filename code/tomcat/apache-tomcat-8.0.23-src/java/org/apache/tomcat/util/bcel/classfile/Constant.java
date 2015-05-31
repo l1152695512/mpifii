@@ -36,7 +36,7 @@ public abstract class Constant {
      * places we will use the tag for switch()es anyway.
      *
      * First, we want match the specification as closely as possible. Second we
-     * need the tag as an index to select the corresponding class name from the
+     * need the tag as an index to select the corresponding class name from the 
      * `CONSTANT_NAMES' array.
      */
     protected final byte tag;

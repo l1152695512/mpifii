@@ -53,23 +53,18 @@ public class SimplePOJOExample {
 
         Connection con = null;
         try {
-            con = datasource.getConnection();
-            Statement st = con.createStatement();
-            ResultSet rs = st.executeQuery("select * from user");
-            int cnt = 1;
-            while (rs.next()) {
-                System.out.println((cnt++)+". Host:" +rs.getString("Host")+" User:"+rs.getString("User")+" Password:"+rs.getString("Password"));
-            }
-            rs.close();
-            st.close();
+          con = datasource.getConnection();
+          Statement st = con.createStatement();
+          ResultSet rs = st.executeQuery("select * from user");
+          int cnt = 1;
+          while (rs.next()) {
+              System.out.println((cnt++)+". Host:" +rs.getString("Host")+" User:"+rs.getString("User")+" Password:"+rs.getString("Password"));
+          }
+          rs.close();
+          st.close();
         } finally {
-            if (con!=null) {
-                try {
-                    con.close();
-                } catch (Exception ignore) {
-                    // Ignore
-                }
-            }
+          if (con!=null) try {con.close();}catch (Exception ignore) {}
         }
     }
+
 }

@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,6 +28,7 @@ import javax.servlet.http.Cookie;
 import org.apache.catalina.Container;
 import org.apache.catalina.Context;
 import org.apache.catalina.Engine;
+import org.apache.catalina.Globals;
 import org.apache.catalina.LifecycleException;
 import org.apache.catalina.Manager;
 import org.apache.catalina.Realm;
@@ -59,6 +60,19 @@ import org.apache.tomcat.util.res.StringManager;
  */
 public class SingleSignOn extends ValveBase {
 
+    protected static final boolean LAST_ACCESS_AT_START;
+
+    static {
+        String lastAccessAtStart = System.getProperty(
+                "org.apache.catalina.session.StandardSession.LAST_ACCESS_AT_START");
+        if (lastAccessAtStart == null) {
+            LAST_ACCESS_AT_START = Globals.STRICT_SERVLET_COMPLIANCE;
+        } else {
+            LAST_ACCESS_AT_START =
+                Boolean.valueOf(lastAccessAtStart).booleanValue();
+        }
+    }
+    
     private static final StringManager sm = StringManager.getManager(Constants.Package);
 
     /* The engine at the top of the container hierarchy in which this SSO Valve
@@ -80,7 +94,15 @@ public class SingleSignOn extends ValveBase {
      * The cache of SingleSignOnEntry instances for authenticated Principals,
      * keyed by the cookie value that is used to select them.
      */
-    protected Map<String,SingleSignOnEntry> cache = new ConcurrentHashMap<>();
+    protected Map<String,SingleSignOnEntry> cache =
+            new ConcurrentHashMap<String,SingleSignOnEntry>();
+
+    /**
+     * Descriptive information about this Valve implementation.
+     */
+    protected static final String info =
+        "org.apache.catalina.authenticator.SingleSignOn";
+
 
     /**
      * Indicates whether this valve should require a downstream Authenticator to
@@ -190,6 +212,15 @@ public class SingleSignOn extends ValveBase {
 
 
     // ---------------------------------------------------------- Valve Methods
+
+    /**
+     * Return descriptive information about this Valve implementation.
+     */
+    @Override
+    public String getInfo() {
+        return info;
+    }
+
 
     /**
      * Perform single-sign-on support processing for this request.
@@ -314,8 +345,9 @@ public class SingleSignOn extends ValveBase {
         // session was logged out, we'll log out of all session associated with
         // the SSO.
         if (((session.getMaxInactiveInterval() > 0)
-            && (session.getIdleTimeInternal() >= session.getMaxInactiveInterval() * 1000))
-            || (!session.getManager().getContext().getState().isAvailable())) {
+            && (System.currentTimeMillis() - session.getThisAccessedTimeInternal() >=
+                session.getMaxInactiveInterval() * 1000))
+            || (!((Context)session.getManager().getContainer()).getState().isAvailable())) {
             if (containerLog.isDebugEnabled()) {
                 containerLog.debug(sm.getString("singleSignOn.debug.sessionTimeout",
                         ssoId, session));
@@ -444,8 +476,8 @@ public class SingleSignOn extends ValveBase {
      * <p>
      * If reauthentication is successful, the <code>Principal</code> and
      * authorization type associated with the SSO session will be bound
-     * to the given <code>Request</code> object via calls to
-     * {@link Request#setAuthType Request.setAuthType()} and
+     * to the given <code>Request</code> object via calls to 
+     * {@link Request#setAuthType Request.setAuthType()} and 
      * {@link Request#setUserPrincipal Request.setUserPrincipal()}
      * </p>
      *
@@ -454,7 +486,7 @@ public class SingleSignOn extends ValveBase {
      * @param realm     Realm implementation against which the caller is to
      *                  be authenticated
      * @param request   the request that needs to be authenticated
-     *
+     * 
      * @return  <code>true</code> if reauthentication was successful,
      *          <code>false</code> otherwise.
      */
@@ -469,13 +501,13 @@ public class SingleSignOn extends ValveBase {
 
         SingleSignOnEntry entry = cache.get(ssoId);
         if (entry != null && entry.getCanReauthenticate()) {
-
+            
             String username = entry.getUsername();
             if (username != null) {
                 Principal reauthPrincipal =
-                        realm.authenticate(username, entry.getPassword());
-                if (reauthPrincipal != null) {
-                    reauthenticated = true;
+                        realm.authenticate(username, entry.getPassword());                
+                if (reauthPrincipal != null) {                    
+                    reauthenticated = true;                    
                     // Bind the authorization credentials to the request
                     request.setAuthType(entry.getAuthType());
                     request.setUserPrincipal(reauthPrincipal);

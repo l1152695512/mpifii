@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ import org.apache.tomcat.util.ExceptionUtils;
 /**
  * A HttpServletResponseWrapper, used from
  * <code>SSIServletExternalResolver</code>
- *
+ * 
  * @author Bip Thelin
  * @author David Becker
  */
@@ -55,28 +55,28 @@ public class ResponseIncludeWrapper extends HttpServletResponseWrapper {
     /**
      * Our ServletOutputStream
      */
-    protected final ServletOutputStream captureServletOutputStream;
+    protected ServletOutputStream captureServletOutputStream;
     protected ServletOutputStream servletOutputStream;
     protected PrintWriter printWriter;
-
-    private final ServletContext context;
-    private final HttpServletRequest request;
+    
+    private ServletContext context;
+    private HttpServletRequest request;
 
     static {
         RFC1123_FORMAT = new SimpleDateFormat(RFC1123_PATTERN, Locale.US);
         RFC1123_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
     }
-
+    
     /**
      * Initialize our wrapper with the current HttpServletResponse and
      * ServletOutputStream.
-     *
+     * 
      * @param context The servlet context
      * @param request The HttpServletResponse to use
      * @param response The response to use
      * @param captureServletOutputStream The ServletOutputStream to use
      */
-    public ResponseIncludeWrapper(ServletContext context,
+    public ResponseIncludeWrapper(ServletContext context, 
             HttpServletRequest request, HttpServletResponse response,
             ServletOutputStream captureServletOutputStream) {
         super(response);
@@ -104,7 +104,7 @@ public class ResponseIncludeWrapper extends HttpServletResponseWrapper {
     /**
      * Return a printwriter, throws and exception if a OutputStream already
      * been returned.
-     *
+     * 
      * @return a PrintWriter object
      * @exception java.io.IOException
      *                if the outputstream already been called
@@ -127,7 +127,7 @@ public class ResponseIncludeWrapper extends HttpServletResponseWrapper {
     /**
      * Return a OutputStream, throws and exception if a printwriter already
      * been returned.
-     *
+     * 
      * @return a OutputStream object
      * @exception java.io.IOException
      *                if the printwriter already been called
@@ -142,23 +142,34 @@ public class ResponseIncludeWrapper extends HttpServletResponseWrapper {
         }
         throw new IllegalStateException();
     }
-
-
+    
+    
     /**
      * Returns the value of the <code>last-modified</code> header field. The
      * result is the number of milliseconds since January 1, 1970 GMT.
      *
      * @return the date the resource referenced by this
      *   <code>ResponseIncludeWrapper</code> was last modified, or -1 if not
-     *   known.
+     *   known.                                                             
      */
-    public long getLastModified() {
+    public long getLastModified() {                                                                                                                                                           
         if (lastModified == -1) {
             // javadocs say to return -1 if date not known, if you want another
             // default, put it here
             return -1;
         }
         return lastModified;
+    }
+
+    /**
+     * Sets the value of the <code>last-modified</code> header field.
+     *
+     * @param lastModified The number of milliseconds since January 1, 1970 GMT.
+     */
+    public void setLastModified(long lastModified) {
+        this.lastModified = lastModified;
+        ((HttpServletResponse) getResponse()).setDateHeader(LAST_MODIFIED,
+                lastModified);
     }
 
     /**
@@ -181,7 +192,7 @@ public class ResponseIncludeWrapper extends HttpServletResponseWrapper {
         }
         return contentType;
     }
-
+    
     /**
      * Sets the value of the <code>content-type</code> header field.
      *

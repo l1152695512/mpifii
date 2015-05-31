@@ -30,38 +30,38 @@ package org.apache.catalina;
  *  -----------------------------
  *  |                           |
  *  | init()                    |
- * NEW -»-- INITIALIZING        |
- * | |           |              |     ------------------«-----------------------
+ * NEW ->-- INITIALIZING        |
+ * | |           |              |     ------------------<-----------------------
  * | |           |auto          |     |                                        |
  * | |          \|/    start() \|/   \|/     auto          auto         stop() |
- * | |      INITIALIZED --»-- STARTING_PREP --»- STARTING --»- STARTED --»---  |
+ * | |      INITIALIZED -->-- STARTING_PREP -->- STARTING -->- STARTED -->---  |
  * | |         |                                                  |         |  |
  * | |         |                                                  |         |  |
  * | |         |                                                  |         |  |
  * | |destroy()|                                                  |         |  |
- * | --»-----«--       auto                    auto               |         |  |
- * |     |       ---------«----- MUST_STOP ---------------------«--         |  |
+ * | -->-----<--       auto                    auto               |         |  |
+ * |     |       ---------<----- MUST_STOP ---------------------<--         |  |
  * |     |       |                                                          |  |
- * |    \|/      ---------------------------«--------------------------------  ^
+ * |    \|/      ---------------------------<--------------------------------  ^
  * |     |       |                                                             |
  * |     |      \|/            auto                 auto              start()  |
- * |     |  STOPPING_PREP ------»----- STOPPING ------»----- STOPPED ----»------
+ * |     |  STOPPING_PREP ------>----- STOPPING ------>----- STOPPED ---->------
  * |     |                                ^                  |  |  ^
  * |     |               stop()           |                  |  |  |
  * |     |       --------------------------                  |  |  |
  * |     |       |                                  auto     |  |  |
- * |     |       |                  MUST_DESTROY------«-------  |  |
+ * |     |       |                  MUST_DESTROY------<-------  |  |
  * |     |       |                    |                         |  |
  * |     |       |                    |auto                     |  |
  * |     |       |    destroy()      \|/              destroy() |  |
- * |     |    FAILED ----»------ DESTROYING ---«-----------------  |
+ * |     |    FAILED ---->------ DESTROYING ---<-----------------  |
  * |     |                        ^     |                          |
  * |     |     destroy()          |     |auto                      |
- * |     --------»-----------------    \|/                         |
+ * |     -------->-----------------    \|/                         |
  * |                                 DESTROYED                     |
  * |                                                               |
  * |                            stop()                             |
- * ----»-----------------------------»------------------------------
+ * --->------------------------------>------------------------------
  *
  * Any state can transition to FAILED.
  *
@@ -106,7 +106,7 @@ public interface Lifecycle {
 
 
     /**
-     * The LifecycleEvent type for the "component before init" event.
+     * The LifecycleEvent type for the "component after init" event.
      */
     public static final String BEFORE_INIT_EVENT = "before_init";
 
@@ -201,11 +201,8 @@ public interface Lifecycle {
 
 
     /**
-     * Get the life cycle listeners associated with this life cycle.
-     *
-     * @return An array containing the life cycle listeners associated with this
-     *         life cycle. If this component has no listeners registered, a
-     *         zero-length array is returned.
+     * Get the life cycle listeners associated with this life cycle. If this
+     * component has no listeners registered, a zero-length array is returned.
      */
     public LifecycleListener[] findLifecycleListeners();
 
@@ -318,11 +315,7 @@ public interface Lifecycle {
 
     /**
      * Obtain a textual representation of the current component state. Useful
-     * for JMX. The format of this string may vary between point releases and
-     * should not be relied upon to determine component state. To determine
-     * component state, use {@link #getState()}.
-     *
-     * @return The name of the current component state.
+     * for JMX.
      */
     public String getStateName();
 }

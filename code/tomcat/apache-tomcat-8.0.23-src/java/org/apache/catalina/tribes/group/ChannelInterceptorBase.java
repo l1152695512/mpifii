@@ -23,6 +23,7 @@ import org.apache.catalina.tribes.Member;
 
 /**
  * Abstract class for the interceptor base class.
+ * @author Filip Hanik
  */
 public abstract class ChannelInterceptorBase implements ChannelInterceptor {
 
@@ -34,8 +35,8 @@ public abstract class ChannelInterceptorBase implements ChannelInterceptor {
     public ChannelInterceptorBase() {
 
     }
-
-    public boolean okToProcess(int messageFlags) {
+    
+    public boolean okToProcess(int messageFlags) { 
         if (this.optionFlag == 0 ) return true;
         return ((optionFlag&messageFlags) == optionFlag);
     }
@@ -79,6 +80,10 @@ public abstract class ChannelInterceptorBase implements ChannelInterceptor {
     @Override
     public void messageReceived(ChannelMessage msg) {
         if (getPrevious() != null) getPrevious().messageReceived(msg);
+    }
+
+    public boolean accept(ChannelMessage msg) {
+        return true;
     }
 
     @Override
@@ -138,7 +143,7 @@ public abstract class ChannelInterceptorBase implements ChannelInterceptor {
         if ( getNext()!=null ) return getNext().getLocalMember(incAlive);
         else return null;
     }
-
+    
     /**
      * Starts up the channel. This can be called multiple times for individual services to start
      * The svc parameter can be the logical or value of any constants
@@ -170,7 +175,7 @@ public abstract class ChannelInterceptorBase implements ChannelInterceptor {
     public void stop(int svc) throws ChannelException {
         if (getNext() != null) getNext().stop(svc);
     }
-
+    
     @Override
     public void fireInterceptorEvent(InterceptorEvent event) {
         //empty operation

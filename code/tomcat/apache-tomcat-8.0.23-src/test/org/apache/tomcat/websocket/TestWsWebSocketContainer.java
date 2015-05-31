@@ -16,12 +16,12 @@
  */
 package org.apache.tomcat.websocket;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
+import java.net.URL;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -35,7 +35,6 @@ import javax.websocket.ContainerProvider;
 import javax.websocket.DeploymentException;
 import javax.websocket.Endpoint;
 import javax.websocket.EndpointConfig;
-import javax.websocket.Extension;
 import javax.websocket.MessageHandler;
 import javax.websocket.OnMessage;
 import javax.websocket.Session;
@@ -83,8 +82,9 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
     @Test
     public void testConnectToServerEndpoint() throws Exception {
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -121,8 +121,9 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
     @Test(expected=javax.websocket.DeploymentException.class)
     public void testConnectToServerEndpointInvalidScheme() throws Exception {
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
 
         tomcat.start();
@@ -139,8 +140,9 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
     @Test(expected=javax.websocket.DeploymentException.class)
     public void testConnectToServerEndpointNoHost() throws Exception {
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
 
         tomcat.start();
@@ -205,8 +207,9 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
             boolean isTextMessage, boolean pass) throws Exception {
 
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -313,8 +316,9 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
             throws Exception {
 
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(BlockingConfig.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -356,9 +360,6 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
 
         long timeout = System.currentTimeMillis() - lastSend;
 
-        // Clear the server side block and prevent and further blocks to allow
-        // the server to shutdown cleanly
-        BlockingPojo.clearBlock();
 
         String msg = "Time out was [" + timeout + "] ms";
 
@@ -384,27 +385,25 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
     }
 
 
-    private static volatile boolean timeoutOnContainer = false;
+    private static volatile boolean timoutOnContainer = false;
 
     private void doTestWriteTimeoutServer(boolean setTimeoutOnContainer)
             throws Exception {
 
         // This will never work for BIO
-        Assume.assumeFalse(
-                "Skipping test. This feature will never work for BIO connector.",
-                getProtocol().equals(Http11Protocol.class.getName()));
 
         /*
          * Note: There are all sorts of horrible uses of statics in this test
          *       because the API uses classes and the tests really need access
          *       to the instances which simply isn't possible.
          */
-        timeoutOnContainer = setTimeoutOnContainer;
+        timoutOnContainer = setTimeoutOnContainer;
 
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(ConstantTxConfig.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -458,8 +457,6 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
                     (ServerContainer) sce.getServletContext().getAttribute(
                             Constants.SERVER_CONTAINER_SERVLET_CONTEXT_ATTRIBUTE);
             try {
-                // Reset blocking state
-                BlockingPojo.resetBlock();
                 sc.addEndpoint(BlockingPojo.class);
             } catch (DeploymentException e) {
                 throw new IllegalStateException(e);
@@ -470,35 +467,11 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
 
     @ServerEndpoint("/block")
     public static class BlockingPojo {
-
-        private static Object monitor = new Object();
-        // Enable blockign by default
-        private static boolean block = true;
-
-        /**
-         * Clear any current block.
-         */
-        public static void clearBlock() {
-            synchronized (monitor) {
-                BlockingPojo.block = false;
-                monitor.notifyAll();
-            }
-        }
-
-        public static void resetBlock() {
-            synchronized (monitor) {
-                block = true;
-            }
-        }
         @SuppressWarnings("unused")
         @OnMessage
         public void echoTextMessage(Session session, String msg, boolean last) {
             try {
-                synchronized (monitor) {
-                    while (block) {
-                        monitor.wait();
-                    }
-                }
+                Thread.sleep(60000);
             } catch (InterruptedException e) {
                 // Ignore
             }
@@ -510,11 +483,7 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
         public void echoBinaryMessage(Session session, ByteBuffer msg,
                 boolean last) {
             try {
-                synchronized (monitor) {
-                    while (block) {
-                        monitor.wait();
-                    }
-                }
+                Thread.sleep(TIMEOUT_MS * 10);
             } catch (InterruptedException e) {
                 // Ignore
             }
@@ -552,7 +521,7 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
             exception = null;
             running = true;
 
-            if (!TestWsWebSocketContainer.timeoutOnContainer) {
+            if (!TestWsWebSocketContainer.timoutOnContainer) {
                 session.getAsyncRemote().setSendTimeout(TIMEOUT_MS);
             }
 
@@ -567,7 +536,9 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
                             ByteBuffer.wrap(MESSAGE_BINARY_4K));
                     f.get();
                 }
-            } catch (ExecutionException | InterruptedException e) {
+            } catch (ExecutionException e) {
+                exception = e;
+            } catch (InterruptedException e) {
                 exception = e;
             }
             timeout = System.currentTimeMillis() - lastSend;
@@ -601,7 +572,7 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
             try {
                 sc.addEndpoint(ServerEndpointConfig.Builder.create(
                         ConstantTxEndpoint.class, PATH).build());
-                if (TestWsWebSocketContainer.timeoutOnContainer) {
+                if (TestWsWebSocketContainer.timoutOnContainer) {
                     sc.setAsyncSendTimeout(TIMEOUT_MS);
                 }
             } catch (DeploymentException e) {
@@ -614,8 +585,9 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
     @Test
     public void testGetOpenSessions() throws Exception {
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -662,8 +634,9 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
     public void testSessionExpiryContainer() throws Exception {
 
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -719,8 +692,9 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
     public void testSessionExpirySession() throws Exception {
 
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -753,9 +727,9 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
             Assert.assertEquals(expected, getOpenCount(setA));
 
             int count = 0;
-            while (getOpenCount(setA) == expected && count < 50) {
+            while (getOpenCount(setA) == expected && count < 5) {
                 count ++;
-                Thread.sleep(100);
+                Thread.sleep(1000);
             }
 
             expected--;
@@ -804,8 +778,9 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
     public void testConnectToServerEndpointSSL() throws Exception {
 
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -818,9 +793,12 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
                 ContainerProvider.getWebSocketContainer();
         ClientEndpointConfig clientEndpointConfig =
                 ClientEndpointConfig.Builder.create().build();
+        URL truststoreUrl = this.getClass().getClassLoader().getResource(
+                "org/apache/tomcat/util/net/ca.jks");
+        File truststoreFile = new File(truststoreUrl.toURI());
         clientEndpointConfig.getUserProperties().put(
                 WsWebSocketContainer.SSL_TRUSTSTORE_PROPERTY,
-                "test/org/apache/tomcat/util/net/ca.jks");
+                truststoreFile.getAbsolutePath());
         Session wsSession = wsContainer.connectToServer(
                 TesterProgrammaticEndpoint.class,
                 clientEndpointConfig,
@@ -887,8 +865,9 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
             throws Exception {
 
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -918,47 +897,5 @@ public class TestWsWebSocketContainer extends TomcatBaseTest {
 
         Assert.assertEquals(Boolean.valueOf(expectOpen),
                 Boolean.valueOf(s.isOpen()));
-    }
-
-
-    @Test
-    public void testPerMessageDefalteClient() throws Exception {
-        Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
-        ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
-        Tomcat.addServlet(ctx, "default", new DefaultServlet());
-        ctx.addServletMapping("/", "default");
-
-        tomcat.start();
-
-        Extension perMessageDeflate = new WsExtension(PerMessageDeflate.NAME);
-        List<Extension> extensions = new ArrayList<>(1);
-        extensions.add(perMessageDeflate);
-
-        ClientEndpointConfig clientConfig =
-                ClientEndpointConfig.Builder.create().extensions(extensions).build();
-
-        WebSocketContainer wsContainer =
-                ContainerProvider.getWebSocketContainer();
-        Session wsSession = wsContainer.connectToServer(
-                TesterProgrammaticEndpoint.class,
-                clientConfig,
-                new URI("ws://localhost:" + getPort() +
-                        TesterEchoServer.Config.PATH_ASYNC));
-        CountDownLatch latch = new CountDownLatch(1);
-        BasicText handler = new BasicText(latch);
-        wsSession.addMessageHandler(handler);
-        wsSession.getBasicRemote().sendText(MESSAGE_STRING_1);
-
-        boolean latchResult = handler.getLatch().await(10, TimeUnit.SECONDS);
-
-        Assert.assertTrue(latchResult);
-
-        Queue<String> messages = handler.getMessages();
-        Assert.assertEquals(1, messages.size());
-        Assert.assertEquals(MESSAGE_STRING_1, messages.peek());
-
-        ((WsWebSocketContainer) wsContainer).destroy();
     }
 }

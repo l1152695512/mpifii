@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,7 +112,7 @@ public interface TagPluginContext {
     /**
      * Associate the attribute with a value in the current tagplugin context.
      * The plugin attributes can be used for communication among tags that
-     * must work together as a group.  See &lt;c:when&gt; for an example.
+     * must work together as a group.  See <c:when> for an example.
      */
     void setPluginAttribute(String attr, Object value);
 

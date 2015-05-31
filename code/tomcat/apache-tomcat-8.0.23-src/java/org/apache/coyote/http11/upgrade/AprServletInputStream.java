@@ -18,7 +18,6 @@ package org.apache.coyote.http11.upgrade;
 
 import java.io.EOFException;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
@@ -35,18 +34,13 @@ public class AprServletInputStream extends AbstractServletInputStream {
 
     private final SocketWrapper<Long> wrapper;
     private final long socket;
-    private ByteBuffer leftoverInput;
     private volatile boolean eagain = false;
     private volatile boolean closed = false;
 
 
-    public AprServletInputStream(SocketWrapper<Long> wrapper, ByteBuffer leftoverInput) {
+    public AprServletInputStream(SocketWrapper<Long> wrapper) {
         this.wrapper = wrapper;
         this.socket = wrapper.getSocket().longValue();
-        if (leftoverInput != null) {
-            this.leftoverInput = ByteBuffer.allocate(leftoverInput.remaining());
-            this.leftoverInput.put(leftoverInput);
-        }
     }
 
 
@@ -58,24 +52,13 @@ public class AprServletInputStream extends AbstractServletInputStream {
             throw new IOException(sm.getString("apr.closed", Long.valueOf(socket)));
         }
 
-        if (leftoverInput != null) {
-            if (leftoverInput.remaining() < len) {
-                len = leftoverInput.remaining();
-            }
-            leftoverInput.get(b, off, len);
-            if (leftoverInput.remaining() == 0) {
-                leftoverInput = null;
-            }
-            return len;
-        }
-
         Lock readLock = wrapper.getBlockingStatusReadLock();
         WriteLock writeLock = wrapper.getBlockingStatusWriteLock();
 
         boolean readDone = false;
         int result = 0;
-        readLock.lock();
         try {
+            readLock.lock();
             if (wrapper.getBlockingStatus() == block) {
                 result = Socket.recv(socket, b, off, len);
                 readDone = true;
@@ -85,14 +68,14 @@ public class AprServletInputStream extends AbstractServletInputStream {
         }
 
         if (!readDone) {
-            writeLock.lock();
             try {
+                writeLock.lock();
                 wrapper.setBlockingStatus(block);
                 // Set the current settings for this socket
                 Socket.optSet(socket, Socket.APR_SO_NONBLOCK, (block ? 0 : 1));
                 // Downgrade the lock
-                readLock.lock();
                 try {
+                    readLock.lock();
                     writeLock.unlock();
                     result = Socket.recv(socket, b, off, len);
                 } finally {

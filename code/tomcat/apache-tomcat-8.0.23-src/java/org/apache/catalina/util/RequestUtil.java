@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -83,6 +83,46 @@ public final class RequestUtil {
 
 
     /**
+     * Normalize a relative URI path that may have relative values ("/./",
+     * "/../", and so on ) it it.  <strong>WARNING</strong> - This method is
+     * useful only for normalizing application-generated paths.  It does not
+     * try to perform security checks for malicious input.
+     *
+     * @param path Relative path to be normalized
+     *
+     * @deprecated Deprecated to resolve a circular package dependency and will
+     *             be removed in Tomcat 8.0.x. Use {@link
+     *             org.apache.tomcat.util.http.RequestUtil#normalize(String)} as
+     *             a replacement.
+     */
+    @Deprecated
+    public static String normalize(String path) {
+        return org.apache.tomcat.util.http.RequestUtil.normalize(path);
+    }
+
+
+    /**
+     * Normalize a relative URI path that may have relative values ("/./",
+     * "/../", and so on ) it it.  <strong>WARNING</strong> - This method is
+     * useful only for normalizing application-generated paths.  It does not
+     * try to perform security checks for malicious input.
+     *
+     * @param path Relative path to be normalized
+     * @param replaceBackSlash Should '\\' be replaced with '/'
+     *
+     * @deprecated Deprecated to resolve a circular package dependency and will
+     *             be removed in Tomcat 8.0.x. Use {@link
+     *             org.apache.tomcat.util.http.RequestUtil#normalize(String,
+     *             boolean)} as a replacement.
+     */
+    @Deprecated
+    public static String normalize(String path, boolean replaceBackSlash) {
+        return org.apache.tomcat.util.http.RequestUtil.normalize(path,
+                replaceBackSlash);
+    }
+
+
+    /**
      * Append request parameters from the specified String to the specified
      * Map.  It is presumed that the specified Map is not accessed from any
      * other thread, so no synchronization is performed.
@@ -90,7 +130,7 @@ public final class RequestUtil {
      * <strong>IMPLEMENTATION NOTE</strong>:  URL decoding is performed
      * individually on the parsed name and value elements, rather than on
      * the entire query string ahead of time, to properly deal with the case
-     * where the name or value includes an encoded "=" or "&amp;" character
+     * where the name or value includes an encoded "=" or "&" character
      * that would otherwise be interpreted as a delimiter.
      *
      * @param map Map that accumulates the resulting parameters
@@ -118,6 +158,147 @@ public final class RequestUtil {
             }
 
         }
+
+    }
+
+
+    /**
+     * Decode and return the specified URL-encoded String.
+     * When the byte array is converted to a string, the system default
+     * character encoding is used...  This may be different than some other
+     * servers. It is assumed the string is not a query string.
+     *
+     * @param str The url-encoded string
+     *
+     * @exception IllegalArgumentException if a '%' character is not followed
+     * by a valid 2-digit hexadecimal number
+     */
+    public static String URLDecode(String str) {
+        return URLDecode(str, null);
+    }
+    
+    
+    /**
+     * Decode and return the specified URL-encoded String. It is assumed the
+     * string is not a query string.
+     *
+     * @param str The url-encoded string
+     * @param enc The encoding to use; if null, the default encoding is used. If
+     * an unsupported encoding is specified null will be returned
+     * @exception IllegalArgumentException if a '%' character is not followed
+     * by a valid 2-digit hexadecimal number
+     */
+    public static String URLDecode(String str, String enc) {
+        return URLDecode(str, enc, false);
+    }
+    
+    /**
+     * Decode and return the specified URL-encoded String.
+     *
+     * @param str The url-encoded string
+     * @param enc The encoding to use; if null, the default encoding is used. If
+     * an unsupported encoding is specified null will be returned
+     * @param isQuery Is this a query string being processed
+     * @exception IllegalArgumentException if a '%' character is not followed
+     * by a valid 2-digit hexadecimal number
+     */
+    public static String URLDecode(String str, String enc, boolean isQuery) {
+        if (str == null)
+            return (null);
+
+        // use the specified encoding to extract bytes out of the
+        // given string so that the encoding is not lost. If an
+        // encoding is not specified, let it use platform default
+        byte[] bytes = null;
+        try {
+            if (enc == null) {
+                bytes = str.getBytes(Charset.defaultCharset());
+            } else {
+                bytes = str.getBytes(B2CConverter.getCharset(enc));
+            }
+        } catch (UnsupportedEncodingException uee) {
+            if (log.isDebugEnabled()) {
+                log.debug(sm.getString("requestUtil.urlDecode.uee", enc), uee);
+            }
+        }
+
+        return URLDecode(bytes, enc, isQuery);
+
+    }
+
+
+    /**
+     * Decode and return the specified URL-encoded byte array. It is assumed
+     * the string is not a query string.
+     *
+     * @param bytes The url-encoded byte array
+     * @exception IllegalArgumentException if a '%' character is not followed
+     * by a valid 2-digit hexadecimal number
+     */
+    public static String URLDecode(byte[] bytes) {
+        return URLDecode(bytes, null);
+    }
+
+
+    /**
+     * Decode and return the specified URL-encoded byte array. It is assumed
+     * the string is not a query string.
+     *
+     * @param bytes The url-encoded byte array
+     * @param enc The encoding to use; if null, the default encoding is used
+     * @exception IllegalArgumentException if a '%' character is not followed
+     * by a valid 2-digit hexadecimal number
+     *
+     * @deprecated  Unused - will be removed in 8.0.x
+     */
+    @Deprecated
+    public static String URLDecode(byte[] bytes, String enc) {
+        return URLDecode(bytes, enc, false);
+    }
+
+    /**
+     * Decode and return the specified URL-encoded byte array.
+     *
+     * @param bytes The url-encoded byte array
+     * @param enc The encoding to use; if null, the default encoding is used. If
+     * an unsupported encoding is specified null will be returned
+     * @param isQuery Is this a query string being processed
+     * @exception IllegalArgumentException if a '%' character is not followed
+     * by a valid 2-digit hexadecimal number
+     */
+    public static String URLDecode(byte[] bytes, String enc, boolean isQuery) {
+    
+        if (bytes == null)
+            return null;
+
+        int len = bytes.length;
+        int ix = 0;
+        int ox = 0;
+        while (ix < len) {
+            byte b = bytes[ix++];     // Get byte to test
+            if (b == '+' && isQuery) {
+                b = (byte)' ';
+            } else if (b == '%') {
+                if (ix + 2 > len) {
+                    throw new IllegalArgumentException(
+                            sm.getString("requestUtil.urlDecode.missingDigit"));
+                }
+                b = (byte) ((convertHexDigit(bytes[ix++]) << 4)
+                            + convertHexDigit(bytes[ix++]));
+            }
+            bytes[ox++] = b;
+        }
+        if (enc != null) {
+            try {
+                return new String(bytes, 0, ox, B2CConverter.getCharset(enc));
+            } catch (UnsupportedEncodingException uee) {
+                if (log.isDebugEnabled()) {
+                    log.debug(sm.getString("requestUtil.urlDecode.uee", enc), uee);
+                }
+                return null;
+            }
+        }
+        return new String(bytes, 0, ox);
 
     }
 
@@ -169,7 +350,7 @@ public final class RequestUtil {
      * <strong>IMPLEMENTATION NOTE</strong>:  URL decoding is performed
      * individually on the parsed name and value elements, rather than on
      * the entire query string ahead of time, to properly deal with the case
-     * where the name or value includes an encoded "=" or "&amp;" character
+     * where the name or value includes an encoded "=" or "&" character
      * that would otherwise be interpreted as a delimiter.
      *
      * NOTE: byte array data is modified by this method.  Caller beware.
@@ -186,7 +367,7 @@ public final class RequestUtil {
             String encoding) throws UnsupportedEncodingException {
 
         Charset charset = B2CConverter.getCharset(encoding);
-
+        
         if (data != null && data.length > 0) {
             int    ix = 0;
             int    ox = 0;
@@ -209,8 +390,8 @@ public final class RequestUtil {
                         ox = 0;
                     } else {
                         data[ox++] = c;
-                    }
-                    break;
+                    }                   
+                    break;  
                 case '+':
                     data[ox++] = (byte)' ';
                     break;

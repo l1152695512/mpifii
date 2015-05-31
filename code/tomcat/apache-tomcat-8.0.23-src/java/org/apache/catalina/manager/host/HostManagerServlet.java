@@ -5,16 +5,19 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.catalina.manager.host;
+
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -22,8 +25,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.util.Enumeration;
+import java.util.Locale;
 import java.util.StringTokenizer;
 
+import javax.management.MBeanServer;
 import javax.servlet.ServletException;
 import javax.servlet.UnavailableException;
 import javax.servlet.http.HttpServlet;
@@ -34,19 +40,21 @@ import org.apache.catalina.Container;
 import org.apache.catalina.ContainerServlet;
 import org.apache.catalina.Context;
 import org.apache.catalina.Engine;
+import org.apache.catalina.Globals;
 import org.apache.catalina.Host;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.core.ContainerBase;
 import org.apache.catalina.core.StandardHost;
 import org.apache.catalina.startup.HostConfig;
 import org.apache.tomcat.util.ExceptionUtils;
+import org.apache.tomcat.util.modeler.Registry;
 import org.apache.tomcat.util.res.StringManager;
 
 
 /**
  * Servlet that enables remote management of the virtual hosts installed
- * on the server.  Normally, this functionality will be protected by
- * a security constraint in the web application deployment descriptor.
+ * on the server.  Normally, this functionality will be protected by 
+ * a security constraint in the web application deployment descriptor.  
  * However, this requirement can be relaxed during testing.
  * <p>
  * This servlet examines the value returned by <code>getPathInfo()</code>
@@ -54,18 +62,18 @@ import org.apache.tomcat.util.res.StringManager;
  * The following actions and parameters (starting after the servlet path)
  * are supported:
  * <ul>
- * <li><b>/add?name={host-name}&amp;aliases={host-aliases}&amp;manager={manager}</b> -
+ * <li><b>/add?name={host-name}&aliases={host-aliases}&manager={manager}</b> -
  *     Create and add a new virtual host. The <code>host-name</code> attribute
- *     indicates the name of the new host. The <code>host-aliases</code>
- *     attribute is a comma separated list of the host alias names.
+ *     indicates the name of the new host. The <code>host-aliases</code> 
+ *     attribute is a comma separated list of the host alias names. 
  *     The <code>manager</code> attribute is a boolean value indicating if the
- *     webapp manager will be installed in the newly created host (optional,
+ *     webapp manager will be installed in the newly created host (optional, 
  *     false by default).</li>
- * <li><b>/remove?name={host-name}</b> - Remove a virtual host.
+ * <li><b>/remove?name={host-name}</b> - Remove a virtual host. 
  *     The <code>host-name</code> attribute indicates the name of the host.
  *     </li>
  * <li><b>/list</b> - List the virtual hosts installed on the server.
- *     Each host will be listed with the following format
+ *     Each host will be listed with the following format 
  *     <code>host-name#host-aliases</code>.</li>
  * <li><b>/start?name={host-name}</b> - Start the virtual host.</li>
  * <li><b>/stop?name={host-name}</b> - Stop the virtual host.</li>
@@ -109,11 +117,17 @@ public class HostManagerServlet
      */
     protected transient Host installedHost = null;
 
-
+    
     /**
      * The associated engine.
      */
     protected transient Engine engine = null;
+
+    
+    /**
+     * MBean server.
+     */
+    protected transient MBeanServer mBeanServer = null;
 
 
     /**
@@ -161,6 +175,10 @@ public class HostManagerServlet
             installedHost = (Host) context.getParent();
             engine = (Engine) installedHost.getParent();
         }
+
+        // Retrieve the MBean server
+        mBeanServer = Registry.getRegistry(null, null).getMBeanServer();
+        
     }
 
 
@@ -200,7 +218,7 @@ public class HostManagerServlet
         if (command == null)
             command = request.getServletPath();
         String name = request.getParameter("name");
-
+  
         // Prepare our output writer to generate the response message
         response.setContentType("text/plain; charset=" + Constants.CHARSET);
         PrintWriter writer = response.getWriter();
@@ -251,7 +269,7 @@ public class HostManagerServlet
         add(writer, name, aliases, appBase, manager,
             autoDeploy,
             deployOnStartup,
-            deployXML,
+            deployXML,                                       
             unpackWARs,
             copyXML,
             smClient);
@@ -324,11 +342,11 @@ public class HostManagerServlet
      * @param manager should the manager webapp be deployed to the new host ?
      */
     protected synchronized void add
-        (PrintWriter writer, String name, String aliases, String appBase,
+        (PrintWriter writer, String name, String aliases, String appBase, 
          boolean manager,
          boolean autoDeploy,
          boolean deployOnStartup,
-         boolean deployXML,
+         boolean deployXML,                                       
          boolean unpackWARs,
          boolean copyXML,
          StringManager smClient) {
@@ -359,7 +377,7 @@ public class HostManagerServlet
         }
         file = new File(applicationBase);
         if (!file.isAbsolute())
-            file = new File(engine.getCatalinaBase(), file.getPath());
+            file = new File(System.getProperty(Globals.CATALINA_BASE_PROP), file.getPath());
         try {
             appBaseFile = file.getCanonicalFile();
         } catch (IOException e) {
@@ -371,10 +389,10 @@ public class HostManagerServlet
                     appBaseFile.toString(), name));
             return;
         }
-
+        
         // Create base for config files
         File configBaseFile = getConfigBase(name);
-
+        
         // Copy manager.xml if requested
         if (manager) {
             if (configBaseFile == null) {
@@ -382,9 +400,11 @@ public class HostManagerServlet
                         "hostManagerServlet.configBaseCreateFail", name));
                 return;
             }
-            try (InputStream is = getServletContext().getResourceAsStream("/manager.xml");
-                    OutputStream os = new FileOutputStream(
-                            new File(configBaseFile, "manager.xml"))) {
+            InputStream is = null;
+            OutputStream os = null;
+            try {
+                is = getServletContext().getResourceAsStream("/manager.xml");
+                os = new FileOutputStream(new File(configBaseFile, "manager.xml"));
                 byte buffer[] = new byte[512];
                 int len = buffer.length;
                 while (true) {
@@ -397,9 +417,24 @@ public class HostManagerServlet
                 writer.println(smClient.getString(
                         "hostManagerServlet.managerXml"));
                 return;
+            } finally {
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        // Ignore
+                    }
+                }
+                if (os != null) {
+                    try {
+                        os.close();
+                    } catch (IOException e) {
+                        // Ignore
+                    }
+                }
             }
         }
-
+        
         StandardHost host = new StandardHost();
         host.setAppBase(applicationBase);
         host.setName(name);
@@ -418,7 +453,7 @@ public class HostManagerServlet
         host.setDeployXML(deployXML);
         host.setUnpackWARs(unpackWARs);
         host.setCopyXML(copyXML);
-
+        
         // Add new host
         try {
             engine.addChild(host);
@@ -427,7 +462,7 @@ public class HostManagerServlet
                     e.toString()));
             return;
         }
-
+        
         host = (StandardHost) engine.findChild(name);
         if (host != null) {
             writer.println(smClient.getString("hostManagerServlet.add", name));
@@ -436,7 +471,7 @@ public class HostManagerServlet
             writer.println(smClient.getString(
                     "hostManagerServlet.addFailed", name));
         }
-
+        
     }
 
 
@@ -485,7 +520,7 @@ public class HostManagerServlet
                     e.toString()));
             return;
         }
-
+        
         Host host = (StandardHost) engine.findChild(name);
         if (host == null) {
             writer.println(smClient.getString(
@@ -495,7 +530,7 @@ public class HostManagerServlet
             writer.println(smClient.getString(
                     "hostManagerServlet.removeFailed", name));
         }
-
+        
     }
 
 
@@ -551,7 +586,7 @@ public class HostManagerServlet
         }
 
         Container host = engine.findChild(name);
-
+        
         // Check if host exists
         if (host == null) {
             writer.println(smClient.getString(
@@ -587,7 +622,7 @@ public class HostManagerServlet
                     "hostManagerServlet.exception", e.toString()));
             return;
         }
-
+        
     }
 
 
@@ -648,7 +683,7 @@ public class HostManagerServlet
                     e.toString()));
             return;
         }
-
+        
     }
 
 
@@ -659,7 +694,8 @@ public class HostManagerServlet
      * Get config base.
      */
     protected File getConfigBase(String hostName) {
-        File configBase = new File(context.getCatalinaBase(), "conf");
+        File configBase = 
+            new File(System.getProperty(Globals.CATALINA_BASE_PROP), "conf");
         if (!configBase.exists()) {
             return null;
         }
@@ -673,5 +709,25 @@ public class HostManagerServlet
             return null;
         }
         return configBase;
+    }
+
+
+    /**
+     * @deprecated Use {@link StringManager#getManager(String, Enumeration)}.
+     *             This method will be removed in Tomcat 8.
+     */
+    @Deprecated
+    protected StringManager getStringManager(HttpServletRequest req) {
+        Enumeration<Locale> requestedLocales = req.getLocales();
+        while (requestedLocales.hasMoreElements()) {
+            Locale locale = requestedLocales.nextElement();
+            StringManager result = StringManager.getManager(Constants.Package,
+                    locale);
+            if (result.getLocale().equals(locale)) {
+                return result;
+            }
+        }
+        // Return the default
+        return sm;
     }
 }

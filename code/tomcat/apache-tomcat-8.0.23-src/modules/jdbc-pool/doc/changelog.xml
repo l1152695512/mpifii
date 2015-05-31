@@ -29,7 +29,6 @@
   </properties>
 
 <body>
-
 <section name="Tomcat JDBC Connection Pool - Apache Tomcat 7.0.19 and later">
   <p>
     Starting with Apache Tomcat 7.0.19 in July 2011, Tomcat JDBC Connection Pool

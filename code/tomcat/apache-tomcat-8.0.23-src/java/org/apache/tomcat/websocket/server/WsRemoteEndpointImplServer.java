@@ -24,10 +24,10 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 
-import javax.servlet.ServletOutputStream;
 import javax.websocket.SendHandler;
 import javax.websocket.SendResult;
 
+import org.apache.coyote.http11.upgrade.AbstractServletOutputStream;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.res.StringManager;
@@ -37,7 +37,7 @@ import org.apache.tomcat.websocket.WsRemoteEndpointImplBase;
 /**
  * This is the server side {@link javax.websocket.RemoteEndpoint} implementation
  * - i.e. what the server uses to send data to the client. Communication is over
- * a {@link ServletOutputStream}.
+ * a {@link javax.servlet.ServletOutputStream}.
  */
 public class WsRemoteEndpointImplServer extends WsRemoteEndpointImplBase {
 
@@ -46,9 +46,9 @@ public class WsRemoteEndpointImplServer extends WsRemoteEndpointImplBase {
     private static final Log log = LogFactory.getLog(WsRemoteEndpointImplServer.class);
 
     private static final Queue<OnResultRunnable> onResultRunnables =
-            new ConcurrentLinkedQueue<>();
+            new ConcurrentLinkedQueue<OnResultRunnable>();
 
-    private final ServletOutputStream sos;
+    private final AbstractServletOutputStream sos;
     private final WsWriteTimeout wsWriteTimeout;
     private final ExecutorService executorService;
     private volatile SendHandler handler = null;
@@ -58,7 +58,8 @@ public class WsRemoteEndpointImplServer extends WsRemoteEndpointImplBase {
     private volatile boolean close;
 
 
-    public WsRemoteEndpointImplServer(ServletOutputStream sos, WsServerContainer serverContainer) {
+    public WsRemoteEndpointImplServer(AbstractServletOutputStream sos,
+            WsServerContainer serverContainer) {
         this.sos = sos;
         this.wsWriteTimeout = serverContainer.getTimeout();
         this.executorService = serverContainer.getExecutorService();
@@ -82,11 +83,6 @@ public class WsRemoteEndpointImplServer extends WsRemoteEndpointImplBase {
 
 
     public void onWritePossible(boolean useDispatch) {
-        if (buffers == null) {
-            // Servlet 3.1 will call the write listener once even if nothing
-            // was written
-            return;
-        }
         boolean complete = true;
         try {
             // If this is false there will be a call back when it is true

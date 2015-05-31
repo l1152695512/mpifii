@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,8 +26,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 
+import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -49,8 +49,8 @@ public abstract class AbstractCatalinaTask extends BaseRedirectorHelperTask {
 
     /**
      * manager webapp's encoding.
-     */
-    private static final String CHARSET = "utf-8";
+     */ 
+    private static String CHARSET = "utf-8";
 
 
     // ------------------------------------------------------------- Properties
@@ -109,28 +109,6 @@ public abstract class AbstractCatalinaTask extends BaseRedirectorHelperTask {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    /**
-     * If set to true - ignore the constraint of the first line of the response
-     * message that must be "OK -".
-     * <p>
-     * When this attribute is set to {@code false} (the default), the first line
-     * of server response is expected to start with "OK -". If it does not
-     * then the task is considered as failed and the first line is treated
-     * as an error message.
-     * <p>
-     * When this attribute is set to {@code true}, the first line of the
-     * response is treated like any other, regardless of its text.
-     */
-    protected boolean ignoreResponseConstraint = false;
-
-    public boolean isIgnoreResponseConstraint() {
-        return ignoreResponseConstraint;
-    }
-
-    public void setIgnoreResponseConstraint(boolean ignoreResponseConstraint) {
-        this.ignoreResponseConstraint = ignoreResponseConstraint;
     }
 
 
@@ -209,7 +187,7 @@ public abstract class AbstractCatalinaTask extends BaseRedirectorHelperTask {
                 if (contentLength >= 0) {
                     hconn.setRequestProperty("Content-Length",
                                              "" + contentLength);
-
+                    
                     hconn.setFixedLengthStreamingMode(contentLength);
                 }
             } else {
@@ -222,7 +200,7 @@ public abstract class AbstractCatalinaTask extends BaseRedirectorHelperTask {
             // Set up an authorization header with our credentials
             String input = username + ":" + password;
             String output = Base64.encodeBase64String(
-                    input.getBytes(StandardCharsets.ISO_8859_1));
+                    input.getBytes(B2CConverter.ISO_8859_1));
             hconn.setRequestProperty("Authorization",
                                      "Basic " + output);
 
@@ -263,7 +241,7 @@ public abstract class AbstractCatalinaTask extends BaseRedirectorHelperTask {
                     if (buff.length() > 0) {
                         String line = buff.toString();
                         buff.setLength(0);
-                        if (!ignoreResponseConstraint && first) {
+                        if (first) {
                             if (!line.startsWith("OK -")) {
                                 error = line;
                                 msgPriority = Project.MSG_ERR;

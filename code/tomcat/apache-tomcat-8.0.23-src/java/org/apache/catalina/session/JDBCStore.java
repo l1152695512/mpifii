@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,6 +55,11 @@ import org.apache.tomcat.util.ExceptionUtils;
 public class JDBCStore extends StoreBase {
 
     /**
+     * The descriptive information about this implementation.
+     */
+    protected static final String info = "JDBCStore/1.0";
+
+    /**
      * Context name associated with this Store
      */
     private String name = null;
@@ -62,12 +67,12 @@ public class JDBCStore extends StoreBase {
     /**
      * Name to register for this Store, used for logging.
      */
-    protected static final String storeName = "JDBCStore";
+    protected static String storeName = "JDBCStore";
 
     /**
      * Name to register for the background thread.
      */
-    protected final String threadName = "JDBCStore";
+    protected String threadName = "JDBCStore";
 
     /**
      * The connection username to use when trying to connect to the database.
@@ -109,7 +114,7 @@ public class JDBCStore extends StoreBase {
      * DataSource to use
      */
     protected DataSource dataSource = null;
-
+    
     // ------------------------------------------------------------- Table & cols
 
     /**
@@ -182,11 +187,19 @@ public class JDBCStore extends StoreBase {
     // ------------------------------------------------------------- Properties
 
     /**
+     * Return the info for this Store.
+     */
+    @Override
+    public String getInfo() {
+        return (info);
+    }
+
+    /**
      * Return the name for this instance (built from container name)
      */
     public String getName() {
         if (name == null) {
-            Container container = manager.getContext();
+            Container container = manager.getContainer();
             String contextName = container.getName();
             if (!contextName.startsWith("/")) {
                 contextName = "/" + contextName;
@@ -443,7 +456,7 @@ public class JDBCStore extends StoreBase {
      */
     public void setDataSourceName(String dataSourceName) {
         if (dataSourceName == null || "".equals(dataSourceName.trim())) {
-            manager.getContext().getLogger().warn(
+            manager.getContainer().getLogger().warn(
                     sm.getString(getStoreName() + ".missingDataSourceName"));
             return;
         }
@@ -468,6 +481,7 @@ public class JDBCStore extends StoreBase {
      */
     @Override
     public String[] keys() throws IOException {
+        ResultSet rst = null;
         String keys[] = null;
         synchronized (this) {
             int numberOfTries = 2;
@@ -486,30 +500,38 @@ public class JDBCStore extends StoreBase {
                     }
 
                     preparedKeysSql.setString(1, getName());
-                    try (ResultSet rst = preparedKeysSql.executeQuery()) {
-                        ArrayList<String> tmpkeys = new ArrayList<>();
-                        if (rst != null) {
-                            while (rst.next()) {
-                                tmpkeys.add(rst.getString(1));
-                            }
+                    rst = preparedKeysSql.executeQuery();
+                    ArrayList<String> tmpkeys = new ArrayList<String>();
+                    if (rst != null) {
+                        while (rst.next()) {
+                            tmpkeys.add(rst.getString(1));
                         }
-                        keys = tmpkeys.toArray(new String[tmpkeys.size()]);
-                        // Break out after the finally block
-                        numberOfTries = 0;
                     }
+                    keys = tmpkeys.toArray(new String[tmpkeys.size()]);
+                    // Break out after the finally block
+                    numberOfTries = 0;
                 } catch (SQLException e) {
-                    manager.getContext().getLogger().error(sm.getString(getStoreName() + ".SQLException", e));
+                    manager.getContainer().getLogger().error(sm.getString(getStoreName() + ".SQLException", e));
                     keys = new String[0];
                     // Close the connection so that it gets reopened next time
                     if (dbConnection != null)
                         close(dbConnection);
                 } finally {
+                    try {
+                        if (rst != null) {
+                            rst.close();
+                        }
+                    } catch (SQLException e) {
+                        // Ignore
+                    }
+
                     release(_conn);
                 }
                 numberOfTries--;
             }
         }
-        return keys;
+
+        return (keys);
     }
 
     /**
@@ -522,6 +544,7 @@ public class JDBCStore extends StoreBase {
     @Override
     public int getSize() throws IOException {
         int size = 0;
+        ResultSet rst = null;
 
         synchronized (this) {
             int numberOfTries = 2;
@@ -541,24 +564,30 @@ public class JDBCStore extends StoreBase {
                     }
 
                     preparedSizeSql.setString(1, getName());
-                    try (ResultSet rst = preparedSizeSql.executeQuery()) {
-                        if (rst.next()) {
-                            size = rst.getInt(1);
-                        }
-                        // Break out after the finally block
-                        numberOfTries = 0;
+                    rst = preparedSizeSql.executeQuery();
+                    if (rst.next()) {
+                        size = rst.getInt(1);
                     }
+                    // Break out after the finally block
+                    numberOfTries = 0;
                 } catch (SQLException e) {
-                    manager.getContext().getLogger().error(sm.getString(getStoreName() + ".SQLException", e));
+                    manager.getContainer().getLogger().error(sm.getString(getStoreName() + ".SQLException", e));
                     if (dbConnection != null)
                         close(dbConnection);
                 } finally {
+                    try {
+                        if (rst != null)
+                            rst.close();
+                    } catch (SQLException e) {
+                        // Ignore
+                    }
+
                     release(_conn);
                 }
                 numberOfTries--;
             }
         }
-        return size;
+        return (size);
     }
 
     /**
@@ -571,14 +600,16 @@ public class JDBCStore extends StoreBase {
      * @exception IOException if an input/output error occurred
      */
     @Override
-    public Session load(String id) throws ClassNotFoundException, IOException {
+    public Session load(String id)
+            throws ClassNotFoundException, IOException {
+        ResultSet rst = null;
         StandardSession _session = null;
         Loader loader = null;
         ClassLoader classLoader = null;
         ObjectInputStream ois = null;
         BufferedInputStream bis = null;
-        org.apache.catalina.Context context = manager.getContext();
-
+        Container container = manager.getContainer();
+ 
         synchronized (this) {
             int numberOfTries = 2;
             while (numberOfTries > 0) {
@@ -599,43 +630,49 @@ public class JDBCStore extends StoreBase {
 
                     preparedLoadSql.setString(1, id);
                     preparedLoadSql.setString(2, getName());
-                    try (ResultSet rst = preparedLoadSql.executeQuery()) {
-                        if (rst.next()) {
-                            bis = new BufferedInputStream(rst.getBinaryStream(2));
+                    rst = preparedLoadSql.executeQuery();
+                    if (rst.next()) {
+                        bis = new BufferedInputStream(rst.getBinaryStream(2));
 
-                            if (context != null) {
-                                loader = context.getLoader();
-                            }
-                            if (loader != null) {
-                                classLoader = loader.getClassLoader();
-                            }
-                            if (classLoader != null) {
-                                Thread.currentThread().setContextClassLoader(classLoader);
-                                ois = new CustomObjectInputStream(bis,
-                                        classLoader);
-                            } else {
-                                ois = new ObjectInputStream(bis);
-                            }
-
-                            if (manager.getContext().getLogger().isDebugEnabled()) {
-                                manager.getContext().getLogger().debug(sm.getString(getStoreName() + ".loading",
-                                        id, sessionTable));
-                            }
-
-                            _session = (StandardSession) manager.createEmptySession();
-                            _session.readObjectData(ois);
-                            _session.setManager(manager);
-                          } else if (manager.getContext().getLogger().isDebugEnabled()) {
-                            manager.getContext().getLogger().debug(getStoreName() + ": No persisted data object found");
+                        if (container != null) {
+                            loader = container.getLoader();
                         }
-                        // Break out after the finally block
-                        numberOfTries = 0;
+                        if (loader != null) {
+                            classLoader = loader.getClassLoader();
+                        }
+                        if (classLoader != null) {
+                            Thread.currentThread().setContextClassLoader(classLoader);
+                            ois = new CustomObjectInputStream(bis,
+                                    classLoader);
+                        } else {
+                            ois = new ObjectInputStream(bis);
+                        }
+
+                        if (manager.getContainer().getLogger().isDebugEnabled()) {
+                            manager.getContainer().getLogger().debug(sm.getString(getStoreName() + ".loading",
+                                    id, sessionTable));
+                        }
+
+                        _session = (StandardSession) manager.createEmptySession();
+                        _session.readObjectData(ois);
+                        _session.setManager(manager);
+                      } else if (manager.getContainer().getLogger().isDebugEnabled()) {
+                        manager.getContainer().getLogger().debug(getStoreName() + ": No persisted data object found");
                     }
+                    // Break out after the finally block
+                    numberOfTries = 0;
                 } catch (SQLException e) {
-                    manager.getContext().getLogger().error(sm.getString(getStoreName() + ".SQLException", e));
+                    manager.getContainer().getLogger().error(sm.getString(getStoreName() + ".SQLException", e));
                     if (dbConnection != null)
                         close(dbConnection);
                 } finally {
+                    try {
+                        if (rst != null) {
+                            rst.close();
+                        }
+                    } catch (SQLException e) {
+                        // Ignore
+                    }
                     if (ois != null) {
                         try {
                             ois.close();
@@ -679,7 +716,7 @@ public class JDBCStore extends StoreBase {
                     // Break out after the finally block
                     numberOfTries = 0;
                 } catch (SQLException e) {
-                    manager.getContext().getLogger().error(sm.getString(getStoreName() + ".SQLException", e));
+                    manager.getContainer().getLogger().error(sm.getString(getStoreName() + ".SQLException", e));
                     if (dbConnection != null)
                         close(dbConnection);
                 } finally {
@@ -689,8 +726,8 @@ public class JDBCStore extends StoreBase {
             }
         }
 
-        if (manager.getContext().getLogger().isDebugEnabled()) {
-            manager.getContext().getLogger().debug(sm.getString(getStoreName() + ".removing", id, sessionTable));
+        if (manager.getContainer().getLogger().isDebugEnabled()) {
+            manager.getContainer().getLogger().debug(sm.getString(getStoreName() + ".removing", id, sessionTable));
         }
     }
 
@@ -698,7 +735,7 @@ public class JDBCStore extends StoreBase {
      * Remove the Session with the specified session identifier from
      * this Store, if present.  If no such Session is present, this method
      * takes no action.
-     *
+     * 
      * @param id Session identifier of the Session to be removed
      * @param _conn open connection to be used
      * @throws SQLException if an error occurs while talking to the database
@@ -744,7 +781,7 @@ public class JDBCStore extends StoreBase {
                     // Break out after the finally block
                     numberOfTries = 0;
                 } catch (SQLException e) {
-                    manager.getContext().getLogger().error(sm.getString(getStoreName() + ".SQLException", e));
+                    manager.getContainer().getLogger().error(sm.getString(getStoreName() + ".SQLException", e));
                     if (dbConnection != null)
                         close(dbConnection);
                 } finally {
@@ -763,7 +800,10 @@ public class JDBCStore extends StoreBase {
      */
     @Override
     public void save(Session session) throws IOException {
+        ObjectOutputStream oos = null;
         ByteArrayOutputStream bos = null;
+        ByteArrayInputStream bis = null;
+        InputStream in = null;
 
         synchronized (this) {
             int numberOfTries = 2;
@@ -778,51 +818,62 @@ public class JDBCStore extends StoreBase {
                     // TODO:
                     // * Check if ID exists in database and if so use UPDATE.
                     remove(session.getIdInternal(), _conn);
-
+                    
                     bos = new ByteArrayOutputStream();
-                    try (ObjectOutputStream oos =
-                            new ObjectOutputStream(new BufferedOutputStream(bos))) {
-                        ((StandardSession) session).writeObjectData(oos);
-                    }
+                    oos = new ObjectOutputStream(new BufferedOutputStream(bos));
+
+                    ((StandardSession) session).writeObjectData(oos);
+                    oos.close();
+                    oos = null;
                     byte[] obs = bos.toByteArray();
                     int size = obs.length;
-                    try (ByteArrayInputStream bis = new ByteArrayInputStream(obs, 0, size);
-                            InputStream in = new BufferedInputStream(bis, size)) {
-                        if (preparedSaveSql == null) {
-                            String saveSql = "INSERT INTO " + sessionTable + " ("
-                               + sessionIdCol + ", " + sessionAppCol + ", "
-                               + sessionDataCol + ", " + sessionValidCol
-                               + ", " + sessionMaxInactiveCol + ", "
-                               + sessionLastAccessedCol
-                               + ") VALUES (?, ?, ?, ?, ?, ?)";
-                           preparedSaveSql = _conn.prepareStatement(saveSql);
-                        }
+                    bis = new ByteArrayInputStream(obs, 0, size);
+                    in = new BufferedInputStream(bis, size);
 
-                        preparedSaveSql.setString(1, session.getIdInternal());
-                        preparedSaveSql.setString(2, getName());
-                        preparedSaveSql.setBinaryStream(3, in, size);
-                        preparedSaveSql.setString(4, session.isValid() ? "1" : "0");
-                        preparedSaveSql.setInt(5, session.getMaxInactiveInterval());
-                        preparedSaveSql.setLong(6, session.getLastAccessedTime());
-                        preparedSaveSql.execute();
-                        // Break out after the finally block
-                        numberOfTries = 0;
+                    if (preparedSaveSql == null) {
+                        String saveSql = "INSERT INTO " + sessionTable + " ("
+                           + sessionIdCol + ", " + sessionAppCol + ", "
+                           + sessionDataCol + ", " + sessionValidCol
+                           + ", " + sessionMaxInactiveCol + ", "
+                           + sessionLastAccessedCol
+                           + ") VALUES (?, ?, ?, ?, ?, ?)";
+                       preparedSaveSql = _conn.prepareStatement(saveSql);
                     }
+
+                    preparedSaveSql.setString(1, session.getIdInternal());
+                    preparedSaveSql.setString(2, getName());
+                    preparedSaveSql.setBinaryStream(3, in, size);
+                    preparedSaveSql.setString(4, session.isValid() ? "1" : "0");
+                    preparedSaveSql.setInt(5, session.getMaxInactiveInterval());
+                    preparedSaveSql.setLong(6, session.getLastAccessedTime());
+                    preparedSaveSql.execute();
+                    // Break out after the finally block
+                    numberOfTries = 0;
                 } catch (SQLException e) {
-                    manager.getContext().getLogger().error(sm.getString(getStoreName() + ".SQLException", e));
+                    manager.getContainer().getLogger().error(sm.getString(getStoreName() + ".SQLException", e));
                     if (dbConnection != null)
                         close(dbConnection);
                 } catch (IOException e) {
                     // Ignore
                 } finally {
+                    if (oos != null) {
+                        oos.close();
+                    }
+                    if (bis != null) {
+                        bis.close();
+                    }
+                    if (in != null) {
+                        in.close();
+                    }
+
                     release(_conn);
                 }
                 numberOfTries--;
             }
         }
 
-        if (manager.getContext().getLogger().isDebugEnabled()) {
-            manager.getContext().getLogger().debug(sm.getString(getStoreName() + ".saving",
+        if (manager.getContainer().getLogger().isDebugEnabled()) {
+            manager.getContainer().getLogger().debug(sm.getString(getStoreName() + ".saving",
                     session.getIdInternal(), sessionTable));
         }
     }
@@ -841,14 +892,14 @@ public class JDBCStore extends StoreBase {
         try {
             conn = open();
             if (conn == null || conn.isClosed()) {
-                manager.getContext().getLogger().info(sm.getString(getStoreName() + ".checkConnectionDBClosed"));
+                manager.getContainer().getLogger().info(sm.getString(getStoreName() + ".checkConnectionDBClosed"));
                 conn = open();
                 if (conn == null || conn.isClosed()) {
-                    manager.getContext().getLogger().info(sm.getString(getStoreName() + ".checkConnectionDBReOpenFail"));
+                    manager.getContainer().getLogger().info(sm.getString(getStoreName() + ".checkConnectionDBReOpenFail"));
                 }
             }
         } catch (SQLException ex) {
-            manager.getContext().getLogger().error(sm.getString(getStoreName() + ".checkConnectionSQLException",
+            manager.getContainer().getLogger().error(sm.getString(getStoreName() + ".checkConnectionSQLException",
                     ex.toString()));
         }
 
@@ -874,12 +925,12 @@ public class JDBCStore extends StoreBase {
                 Context envCtx = (Context) initCtx.lookup("java:comp/env");
                 this.dataSource = (DataSource) envCtx.lookup(this.dataSourceName);
             } catch (NamingException e) {
-                manager.getContext().getLogger().error(
+                manager.getContainer().getLogger().error(
                         sm.getString(getStoreName() + ".wrongDataSource",
                                 this.dataSourceName), e);
            }
         }
-
+        
         if (dataSource != null) {
             return dataSource.getConnection();
         }
@@ -890,13 +941,13 @@ public class JDBCStore extends StoreBase {
                 Class<?> clazz = Class.forName(driverName);
                 driver = (Driver) clazz.newInstance();
             } catch (ClassNotFoundException ex) {
-                manager.getContext().getLogger().error(sm.getString(getStoreName() + ".checkConnectionClassNotFoundException",
+                manager.getContainer().getLogger().error(sm.getString(getStoreName() + ".checkConnectionClassNotFoundException",
                         ex.toString()));
             } catch (InstantiationException ex) {
-                manager.getContext().getLogger().error(sm.getString(getStoreName() + ".checkConnectionClassNotFoundException",
+                manager.getContainer().getLogger().error(sm.getString(getStoreName() + ".checkConnectionClassNotFoundException",
                         ex.toString()));
             } catch (IllegalAccessException ex) {
-                manager.getContext().getLogger().error(sm.getString(getStoreName() + ".checkConnectionClassNotFoundException",
+                manager.getContainer().getLogger().error(sm.getString(getStoreName() + ".checkConnectionClassNotFoundException",
                         ex.toString()));
             }
         }
@@ -951,7 +1002,7 @@ public class JDBCStore extends StoreBase {
         } catch (Throwable f) {
             ExceptionUtils.handleThrowable(f);
         }
-
+         
         try {
             preparedRemoveSql.close();
         } catch (Throwable f) {
@@ -965,21 +1016,21 @@ public class JDBCStore extends StoreBase {
             ExceptionUtils.handleThrowable(f);
         }
         this.preparedLoadSql = null;
-
+        
         // Commit if autoCommit is false
         try {
             if (!dbConnection.getAutoCommit()) {
                 dbConnection.commit();
-            }
+            }            
         } catch (SQLException e) {
-            manager.getContext().getLogger().error(sm.getString(getStoreName() + ".commitSQLException"), e);
+            manager.getContainer().getLogger().error(sm.getString(getStoreName() + ".commitSQLException"), e);
         }
 
         // Close this database connection, and log any errors
         try {
             dbConnection.close();
         } catch (SQLException e) {
-            manager.getContext().getLogger().error(sm.getString(getStoreName() + ".close", e.toString())); // Just log it here
+            manager.getContainer().getLogger().error(sm.getString(getStoreName() + ".close", e.toString())); // Just log it here
         } finally {
             this.dbConnection = null;
         }
@@ -994,7 +1045,7 @@ public class JDBCStore extends StoreBase {
      */
     protected void release(Connection conn) {
         if (dataSource != null) {
-            close(conn);
+            close(conn); 
         }
     }
 
@@ -1012,7 +1063,7 @@ public class JDBCStore extends StoreBase {
             // If not using a connection pool, open a connection to the database
             this.dbConnection = getConnection();
         }
-
+        
         super.startInternal();
     }
 
@@ -1025,7 +1076,7 @@ public class JDBCStore extends StoreBase {
      */
     @Override
     protected synchronized void stopInternal() throws LifecycleException {
-
+        
         super.stopInternal();
 
         // Close and release everything associated with our db.

@@ -19,19 +19,18 @@ package org.apache.tomcat.websocket.server;
 import java.io.EOFException;
 import java.io.IOException;
 
-import javax.servlet.ServletInputStream;
-
+import org.apache.coyote.http11.upgrade.AbstractServletInputStream;
 import org.apache.tomcat.websocket.Transformation;
 import org.apache.tomcat.websocket.WsFrameBase;
 import org.apache.tomcat.websocket.WsSession;
 
 public class WsFrameServer extends WsFrameBase {
 
-    private final ServletInputStream sis;
+    private final AbstractServletInputStream sis;
     private final Object connectionReadLock = new Object();
 
 
-    public WsFrameServer(ServletInputStream sis, WsSession wsSession,
+    public WsFrameServer(AbstractServletInputStream sis, WsSession wsSession,
             Transformation transformation) {
         super(wsSession, transformation);
         this.sis = sis;
@@ -40,9 +39,6 @@ public class WsFrameServer extends WsFrameBase {
 
     /**
      * Called when there is data in the ServletInputStream to process.
-     *
-     * @throws IOException if an I/O error occurs while processing the available
-     *                     data
      */
     public void onDataAvailable() throws IOException {
         synchronized (connectionReadLock) {

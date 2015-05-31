@@ -16,6 +16,7 @@
  */
 package org.apache.catalina.connector;
 
+
 import java.io.IOException;
 import java.io.Writer;
 import java.security.AccessController;
@@ -23,7 +24,6 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.HashMap;
 
-import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.catalina.Globals;
@@ -32,7 +32,7 @@ import org.apache.coyote.Response;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.buf.C2BConverter;
 import org.apache.tomcat.util.buf.CharChunk;
-import org.apache.tomcat.util.res.StringManager;
+
 
 /**
  * The buffer used by Tomcat response. This is a derivative of the Tomcat 3.3
@@ -45,10 +45,9 @@ import org.apache.tomcat.util.res.StringManager;
 public class OutputBuffer extends Writer
     implements ByteChunk.ByteOutputChannel, CharChunk.CharOutputChannel {
 
-    private static final StringManager sm =
-            StringManager.getManager(Constants.Package);
 
     // -------------------------------------------------------------- Constants
+
 
     public static final String DEFAULT_ENCODING =
         org.apache.coyote.Constants.DEFAULT_CHARACTER_ENCODING;
@@ -56,6 +55,7 @@ public class OutputBuffer extends Writer
 
 
     // ----------------------------------------------------- Instance Variables
+
 
     /**
      * The byte buffer.
@@ -126,7 +126,8 @@ public class OutputBuffer extends Writer
     /**
      * List of encoders.
      */
-    protected final HashMap<String, C2BConverter> encoders = new HashMap<>();
+    protected HashMap<String, C2BConverter> encoders =
+        new HashMap<String, C2BConverter>();
 
 
     /**
@@ -192,6 +193,17 @@ public class OutputBuffer extends Writer
 
 
     /**
+     * Get associated Coyote response.
+     *
+     * @return the associated Coyote response
+     */
+    @Deprecated
+    public Response getResponse() {
+        return this.coyoteResponse;
+    }
+
+
+    /**
      * Is the response output suspended ?
      *
      * @return suspended flag value
@@ -231,20 +243,21 @@ public class OutputBuffer extends Writer
         initial = true;
         bytesWritten = 0;
         charsWritten = 0;
-
+        
         bb.recycle();
         cb.recycle();
         outputCharChunk.setChars(null, 0, 0);
         closed = false;
         suspended = false;
         doFlush = false;
-
+        
         if (conv!= null) {
             conv.recycle();
         }
-
+        
         gotEnc = false;
         enc = null;
+
     }
 
 
@@ -303,7 +316,8 @@ public class OutputBuffer extends Writer
                 CoyoteAdapter.ADAPTER_NOTES);
         req.inputBuffer.close();
 
-        coyoteResponse.action(ActionCode.CLOSE, null);
+        coyoteResponse.finish();
+
     }
 
 
@@ -443,13 +457,13 @@ public class OutputBuffer extends Writer
     // ------------------------------------------------- Chars Handling Methods
 
 
-    /**
+    /** 
      * Convert the chars to bytes, then send the data to the client.
-     *
+     * 
      * @param buf Char buffer to be written to the response
      * @param off Offset
      * @param len Length
-     *
+     * 
      * @throws IOException An underlying IOException occurred
      */
     @Override
@@ -457,7 +471,7 @@ public class OutputBuffer extends Writer
         throws IOException {
 
         outputCharChunk.setChars(buf, off, len);
-        while (outputCharChunk.getLength() > 0) {
+        while (outputCharChunk.getLength() > 0) { 
             conv.convert(outputCharChunk, bb);
             if (bb.getLength() == 0) {
                 // Break out of the loop if more chars are needed to produce any output
@@ -527,8 +541,9 @@ public class OutputBuffer extends Writer
             return;
         }
 
+        charsWritten += len;
         if (s == null) {
-            throw new NullPointerException(sm.getString("outputBuffer.writeNull"));
+            s = "null";
         }
         cb.append(s, off, len);
         charsWritten += len;
@@ -615,10 +630,8 @@ public class OutputBuffer extends Writer
     }
 
     /**
-     * Has this buffer been used at all?
-     *
-     * @return true if no chars or bytes have been added to the buffer since the
-     *         last call to {@link #recycle()}
+     * True if this buffer hasn't been used ( since recycle() ) -
+     * i.e. no chars or bytes have been added to the buffer.
      */
     public boolean isNew() {
         return (bytesWritten == 0) && (charsWritten == 0);
@@ -654,26 +667,4 @@ public class OutputBuffer extends Writer
     }
 
 
-    /*
-     * All the non-blocking write state information is held in the Response so
-     * it is visible / accessible to all the code that needs it.
-     */
-
-    public boolean isReady() {
-        return coyoteResponse.isReady();
-    }
-
-
-    public void setWriteListener(WriteListener listener) {
-        coyoteResponse.setWriteListener(listener);
-    }
-
-
-    public boolean isBlocking() {
-        return coyoteResponse.getWriteListener() == null;
-    }
-
-    public void checkRegisterForWrite() {
-        coyoteResponse.checkRegisterForWrite();
-    }
 }

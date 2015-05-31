@@ -70,8 +70,18 @@ public abstract class RequestFilterValve extends ValveBase {
         super(true);
     }
 
+    // ----------------------------------------------------- Class Variables
+
+
+    /**
+     * The descriptive information related to this implementation.
+     */
+    private static final String info =
+        "org.apache.catalina.valves.RequestFilterValve/1.0";
+
 
     // ----------------------------------------------------- Instance Variables
+
 
     /**
      * The regular expression used to test for allowed requests.
@@ -237,6 +247,17 @@ public abstract class RequestFilterValve extends ValveBase {
 
 
     /**
+     * Return descriptive information about this Valve implementation.
+     */
+    @Override
+    public String getInfo() {
+
+        return (info);
+
+    }
+
+
+    /**
      * Return true if a deny is handled by setting an invalid auth header.
      */
     public boolean getInvalidAuthenticationWhenDeny() {
@@ -253,6 +274,7 @@ public abstract class RequestFilterValve extends ValveBase {
 
 
     // --------------------------------------------------------- Public Methods
+
 
     /**
      * Extract the desired request property, and pass it (along with the

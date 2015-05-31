@@ -14,43 +14,36 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.coyote;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.nio.charset.Charset;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.servlet.WriteListener;
 
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.buf.MessageBytes;
 import org.apache.tomcat.util.http.MimeHeaders;
+import org.apache.tomcat.util.http.parser.HttpParser;
 import org.apache.tomcat.util.http.parser.MediaType;
-import org.apache.tomcat.util.res.StringManager;
 
 /**
  * Response object.
- *
+ * 
  * @author James Duncan Davidson [duncan@eng.sun.com]
  * @author Jason Hunter [jch@eng.sun.com]
  * @author James Todd [gonzo@eng.sun.com]
  * @author Harish Prabandham
- * @author Hans Bergsten [hans@gefionsoftware.com]
+ * @author Hans Bergsten <hans@gefionsoftware.com>
  * @author Remy Maucherat
  */
 public final class Response {
-
-    private static final StringManager sm =
-            StringManager.getManager(Constants.Package);
 
     // ----------------------------------------------------- Class Variables
 
     /**
      * Default locale as mandated by the spec.
      */
-    private static final Locale DEFAULT_LOCALE = Locale.getDefault();
+    private static Locale DEFAULT_LOCALE = Locale.getDefault();
 
 
     // ----------------------------------------------------- Instance Variables
@@ -70,7 +63,7 @@ public final class Response {
     /**
      * Response headers.
      */
-    protected final MimeHeaders headers = new MimeHeaders();
+    protected MimeHeaders headers = new MimeHeaders();
 
 
     /**
@@ -82,7 +75,7 @@ public final class Response {
     /**
      * Notes.
      */
-    protected final Object notes[] = new Object[Constants.MAX_NOTES];
+    protected Object notes[] = new Object[Constants.MAX_NOTES];
 
 
     /**
@@ -175,7 +168,7 @@ public final class Response {
 
     public void action(ActionCode actionCode, Object param) {
         if (hook != null) {
-            if( param==null )
+            if( param==null ) 
                 hook.action(actionCode, this);
             else
                 hook.action(actionCode, param);
@@ -190,10 +183,10 @@ public final class Response {
         return status;
     }
 
-
-    /**
-     * Set the response status
-     */
+    
+    /** 
+     * Set the response status 
+     */ 
     public void setStatus( int status ) {
         this.status = status;
     }
@@ -239,7 +232,7 @@ public final class Response {
     // -----------------Error State --------------------
 
 
-    /**
+    /** 
      * Set the error Exception that occurred during
      * request processing.
      */
@@ -248,7 +241,7 @@ public final class Response {
     }
 
 
-    /**
+    /** 
      * Get the Exception that occurred during request
      * processing.
      */
@@ -264,9 +257,8 @@ public final class Response {
 
     // -------------------- Methods --------------------
 
-
     public void reset() throws IllegalStateException {
-
+        
         if (commited) {
             throw new IllegalStateException();
         }
@@ -278,9 +270,19 @@ public final class Response {
     }
 
 
+    public void finish() {
+        action(ActionCode.CLOSE, this);
+    }
+
+
+    public void acknowledge() {
+        action(ActionCode.ACK, this);
+    }
+
+
     // -------------------- Headers --------------------
     /**
-     * Warning: This method always returns <code>false</code> for Content-Type
+     * Warning: This method always returns <code>false<code> for Content-Type
      * and Content-Length.
      */
     public boolean containsHeader(String name) {
@@ -299,26 +301,17 @@ public final class Response {
 
 
     public void addHeader(String name, String value) {
-        addHeader(name, value, null);
-    }
-
-
-    public void addHeader(String name, String value, Charset charset) {
         char cc=name.charAt(0);
         if( cc=='C' || cc=='c' ) {
             if( checkSpecialHeader(name, value) )
             return;
         }
-        MessageBytes mb = headers.addValue(name);
-        if (charset != null) {
-            mb.setCharset(charset);
-        }
-        mb.setString(value);
+        headers.addValue(name).setString( value );
     }
 
-
-    /**
-     * Set internal fields for special header names.
+    
+    /** 
+     * Set internal fields for special header names. 
      * Called from set/addHeader.
      * Return true if the header is special, no need to set the header.
      */
@@ -335,10 +328,13 @@ public final class Response {
                 setContentLength( cL );
                 return true;
             } catch( NumberFormatException ex ) {
-                // Do nothing - the spec doesn't have any "throws"
+                // Do nothing - the spec doesn't have any "throws" 
                 // and the user might know what he's doing
                 return false;
             }
+        }
+        if( name.equalsIgnoreCase( "Content-Language" ) ) {
+            // XXX XXX Need to construct Locale or something else
         }
         return false;
     }
@@ -420,7 +416,7 @@ public final class Response {
     /**
      * Sets the content type.
      *
-     * This method must preserve any response charset that may already have
+     * This method must preserve any response charset that may already have 
      * been set via a call to response.setContentType(), response.setLocale(),
      * or response.setCharacterEncoding().
      *
@@ -435,7 +431,7 @@ public final class Response {
 
         MediaType m = null;
         try {
-             m = MediaType.parseMediaType(new StringReader(type));
+             m = HttpParser.parseMediaType(new StringReader(type));
         } catch (IOException e) {
             // Ignore - null test below handles this
         }
@@ -467,7 +463,7 @@ public final class Response {
 
         String ret = contentType;
 
-        if (ret != null
+        if (ret != null 
             && characterEncoding != null
             && charsetSet) {
             ret = ret + ";charset=" + characterEncoding;
@@ -475,26 +471,26 @@ public final class Response {
 
         return ret;
     }
-
+    
     public void setContentLength(long contentLength) {
         this.contentLength = contentLength;
     }
 
     public int getContentLength() {
         long length = getContentLengthLong();
-
+        
         if (length < Integer.MAX_VALUE) {
             return (int) length;
         }
         return -1;
     }
-
+    
     public long getContentLengthLong() {
         return contentLength;
     }
 
 
-    /**
+    /** 
      * Write a chunk of bytes.
      */
     public void doWrite(ByteChunk chunk/*byte buffer[], int pos, int count*/)
@@ -505,9 +501,9 @@ public final class Response {
     }
 
     // --------------------
-
+    
     public void recycle() {
-
+        
         contentType = null;
         contentLanguage = null;
         locale = DEFAULT_LOCALE;
@@ -520,10 +516,6 @@ public final class Response {
         commitTime = -1;
         errorException = null;
         headers.clear();
-        // Servlet 3.1 non-blocking write listener
-        listener = null;
-        fireListener = false;
-        registeredForWrite = false;
 
         // update counters
         contentWritten=0;
@@ -535,7 +527,7 @@ public final class Response {
     public long getContentWritten() {
         return contentWritten;
     }
-
+    
     /**
      * Bytes written to socket - i.e. after compression, chunking, etc.
      */
@@ -544,106 +536,5 @@ public final class Response {
             action(ActionCode.CLIENT_FLUSH, this);
         }
         return outputBuffer.getBytesWritten();
-    }
-
-    /*
-     * State for non-blocking output is maintained here as it is the one point
-     * easily reachable from the CoyoteOutputStream and the Processor which both
-     * need access to state.
-     */
-    protected volatile WriteListener listener;
-    private boolean fireListener = false;
-    private boolean registeredForWrite = false;
-    private final Object nonBlockingStateLock = new Object();
-
-    public WriteListener getWriteListener() {
-        return listener;
-}
-
-    public void setWriteListener(WriteListener listener) {
-        if (listener == null) {
-            throw new NullPointerException(
-                    sm.getString("response.nullWriteListener"));
-        }
-        if (getWriteListener() != null) {
-            throw new IllegalStateException(
-                    sm.getString("response.writeListenerSet"));
-        }
-        // Note: This class is not used for HTTP upgrade so only need to test
-        //       for async
-        AtomicBoolean result = new AtomicBoolean(false);
-        action(ActionCode.ASYNC_IS_ASYNC, result);
-        if (!result.get()) {
-            throw new IllegalStateException(
-                    sm.getString("response.notAsync"));
-        }
-
-        this.listener = listener;
-
-        // The container is responsible for the first call to
-        // listener.onWritePossible(). If isReady() returns true, the container
-        // needs to call listener.onWritePossible() from a new thread. If
-        // isReady() returns false, the socket will be registered for write and
-        // the container will call listener.onWritePossible() once data can be
-        // written.
-        if (isReady()) {
-            action(ActionCode.DISPATCH_WRITE, null);
-            synchronized (nonBlockingStateLock) {
-                // Ensure we don't get multiple write registrations if
-                // ServletOutoutStream.isReady() returns false during a call to
-                // onDataAvailable()
-                registeredForWrite = true;
-                // Need to set the fireListener flag otherwise when the
-                // container tries to trigger onWritePossible, nothing will
-                // happen
-                fireListener = true;
-            }
-        }
-    }
-
-    public boolean isReady() {
-        if (listener == null) {
-            // TODO i18n
-            throw new IllegalStateException("not in non blocking mode.");
-        }
-        // Assume write is not possible
-        boolean ready = false;
-        synchronized (nonBlockingStateLock) {
-            if (registeredForWrite) {
-                fireListener = true;
-                return false;
-            }
-            ready = checkRegisterForWrite();
-            fireListener = !ready;
-        }
-        return ready;
-    }
-
-    public boolean checkRegisterForWrite() {
-        AtomicBoolean ready = new AtomicBoolean(false);
-        synchronized (nonBlockingStateLock) {
-            if (!registeredForWrite) {
-                action(ActionCode.NB_WRITE_INTEREST, ready);
-                registeredForWrite = !ready.get();
-            }
-        }
-        return ready.get();
-    }
-
-    public void onWritePossible() throws IOException {
-        // Any buffered data left over from a previous non-blocking write is
-        // written in the Processor so if this point is reached the app is able
-        // to write data.
-        boolean fire = false;
-        synchronized (nonBlockingStateLock) {
-            registeredForWrite = false;
-            if (fireListener) {
-                fireListener = false;
-                fire = true;
-            }
-        }
-        if (fire) {
-            listener.onWritePossible();
-        }
     }
 }

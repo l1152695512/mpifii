@@ -16,6 +16,7 @@
  */
 package org.apache.catalina.valves;
 
+import java.io.File;
 import java.io.IOException;
 
 import javax.servlet.AsyncContext;
@@ -40,8 +41,9 @@ public class TestErrorReportValve extends TomcatBaseTest {
     public void testBug53071() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "errorServlet", new ErrorServlet());
         ctx.addServletMapping("/", "errorServlet");
@@ -73,8 +75,9 @@ public class TestErrorReportValve extends TomcatBaseTest {
     public void testBug54220DoNotSetNotFound() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "bug54220", new Bug54220Servlet(false));
         ctx.addServletMapping("/", "bug54220");
@@ -93,8 +96,9 @@ public class TestErrorReportValve extends TomcatBaseTest {
     public void testBug54220SetNotFound() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "bug54220", new Bug54220Servlet(true));
         ctx.addServletMapping("/", "bug54220");
@@ -130,15 +134,16 @@ public class TestErrorReportValve extends TomcatBaseTest {
     }
 
 
-    /*
+    /**
      * Custom error/status codes should not result in a blank response.
      */
     @Test
     public void testBug54536() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "bug54536", new Bug54536Servlet());
         ctx.addServletMapping("/", "bug54536");
@@ -173,8 +178,10 @@ public class TestErrorReportValve extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         Bug56042Servlet bug56042Servlet = new Bug56042Servlet();
         Wrapper wrapper =

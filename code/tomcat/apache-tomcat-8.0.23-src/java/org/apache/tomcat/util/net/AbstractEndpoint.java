@@ -18,26 +18,20 @@ package org.apache.tomcat.util.net;
 
 import java.io.File;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLParameters;
 
 import org.apache.juli.logging.Log;
 import org.apache.tomcat.util.IntrospectionUtils;
+import org.apache.tomcat.util.compat.JreCompat;
 import org.apache.tomcat.util.net.AbstractEndpoint.Acceptor.AcceptorState;
 import org.apache.tomcat.util.res.StringManager;
 import org.apache.tomcat.util.threads.LimitLatch;
@@ -47,15 +41,13 @@ import org.apache.tomcat.util.threads.TaskThreadFactory;
 import org.apache.tomcat.util.threads.ThreadPoolExecutor;
 /**
  *
+ * @author fhanik
  * @author Mladen Turk
  * @author Remy Maucherat
  */
 public abstract class AbstractEndpoint<S> {
 
     // -------------------------------------------------------------- Constants
-
-    protected static final String DEFAULT_CIPHERS = "HIGH:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5";
-
     protected static final StringManager sm = StringManager.getManager("org.apache.tomcat.util.net.res");
 
     public static interface Handler {
@@ -65,7 +57,8 @@ public abstract class AbstractEndpoint<S> {
         public enum SocketState {
             // TODO Add a new state to the AsyncStateMachine and remove
             //      ASYNC_END (if possible)
-            OPEN, CLOSED, LONG, ASYNC_END, SENDFILE, UPGRADING, UPGRADED
+            OPEN, CLOSED, LONG, ASYNC_END, SENDFILE, UPGRADING_TOMCAT,
+            UPGRADING, UPGRADED
         }
 
 
@@ -104,60 +97,8 @@ public abstract class AbstractEndpoint<S> {
         }
     }
 
-
     private static final int INITIAL_ERROR_DELAY = 50;
     private static final int MAX_ERROR_DELAY = 1600;
-
-
-    /**
-     * Async timeout thread
-     */
-    protected class AsyncTimeout implements Runnable {
-
-        private volatile boolean asyncTimeoutRunning = true;
-
-        /**
-         * The background thread that checks async requests and fires the
-         * timeout if there has been no activity.
-         */
-        @Override
-        public void run() {
-
-            // Loop until we receive a shutdown command
-            while (asyncTimeoutRunning) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    // Ignore
-                }
-                long now = System.currentTimeMillis();
-                for (SocketWrapper<S> socket : waitingRequests) {
-                    long access = socket.getLastAccess();
-                    if (socket.getTimeout() > 0 && (now - access) > socket.getTimeout()) {
-                        // Prevent multiple timeouts
-                        socket.setTimeout(-1);
-                        processSocket(socket, SocketStatus.TIMEOUT, true);
-                    }
-                }
-
-                // Loop if endpoint is paused
-                while (paused && asyncTimeoutRunning) {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        // Ignore
-                    }
-                }
-
-            }
-        }
-
-
-        protected void stop() {
-            asyncTimeoutRunning = false;
-        }
-    }
-
 
     // ----------------------------------------------------------------- Fields
 
@@ -474,8 +415,8 @@ public abstract class AbstractEndpoint<S> {
      * sub-component is the
      * {@link org.apache.tomcat.util.net.ServerSocketFactory}.
      */
-    protected HashMap<String, Object> attributes = new HashMap<>();
-
+    protected HashMap<String, Object> attributes =
+        new HashMap<String, Object>();
     /**
      * Generic property setter called when a property for which a specific
      * setter already exists within the
@@ -485,7 +426,8 @@ public abstract class AbstractEndpoint<S> {
      */
     public void setAttribute(String name, Object value) {
         if (getLog().isTraceEnabled()) {
-            getLog().trace(sm.getString("endpoint.setAttribute", name, value));
+            getLog().trace(sm.getString("abstractProtocolHandler.setAttribute",
+                    name, value));
         }
         attributes.put(name, value);
     }
@@ -495,7 +437,8 @@ public abstract class AbstractEndpoint<S> {
     public Object getAttribute(String key) {
         Object value = attributes.get(key);
         if (getLog().isTraceEnabled()) {
-            getLog().trace(sm.getString("endpoint.getAttribute", key, value));
+            getLog().trace(sm.getString("abstractProtocolHandler.getAttribute",
+                    key, value));
         }
         return value;
     }
@@ -615,6 +558,7 @@ public abstract class AbstractEndpoint<S> {
             return;
         }
 
+        java.net.Socket s = null;
         InetSocketAddress saddr = null;
         try {
             // Need to create a connection to unlock the accept();
@@ -623,50 +567,57 @@ public abstract class AbstractEndpoint<S> {
             } else {
                 saddr = new InetSocketAddress(address, getLocalPort());
             }
-            try (java.net.Socket s = new java.net.Socket()) {
-                int stmo = 2 * 1000;
-                int utmo = 2 * 1000;
-                if (getSocketProperties().getSoTimeout() > stmo)
-                    stmo = getSocketProperties().getSoTimeout();
-                if (getSocketProperties().getUnlockTimeout() > utmo)
-                    utmo = getSocketProperties().getUnlockTimeout();
-                s.setSoTimeout(stmo);
-                // TODO Consider hard-coding to s.setSoLinger(true,0)
-                s.setSoLinger(getSocketProperties().getSoLingerOn(),getSocketProperties().getSoLingerTime());
-                if (getLog().isDebugEnabled()) {
-                    getLog().debug("About to unlock socket for:"+saddr);
-                }
-                s.connect(saddr,utmo);
-                if (getDeferAccept()) {
-                    /*
-                     * In the case of a deferred accept / accept filters we need to
-                     * send data to wake up the accept. Send OPTIONS * to bypass
-                     * even BSD accept filters. The Acceptor will discard it.
-                     */
-                    OutputStreamWriter sw;
+            s = new java.net.Socket();
+            int stmo = 2 * 1000;
+            int utmo = 2 * 1000;
+            if (getSocketProperties().getSoTimeout() > stmo)
+                stmo = getSocketProperties().getSoTimeout();
+            if (getSocketProperties().getUnlockTimeout() > utmo)
+                utmo = getSocketProperties().getUnlockTimeout();
+            s.setSoTimeout(stmo);
+            // TODO Consider hard-coding to s.setSoLinger(true,0)
+            s.setSoLinger(getSocketProperties().getSoLingerOn(),getSocketProperties().getSoLingerTime());
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("About to unlock socket for:"+saddr);
+            }
+            s.connect(saddr,utmo);
+            if (getDeferAccept()) {
+                /*
+                 * In the case of a deferred accept / accept filters we need to
+                 * send data to wake up the accept. Send OPTIONS * to bypass
+                 * even BSD accept filters. The Acceptor will discard it.
+                 */
+                OutputStreamWriter sw;
 
-                    sw = new OutputStreamWriter(s.getOutputStream(), "ISO-8859-1");
-                    sw.write("OPTIONS * HTTP/1.0\r\n" +
-                             "User-Agent: Tomcat wakeup connection\r\n\r\n");
-                    sw.flush();
-                }
-                if (getLog().isDebugEnabled()) {
-                    getLog().debug("Socket unlock completed for:"+saddr);
-                }
+                sw = new OutputStreamWriter(s.getOutputStream(), "ISO-8859-1");
+                sw.write("OPTIONS * HTTP/1.0\r\n" +
+                         "User-Agent: Tomcat wakeup connection\r\n\r\n");
+                sw.flush();
+            }
+            if (getLog().isDebugEnabled()) {
+                getLog().debug("Socket unlock completed for:"+saddr);
+            }
 
-                // Wait for upto 1000ms acceptor threads to unlock
-                long waitLeft = 1000;
-                for (Acceptor acceptor : acceptors) {
-                    while (waitLeft > 0 &&
-                            acceptor.getState() == AcceptorState.RUNNING) {
-                        Thread.sleep(50);
-                        waitLeft -= 50;
-                    }
+            // Wait for upto 1000ms acceptor threads to unlock
+            long waitLeft = 1000;
+            for (Acceptor acceptor : acceptors) {
+                while (waitLeft > 0 &&
+                        acceptor.getState() == AcceptorState.RUNNING) {
+                    Thread.sleep(50);
+                    waitLeft -= 50;
                 }
             }
         } catch(Exception e) {
             if (getLog().isDebugEnabled()) {
                 getLog().debug(sm.getString("endpoint.debug.unlock", "" + getPort()), e);
+            }
+        } finally {
+            if (s != null) {
+                try {
+                    s.close();
+                } catch (Exception e) {
+                    // Ignore
+                }
             }
         }
     }
@@ -674,48 +625,9 @@ public abstract class AbstractEndpoint<S> {
 
     // ---------------------------------------------- Request processing methods
 
-    /**
-     * Process the given SocketWrapper with the given status. Used to trigger
-     * processing as if the Poller (for those endpoints that have one)
-     * selected the socket.
-     *
-     * @param socketWrapper The socket wrapper to process
-     * @param socketStatus  The input status to the processing
-     * @param dispatch      Should the processing be performed on a new
-     *                          container thread
-     */
-    public abstract void processSocket(SocketWrapper<S> socketWrapper,
-            SocketStatus socketStatus, boolean dispatch);
+    public abstract void processSocketAsync(SocketWrapper<S> socketWrapper,
+            SocketStatus socketStatus);
 
-
-    public void executeNonBlockingDispatches(SocketWrapper<S> socketWrapper) {
-        /*
-         * This method is called when non-blocking IO is initiated by defining
-         * a read and/or write listener in a non-container thread. It is called
-         * once the non-container thread completes so that the first calls to
-         * onWritePossible() and/or onDataAvailable() as appropriate are made by
-         * the container.
-         *
-         * Processing the dispatches requires (for BIO and APR/native at least)
-         * that the socket has been added to the waitingRequests queue. This may
-         * not have occurred by the time that the non-container thread completes
-         * triggering the call to this method. Therefore, the coded syncs on the
-         * SocketWrapper as the container thread that initiated this
-         * non-container thread holds a lock on the SocketWrapper. The container
-         * thread will add the socket to the waitingRequests queue before
-         * releasing the lock on the socketWrapper. Therefore, by obtaining the
-         * lock on socketWrapper before processing the dispatches, we can be
-         * sure that the socket has been added to the waitingRequests queue.
-         */
-        synchronized (socketWrapper) {
-            Iterator<DispatchType> dispatches = socketWrapper.getIteratorAndClearDispatches();
-
-            while (dispatches != null && dispatches.hasNext()) {
-                DispatchType dispatchType = dispatches.next();
-                processSocket(socketWrapper, dispatchType.getSocketStatus(), false);
-            }
-        }
-    }
 
     // ------------------------------------------------------- Lifecycle methods
 
@@ -742,15 +654,9 @@ public abstract class AbstractEndpoint<S> {
     private void testServerCipherSuitesOrderSupport() {
         // Only test this feature if the user explicitly requested its use.
         if(!"".equals(getUseServerCipherSuitesOrder().trim())) {
-            try {
-                // This method is only available in Java 8+
-                // Check to see if the method exists, and then call it.
-                SSLParameters.class.getMethod("setUseCipherSuitesOrder",
-                                              Boolean.TYPE);
-            }
-            catch (NoSuchMethodException nsme) {
-                throw new UnsupportedOperationException(sm.getString("endpoint.jsse.cannotHonorServerCipherOrder"),
-                                                        nsme);
+            if (!JreCompat.isJre8Available()) {
+                throw new UnsupportedOperationException(
+                        sm.getString("endpoint.jsse.cannotHonorServerCipherOrder"));
             }
         }
     }
@@ -821,7 +727,7 @@ public abstract class AbstractEndpoint<S> {
     }
 
 
-    private String adjustRelativePath(String path, String relativeTo) {
+    public String adjustRelativePath(String path, String relativeTo) {
         // Empty or null path can't point to anything useful. The assumption is
         // that the value is deliberately empty / null so leave it that way.
         if (path == null || path.length() == 0) {
@@ -945,15 +851,11 @@ public abstract class AbstractEndpoint<S> {
     public String getSslProtocol() { return sslProtocol;}
     public void setSslProtocol(String s) { sslProtocol = s;}
 
-    private String ciphers = DEFAULT_CIPHERS;
+    private String ciphers = null;
     public String getCiphers() { return ciphers;}
     public void setCiphers(String s) {
         ciphers = s;
     }
-    /**
-     * @return  The ciphers in use by this Endpoint
-     */
-    public abstract String[] getCiphersUsed();
 
     private String useServerCipherSuitesOrder = "";
     public String getUseServerCipherSuitesOrder() { return useServerCipherSuitesOrder;}
@@ -1035,7 +937,7 @@ public abstract class AbstractEndpoint<S> {
     }
 
 
-    private String[] sslEnabledProtocolsarr = new String[0];
+    private String[] sslEnabledProtocolsarr =  new String[0];
     public String[] getSslEnabledProtocolsArray() {
         return this.sslEnabledProtocolsarr;
     }
@@ -1043,7 +945,7 @@ public abstract class AbstractEndpoint<S> {
         if (s == null) {
             this.sslEnabledProtocolsarr = new String[0];
         } else {
-            ArrayList<String> sslEnabledProtocols = new ArrayList<>();
+            ArrayList<String> sslEnabledProtocols = new ArrayList<String>();
             StringTokenizer t = new StringTokenizer(s,",");
             while (t.hasMoreTokens()) {
                 String p = t.nextToken().trim();
@@ -1055,10 +957,6 @@ public abstract class AbstractEndpoint<S> {
                     new String[sslEnabledProtocols.size()]);
         }
     }
-
-
-    protected final Set<SocketWrapper<S>> waitingRequests = Collections
-            .newSetFromMap(new ConcurrentHashMap<SocketWrapper<S>, Boolean>());
 
     /**
      * Configures SSLEngine to honor cipher suites ordering based upon
@@ -1073,48 +971,12 @@ public abstract class AbstractEndpoint<S> {
 
         // Only use this feature if the user explicitly requested its use.
         if(!"".equals(useServerCipherSuitesOrderStr)) {
-            SSLParameters sslParameters = engine.getSSLParameters();
             boolean useServerCipherSuitesOrder =
                     ("true".equalsIgnoreCase(useServerCipherSuitesOrderStr)
                             || "yes".equalsIgnoreCase(useServerCipherSuitesOrderStr));
-
-            try {
-                // This method is only available in Java 8+
-                // Check to see if the method exists, and then call it.
-                Method m = SSLParameters.class.getMethod("setUseCipherSuitesOrder",
-                                                         Boolean.TYPE);
-
-                m.invoke(sslParameters, Boolean.valueOf(useServerCipherSuitesOrder));
-            }
-            catch (NoSuchMethodException nsme) {
-                throw new UnsupportedOperationException(sm.getString("endpoint.jsse.cannotHonorServerCipherOrder"),
-                                                        nsme);
-            } catch (InvocationTargetException ite) {
-                // Should not happen
-                throw new UnsupportedOperationException(sm.getString("endpoint.jsse.cannotHonorServerCipherOrder"),
-                                                        ite);
-            } catch (IllegalArgumentException iae) {
-                // Should not happen
-                throw new UnsupportedOperationException(sm.getString("endpoint.jsse.cannotHonorServerCipherOrder"),
-                                                        iae);
-            } catch (IllegalAccessException e) {
-                // Should not happen
-                throw new UnsupportedOperationException(sm.getString("endpoint.jsse.cannotHonorServerCipherOrder"),
-                                                        e);
-            }
-            engine.setSSLParameters(sslParameters);
+            JreCompat jreCompat = JreCompat.getInstance();
+            jreCompat.setUseServerCipherSuitesOrder(engine, useServerCipherSuitesOrder);
         }
-    }
-
-    /**
-     * The async timeout thread.
-     */
-    private AsyncTimeout asyncTimeout = null;
-    public AsyncTimeout getAsyncTimeout() {
-        return asyncTimeout;
-    }
-    public void setAsyncTimeout(AsyncTimeout asyncTimeout) {
-        this.asyncTimeout = asyncTimeout;
     }
 }
 

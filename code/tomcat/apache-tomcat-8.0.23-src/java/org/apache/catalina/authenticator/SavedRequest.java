@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ public final class SavedRequest {
     /**
      * The set of Cookies associated with this Request.
      */
-    private final ArrayList<Cookie> cookies = new ArrayList<>();
+    private ArrayList<Cookie> cookies = new ArrayList<Cookie>();
 
     public void addCookie(Cookie cookie) {
         cookies.add(cookie);
@@ -63,12 +63,13 @@ public final class SavedRequest {
      * values for this header.  The values are returned as an Iterator when
      * you ask for them.
      */
-    private final HashMap<String,ArrayList<String>> headers = new HashMap<>();
+    private HashMap<String,ArrayList<String>> headers =
+        new HashMap<String,ArrayList<String>>();
 
     public void addHeader(String name, String value) {
         ArrayList<String> values = headers.get(name);
         if (values == null) {
-            values = new ArrayList<>();
+            values = new ArrayList<String>();
             headers.put(name, values);
         }
         values.add(value);
@@ -90,7 +91,7 @@ public final class SavedRequest {
     /**
      * The set of Locales associated with this Request.
      */
-    private final ArrayList<Locale> locales = new ArrayList<>();
+    private ArrayList<Locale> locales = new ArrayList<Locale>();
 
     public void addLocale(Locale locale) {
         locales.add(locale);
@@ -142,7 +143,7 @@ public final class SavedRequest {
         this.requestURI = requestURI;
     }
 
-
+    
     /**
      * The decode request URI associated with this Request. Path parameters are
      * also excluded
@@ -162,7 +163,7 @@ public final class SavedRequest {
      * The body of this request.
      */
     private ByteChunk body = null;
-
+    
     public ByteChunk getBody() {
         return (this.body);
     }
@@ -170,16 +171,16 @@ public final class SavedRequest {
     public void setBody(ByteChunk body) {
         this.body = body;
     }
-
+    
     /**
      * The content type of the request, used if this is a POST.
      */
     private String contentType = null;
-
+    
     public String getContentType() {
         return (this.contentType);
     }
-
+    
     public void setContentType(String contentType) {
         this.contentType = contentType;
     }

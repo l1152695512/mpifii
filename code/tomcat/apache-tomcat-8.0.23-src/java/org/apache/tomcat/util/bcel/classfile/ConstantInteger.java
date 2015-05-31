@@ -22,9 +22,9 @@ import java.io.IOException;
 
 import org.apache.tomcat.util.bcel.Constants;
 
-/**
- * This class is derived from the abstract
- * <A HREF="org.apache.tomcat.util.bcel.classfile.Constant.html">Constant</A> class
+/** 
+ * This class is derived from the abstract 
+ * <A HREF="org.apache.tomcat.util.bcel.classfile.Constant.html">Constant</A> class 
  * and represents a reference to an int object.
  *
  * @author  <A HREF="mailto:m.dahm@gmx.de">M. Dahm</A>
@@ -35,7 +35,7 @@ public final class ConstantInteger extends Constant {
     private final int bytes;
 
 
-    /**
+    /** 
      * Initialize instance from file data.
      *
      * @param file Input stream

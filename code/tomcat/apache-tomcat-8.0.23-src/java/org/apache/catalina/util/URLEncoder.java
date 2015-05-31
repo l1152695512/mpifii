@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ import java.util.BitSet;
  *
  * This class is very similar to the java.net.URLEncoder class.
  *
- * Unfortunately, with java.net.URLEncoder there is no way to specify to the
+ * Unfortunately, with java.net.URLEncoder there is no way to specify to the 
  * java.net.URLEncoder which characters should NOT be encoded.
  *
  * This code was moved from DefaultServlet.java
@@ -34,22 +34,12 @@ import java.util.BitSet;
  * @author Remy Maucherat
  */
 public class URLEncoder {
-    private static final char[] hexadecimal =
+    protected static final char[] hexadecimal =
     {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
      'A', 'B', 'C', 'D', 'E', 'F'};
 
-    public static final URLEncoder DEFAULT = new URLEncoder();
-    static {
-        DEFAULT.addSafeCharacter('~');
-        DEFAULT.addSafeCharacter('-');
-        DEFAULT.addSafeCharacter('_');
-        DEFAULT.addSafeCharacter('.');
-        DEFAULT.addSafeCharacter('*');
-        DEFAULT.addSafeCharacter('/');
-    }
-
     //Array containing the safe characters set.
-    protected final BitSet safeCharacters = new BitSet(256);
+    protected BitSet safeCharacters = new BitSet(256);
 
     public URLEncoder() {
         for (char i = 'a'; i <= 'z'; i++) {

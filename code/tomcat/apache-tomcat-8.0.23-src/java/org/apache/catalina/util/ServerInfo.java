@@ -19,6 +19,7 @@
 package org.apache.catalina.util;
 
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
@@ -40,44 +41,46 @@ public class ServerInfo {
     /**
      * The server information String with which we identify ourselves.
      */
-    private static final String serverInfo;
+    private static String serverInfo = null;
 
     /**
      * The server built String.
      */
-    private static final String serverBuilt;
+    private static String serverBuilt = null;
 
     /**
      * The server's version number String.
      */
-    private static final String serverNumber;
+    private static String serverNumber = null;
 
     static {
 
-        String info = null;
-        String built = null;
-        String number = null;
-
         Properties props = new Properties();
-        try (InputStream is = ServerInfo.class.getResourceAsStream
-                ("/org/apache/catalina/util/ServerInfo.properties")) {
+        InputStream is = null;
+        try {
+            is = ServerInfo.class.getResourceAsStream
+                    ("/org/apache/catalina/util/ServerInfo.properties");
             props.load(is);
-            info = props.getProperty("server.info");
-            built = props.getProperty("server.built");
-            number = props.getProperty("server.number");
+            serverInfo = props.getProperty("server.info");
+            serverBuilt = props.getProperty("server.built");
+            serverNumber = props.getProperty("server.number");
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException e) {
+                }
+            }
         }
-        if (info == null)
-            info = "Apache Tomcat 8.0.x-dev";
-        if (built == null)
-            built = "unknown";
-        if (number == null)
-            number = "8.0.x";
-
-        serverInfo = info;
-        serverBuilt = built;
-        serverNumber = number;
+        if (serverInfo == null)
+            serverInfo = "Apache Tomcat 7.0.x-dev";
+        if (serverBuilt == null)
+            serverBuilt = "unknown";
+        if (serverNumber == null)
+            serverNumber = "7.0.x";
+        
     }
 
 
@@ -124,7 +127,7 @@ public class ServerInfo {
         System.out.println("JVM Version:    " +
                            System.getProperty("java.runtime.version"));
         System.out.println("JVM Vendor:     " +
-                           System.getProperty("java.vm.vendor"));
+                           System.getProperty("java.vm.vendor"));                        
     }
 
 }

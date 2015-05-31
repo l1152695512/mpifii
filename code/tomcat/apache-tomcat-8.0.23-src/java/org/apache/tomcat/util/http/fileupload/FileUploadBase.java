@@ -18,7 +18,7 @@ package org.apache.tomcat.util.http.fileupload;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -50,6 +50,9 @@ import org.apache.tomcat.util.http.fileupload.util.Streams;
 public abstract class FileUploadBase {
 
     // ---------------------------------------------------------- Class methods
+
+    private static final Charset CHARSET_ISO_8859_1 =
+        Charset.forName("ISO-8859-1");
 
     /**
      * <p>Utility method that determines whether the request contains multipart
@@ -274,7 +277,7 @@ public abstract class FileUploadBase {
      */
     public List<FileItem> parseRequest(RequestContext ctx)
             throws FileUploadException {
-        List<FileItem> items = new ArrayList<>();
+        List<FileItem> items = new ArrayList<FileItem>();
         boolean successful = false;
         try {
             FileItemIterator iter = getItemIterator(ctx);
@@ -335,14 +338,15 @@ public abstract class FileUploadBase {
     public Map<String, List<FileItem>> parseParameterMap(RequestContext ctx)
             throws FileUploadException {
         final List<FileItem> items = parseRequest(ctx);
-        final Map<String, List<FileItem>> itemsMap = new HashMap<>(items.size());
+        final Map<String, List<FileItem>> itemsMap =
+                new HashMap<String, List<FileItem>>(items.size());
 
         for (FileItem fileItem : items) {
             String fieldName = fileItem.getFieldName();
             List<FileItem> mappedItems = itemsMap.get(fieldName);
 
             if (mappedItems == null) {
-                mappedItems = new ArrayList<>();
+                mappedItems = new ArrayList<FileItem>();
                 itemsMap.put(fieldName, mappedItems);
             }
 
@@ -374,7 +378,7 @@ public abstract class FileUploadBase {
             return null;
         }
         byte[] boundary;
-        boundary = boundaryStr.getBytes(StandardCharsets.ISO_8859_1);
+        boundary = boundaryStr.getBytes(CHARSET_ISO_8859_1);
         return boundary;
     }
 
@@ -802,10 +806,10 @@ public abstract class FileUploadBase {
                         MULTIPART_FORM_DATA, MULTIPART_MIXED, contentType));
             }
 
+            InputStream input = ctx.getInputStream();
 
             final long requestSize = ((UploadContext) ctx).contentLength();
 
-            InputStream input; // N.B. this is eventually closed in MultipartStream processing
             if (sizeMax >= 0) {
                 if (requestSize != -1 && requestSize > sizeMax) {
                     throw new SizeLimitExceededException(String.format(
@@ -813,8 +817,7 @@ public abstract class FileUploadBase {
                             Long.valueOf(requestSize), Long.valueOf(sizeMax)),
                             requestSize, sizeMax);
                 }
-                // N.B. this is eventually closed in MultipartStream processing
-                input = new LimitedInputStream(ctx.getInputStream(), sizeMax) {
+                input = new LimitedInputStream(input, sizeMax) {
                     @Override
                     protected void raiseError(long pSizeMax, long pCount)
                             throws IOException {
@@ -825,8 +828,6 @@ public abstract class FileUploadBase {
                         throw new FileUploadIOException(ex);
                     }
                 };
-            } else {
-                input = ctx.getInputStream();
             }
 
             String charEncoding = headerEncoding;
@@ -836,7 +837,6 @@ public abstract class FileUploadBase {
 
             boundary = getBoundary(contentType);
             if (boundary == null) {
-                IOUtils.closeQuietly(input); // avoid possible resource leak
                 throw new FileUploadException("the request was rejected because no multipart boundary was found");
             }
 
@@ -844,9 +844,9 @@ public abstract class FileUploadBase {
             try {
                 multi = new MultipartStream(input, boundary, notifier);
             } catch (IllegalArgumentException iae) {
-                IOUtils.closeQuietly(input); // avoid possible resource leak
-                throw new InvalidContentTypeException(
-                        String.format("The boundary specified in the %s header is too long", CONTENT_TYPE), iae);
+                throw new InvalidContentTypeException(String.format(
+                        "The boundary specified in the %s header is too long",
+                        CONTENT_TYPE), iae);
             }
             multi.setHeaderEncoding(charEncoding);
 
@@ -1038,15 +1038,6 @@ public abstract class FileUploadBase {
             super(message);
         }
 
-        /**
-         * Constructs an <code>InvalidContentTypeException</code> with
-         * the specified detail message and cause.
-         *
-         * @param msg The detail message.
-         * @param cause the original cause
-         *
-         * @since 1.3.1
-         */
         public InvalidContentTypeException(String msg, Throwable cause) {
             super(msg, cause);
         }

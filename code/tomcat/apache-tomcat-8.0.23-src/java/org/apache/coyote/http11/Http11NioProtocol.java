@@ -17,15 +17,13 @@
 package org.apache.coyote.http11;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
-
-import javax.servlet.http.HttpUpgradeHandler;
 
 import org.apache.coyote.AbstractProtocol;
 import org.apache.coyote.Processor;
 import org.apache.coyote.http11.upgrade.NioProcessor;
+import org.apache.coyote.http11.upgrade.servlet31.HttpUpgradeHandler;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.net.AbstractEndpoint;
@@ -44,6 +42,7 @@ import org.apache.tomcat.util.net.SocketWrapper;
  *
  * @author Remy Maucherat
  * @author Costin Manolache
+ * @author Filip Hanik
  */
 public class Http11NioProtocol extends AbstractHttp11JsseProtocol<NioChannel> {
 
@@ -77,7 +76,7 @@ public class Http11NioProtocol extends AbstractHttp11JsseProtocol<NioChannel> {
 
     // -------------------- Properties--------------------
 
-    private final Http11ConnectionHandler cHandler;
+    private Http11ConnectionHandler cHandler;
 
     // -------------------- Pool setup --------------------
 
@@ -115,7 +114,7 @@ public class Http11NioProtocol extends AbstractHttp11JsseProtocol<NioChannel> {
 
 
     public boolean getUseSendfile() {
-        return endpoint.getUseSendfile();
+        return ((NioEndpoint)endpoint).getUseSendfile();
     }
 
     public void setUseSendfile(boolean useSendfile) {
@@ -198,7 +197,7 @@ public class Http11NioProtocol extends AbstractHttp11JsseProtocol<NioChannel> {
                 connections.remove(socket.getSocket());
             if (processor != null) {
                 processor.recycle(true);
-                recycledProcessors.push(processor);
+                recycledProcessors.offer(processor);
             }
         }
 
@@ -217,7 +216,7 @@ public class Http11NioProtocol extends AbstractHttp11JsseProtocol<NioChannel> {
                 Processor<NioChannel> processor, boolean isSocketClosing,
                 boolean addToPoller) {
             processor.recycle(isSocketClosing);
-            recycledProcessors.push(processor);
+            recycledProcessors.offer(processor);
             if (addToPoller) {
                 socket.getSocket().getPoller().add(socket.getSocket());
             }
@@ -262,17 +261,44 @@ public class Http11NioProtocol extends AbstractHttp11JsseProtocol<NioChannel> {
                     proto.getMaxHttpHeaderSize(), (NioEndpoint)proto.endpoint,
                     proto.getMaxTrailerSize(), proto.getAllowedTrailerHeadersAsSet(),
                     proto.getMaxExtensionSize(), proto.getMaxSwallowSize());
-            proto.configureProcessor(processor);
+            processor.setAdapter(proto.adapter);
+            processor.setMaxKeepAliveRequests(proto.getMaxKeepAliveRequests());
+            processor.setKeepAliveTimeout(proto.getKeepAliveTimeout());
+            processor.setConnectionUploadTimeout(
+                    proto.getConnectionUploadTimeout());
+            processor.setDisableUploadTimeout(proto.getDisableUploadTimeout());
+            processor.setCompressionMinSize(proto.getCompressionMinSize());
+            processor.setCompression(proto.getCompression());
+            processor.setNoCompressionUserAgents(proto.getNoCompressionUserAgents());
+            processor.setCompressableMimeTypes(proto.getCompressableMimeTypes());
+            processor.setRestrictedUserAgents(proto.getRestrictedUserAgents());
+            processor.setSocketBuffer(proto.getSocketBuffer());
+            processor.setMaxSavePostSize(proto.getMaxSavePostSize());
+            processor.setServer(proto.getServer());
             register(processor);
             return processor;
         }
 
+        /**
+         * @deprecated  Will be removed in Tomcat 8.0.x.
+         */
+        @Deprecated
         @Override
         protected Processor<NioChannel> createUpgradeProcessor(
-                SocketWrapper<NioChannel> socket, ByteBuffer leftoverInput,
+                SocketWrapper<NioChannel> socket,
+                org.apache.coyote.http11.upgrade.UpgradeInbound inbound)
+                throws IOException {
+            return new org.apache.coyote.http11.upgrade.UpgradeNioProcessor(
+                    socket, inbound,
+                    ((Http11NioProtocol) getProtocol()).getEndpoint().getSelectorPool());
+        }
+        
+        @Override
+        protected Processor<NioChannel> createUpgradeProcessor(
+                SocketWrapper<NioChannel> socket,
                 HttpUpgradeHandler httpUpgradeProcessor)
                 throws IOException {
-            return new NioProcessor(socket, leftoverInput, httpUpgradeProcessor,
+            return new NioProcessor(socket, httpUpgradeProcessor,
                     proto.getEndpoint().getSelectorPool(),
                     proto.getUpgradeAsyncWriteBufferSize());
         }

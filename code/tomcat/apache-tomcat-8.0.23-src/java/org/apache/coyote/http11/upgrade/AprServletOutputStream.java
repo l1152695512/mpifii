@@ -28,20 +28,22 @@ import org.apache.tomcat.jni.Status;
 import org.apache.tomcat.util.net.AprEndpoint;
 import org.apache.tomcat.util.net.SocketWrapper;
 
-public class AprServletOutputStream extends AbstractServletOutputStream<Long> {
+public class AprServletOutputStream extends AbstractServletOutputStream {
 
     private static final int SSL_OUTPUT_BUFFER_SIZE = 8192;
 
     private final AprEndpoint endpoint;
+    private final SocketWrapper<Long> wrapper;
     private final long socket;
     private volatile boolean closed = false;
     private final ByteBuffer sslOutputBuffer;
 
-    public AprServletOutputStream(SocketWrapper<Long> socketWrapper,
+    public AprServletOutputStream(SocketWrapper<Long> wrapper,
             int asyncWriteBufferSize, AprEndpoint endpoint) {
-        super(socketWrapper, asyncWriteBufferSize);
+        super(asyncWriteBufferSize);
         this.endpoint = endpoint;
-        this.socket = socketWrapper.getSocket().longValue();
+        this.wrapper = wrapper;
+        this.socket = wrapper.getSocket().longValue();
         if (endpoint.isSSLEnabled()) {
             sslOutputBuffer = ByteBuffer.allocateDirect(SSL_OUTPUT_BUFFER_SIZE);
             sslOutputBuffer.position(SSL_OUTPUT_BUFFER_SIZE);
@@ -59,22 +61,22 @@ public class AprServletOutputStream extends AbstractServletOutputStream<Long> {
             throw new IOException(sm.getString("apr.closed", Long.valueOf(socket)));
         }
 
-        Lock readLock = socketWrapper.getBlockingStatusReadLock();
-        WriteLock writeLock = socketWrapper.getBlockingStatusWriteLock();
+        Lock readLock = wrapper.getBlockingStatusReadLock();
+        WriteLock writeLock = wrapper.getBlockingStatusWriteLock();
 
-        readLock.lock();
         try {
-            if (socketWrapper.getBlockingStatus() == block) {
+            readLock.lock();
+            if (wrapper.getBlockingStatus() == block) {
                 return doWriteInternal(b, off, len);
             }
         } finally {
             readLock.unlock();
         }
 
-        writeLock.lock();
         try {
+            writeLock.lock();
             // Set the current settings for this socket
-            socketWrapper.setBlockingStatus(block);
+            wrapper.setBlockingStatus(block);
             if (block) {
                 Socket.timeoutSet(socket, endpoint.getSoTimeout() * 1000);
             } else {
@@ -82,8 +84,8 @@ public class AprServletOutputStream extends AbstractServletOutputStream<Long> {
             }
 
             // Downgrade the lock
-            readLock.lock();
             try {
+                readLock.lock();
                 writeLock.unlock();
                 return doWriteInternal(b, off, len);
             } finally {
@@ -140,14 +142,14 @@ public class AprServletOutputStream extends AbstractServletOutputStream<Long> {
                 throw new EOFException(sm.getString("apr.clientAbort"));
             } else if (written < 0) {
                 throw new IOException(sm.getString("apr.write.error",
-                        Integer.valueOf(-written), Long.valueOf(socket), socketWrapper));
+                        Integer.valueOf(-written), Long.valueOf(socket), wrapper));
             }
             start += written;
             left -= written;
         } while (written > 0 && left > 0);
 
         if (left > 0) {
-            socketWrapper.registerforEvent(-1, false, true);
+            endpoint.getPoller().add(socket, -1, false, true);
         }
         return len - left;
     }

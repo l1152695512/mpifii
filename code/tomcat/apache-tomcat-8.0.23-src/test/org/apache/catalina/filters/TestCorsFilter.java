@@ -32,7 +32,7 @@ import org.junit.Test;
 public class TestCorsFilter {
     private FilterChain filterChain = new TesterFilterChain();
 
-    /*
+    /**
      * Tests if a GET request is treated as simple request.
      *
      * @See http://www.w3.org/TR/cors/#simple-method
@@ -64,7 +64,7 @@ public class TestCorsFilter {
                 CorsFilter.CORSRequestType.SIMPLE.name().toLowerCase(Locale.ENGLISH)));
     }
 
-    /*
+    /**
      * Tests if a POST request is treated as simple request.
      *
      * @See http://www.w3.org/TR/cors/#simple-method
@@ -97,7 +97,7 @@ public class TestCorsFilter {
                 CorsFilter.CORSRequestType.SIMPLE.name().toLowerCase(Locale.ENGLISH)));
     }
 
-    /*
+    /**
      * Tests if a HEAD request is treated as simple request.
      *
      * @See http://www.w3.org/TR/cors/#simple-method
@@ -129,7 +129,7 @@ public class TestCorsFilter {
                 CorsFilter.CORSRequestType.SIMPLE.name().toLowerCase(Locale.ENGLISH)));
     }
 
-    /*
+    /**
      * Test the presence of specific origin in response, when '*' is not used.
      *
      * @throws IOException
@@ -162,7 +162,7 @@ public class TestCorsFilter {
                 CorsFilter.CORSRequestType.SIMPLE.name().toLowerCase(Locale.ENGLISH)));
     }
 
-    /*
+    /**
      * Tests the prsence of the origin (and not '*') in the response, when
      * supports credentials is enabled alongwith any origin, '*'.
      *
@@ -200,7 +200,7 @@ public class TestCorsFilter {
                 CorsFilter.CORSRequestType.SIMPLE.name().toLowerCase(Locale.ENGLISH)));
     }
 
-    /*
+    /**
      * Tests the presence of the origin (and not '*') in the response, when
      * supports credentials is enabled alongwith any origin, '*'.
      *
@@ -236,7 +236,7 @@ public class TestCorsFilter {
                 CorsFilter.CORSRequestType.SIMPLE.name().toLowerCase(Locale.ENGLISH)));
     }
 
-    /*
+    /**
      * Tests the presence of exposed headers in response, if configured.
      *
      * @throws IOException
@@ -273,7 +273,7 @@ public class TestCorsFilter {
                 CorsFilter.CORSRequestType.SIMPLE.name().toLowerCase(Locale.ENGLISH)));
     }
 
-    /*
+    /**
      * Checks if an OPTIONS request is processed as pre-flight.
      *
      * @throws IOException
@@ -313,7 +313,7 @@ public class TestCorsFilter {
                 "Content-Type"));
     }
 
-    /*
+    /**
      * Checks if an OPTIONS request is processed as pre-flight where any origin
      * is enabled.
      *
@@ -355,7 +355,7 @@ public class TestCorsFilter {
                 "Content-Type"));
     }
 
-    /*
+    /**
      * Checks if an OPTIONS request is processed as pre-flight.
      *
      * @throws IOException
@@ -497,7 +497,7 @@ public class TestCorsFilter {
                 "Content-Type"));
     }
 
-    /*
+    /**
      * Negative test, when a CORS request arrives, with no origin header.
      */
     @Test
@@ -583,7 +583,6 @@ public class TestCorsFilter {
         CorsFilter.CORSRequestType requestType =
                 corsFilter.checkRequestType(request);
         if (isCors) {
-            Assert.assertNotEquals(CorsFilter.CORSRequestType.NOT_CORS, requestType);
         } else {
             Assert.assertEquals(CorsFilter.CORSRequestType.NOT_CORS, requestType);
         }
@@ -728,7 +727,7 @@ public class TestCorsFilter {
         // worked as expected.
     }
 
-    /*
+    /**
      * Tests if a non-simple request is given to simple request handler.
      *
      * @throws IOException
@@ -753,7 +752,7 @@ public class TestCorsFilter {
         corsFilter.handleSimpleCORS(request, response, filterChain);
     }
 
-    /*
+    /**
      * When a non-preflight request is given to a pre-flight request handler.
      *
      * @throws IOException
@@ -822,7 +821,7 @@ public class TestCorsFilter {
         Assert.assertEquals(CorsFilter.CORSRequestType.SIMPLE, requestType);
     }
 
-    /*
+    /**
      * Happy path test, when a valid CORS Simple request arrives.
      *
      * @throws ServletException
@@ -841,7 +840,7 @@ public class TestCorsFilter {
         Assert.assertEquals(CorsFilter.CORSRequestType.SIMPLE, requestType);
     }
 
-    /*
+    /**
      * Happy path test, when a valid CORS Simple request arrives.
      *
      * @throws ServletException
@@ -860,7 +859,7 @@ public class TestCorsFilter {
         Assert.assertEquals(CorsFilter.CORSRequestType.ACTUAL, requestType);
     }
 
-    /*
+    /**
      * Happy path test, when a valid CORS Simple request arrives.
      *
      * @throws ServletException
@@ -881,7 +880,7 @@ public class TestCorsFilter {
         Assert.assertEquals(CorsFilter.CORSRequestType.ACTUAL, requestType);
     }
 
-    /*
+    /**
      * Happy path test, when a valid CORS Pre-flight request arrives.
      *
      * @throws ServletException
@@ -906,12 +905,16 @@ public class TestCorsFilter {
         Assert.assertEquals(CorsFilter.CORSRequestType.PRE_FLIGHT, requestType);
     }
 
-    /*
+    /**
      * when a valid CORS Pre-flight request arrives, with no
      * Access-Control-Request-Method
+     *
+     * @throws ServletException
+     * @throws IOException
      */
     @Test
-    public void testCheckPreFlightRequestTypeNoACRM() throws ServletException {
+    public void testCheckPreFlightRequestTypeNoACRM() throws ServletException,
+            IOException {
         TesterHttpServletRequest request = new TesterHttpServletRequest();
         request.setHeader(CorsFilter.REQUEST_HEADER_ORIGIN,
                 TesterFilterConfigs.HTTP_TOMCAT_APACHE_ORG);
@@ -925,13 +928,16 @@ public class TestCorsFilter {
         Assert.assertEquals(CorsFilter.CORSRequestType.ACTUAL, requestType);
     }
 
-    /*
+    /**
      * when a valid CORS Pre-flight request arrives, with empty
      * Access-Control-Request-Method
+     *
+     * @throws ServletException
+     * @throws IOException
      */
     @Test
     public void testCheckPreFlightRequestTypeEmptyACRM()
-            throws ServletException {
+            throws ServletException, IOException {
         TesterHttpServletRequest request = new TesterHttpServletRequest();
         request.setHeader(CorsFilter.REQUEST_HEADER_ORIGIN,
                 TesterFilterConfigs.HTTP_TOMCAT_APACHE_ORG);
@@ -948,7 +954,7 @@ public class TestCorsFilter {
                 requestType);
     }
 
-    /*
+    /**
      * Happy path test, when a valid CORS Pre-flight request arrives.
      *
      * @throws ServletException
@@ -971,7 +977,7 @@ public class TestCorsFilter {
         Assert.assertEquals(CorsFilter.CORSRequestType.PRE_FLIGHT, requestType);
     }
 
-    /*
+    /**
      * Section 6.2.3
      *
      * @throws ServletException
@@ -996,7 +1002,7 @@ public class TestCorsFilter {
                 response.getStatus());
     }
 
-    /*
+    /**
      * Section Section 6.2.5
      *
      * @throws ServletException
@@ -1021,7 +1027,7 @@ public class TestCorsFilter {
                 response.getStatus());
     }
 
-    /*
+    /**
      * Section Section 6.2.6
      *
      * @throws ServletException
@@ -1049,7 +1055,7 @@ public class TestCorsFilter {
                 response.getStatus());
     }
 
-    /*
+    /**
      * Section Section 6.2.7
      *
      * @throws ServletException
@@ -1099,7 +1105,7 @@ public class TestCorsFilter {
                 response.getStatus());
     }
 
-    /*
+    /**
      * Happy path test, when a valid CORS Pre-flight request arrives.
      *
      * @throws ServletException
@@ -1125,7 +1131,7 @@ public class TestCorsFilter {
         Assert.assertEquals(CorsFilter.CORSRequestType.PRE_FLIGHT, requestType);
     }
 
-    /*
+    /**
      * Negative test, when a CORS request arrives, with an empty origin.
      *
      * @throws ServletException
@@ -1146,7 +1152,7 @@ public class TestCorsFilter {
                 requestType);
     }
 
-    /*
+    /**
      * Tests for failure, when a different domain is used, that's not in the
      * allowed list of origins.
      *
@@ -1168,7 +1174,7 @@ public class TestCorsFilter {
                 response.getStatus());
     }
 
-    /*
+    /**
      * Tests for failure, when the 'null' origin is used, and it's not in the
      * list of allowed origins.
      */
@@ -1209,7 +1215,7 @@ public class TestCorsFilter {
                 response.getStatus());
     }
 
-    /*
+    /**
      * PUT is not an allowed request method.
      *
      * @throws ServletException
@@ -1231,7 +1237,7 @@ public class TestCorsFilter {
                 response.getStatus());
     }
 
-    /*
+    /**
      * When requestMethod is null
      *
      * @throws ServletException
@@ -1251,7 +1257,7 @@ public class TestCorsFilter {
                 requestType);
     }
 
-    /*
+    /**
      * "http://tomcat.apache.org" is an allowed origin and
      * "https://tomcat.apache.org" is not, because scheme doesn't match
      *
@@ -1272,7 +1278,7 @@ public class TestCorsFilter {
                 requestType);
     }
 
-    /*
+    /**
      * "http://tomcat.apache.org" is an allowed origin and
      * "http://tomcat.apache.org:8080" is not, because ports doesn't match
      *
@@ -1294,12 +1300,14 @@ public class TestCorsFilter {
                 response.getStatus());
     }
 
-    /*
+    /**
      * Tests for failure, when an invalid {@link HttpServletRequest} is
      * encountered.
+     *
+     * @throws ServletException
      */
     @Test(expected = IllegalArgumentException.class)
-    public void testCheckRequestTypeNull() {
+    public void testCheckRequestTypeNull() throws ServletException {
         HttpServletRequest request = null;
         CorsFilter corsFilter = new CorsFilter();
         corsFilter.checkRequestType(request);
@@ -1307,7 +1315,7 @@ public class TestCorsFilter {
 
     @Test
     public void testJoin() {
-        Set<String> elements = new LinkedHashSet<>();
+        Set<String> elements = new LinkedHashSet<String>();
         String separator = ",";
         elements.add("world");
         elements.add("peace");
@@ -1317,7 +1325,7 @@ public class TestCorsFilter {
 
     @Test
     public void testJoinSingleElement() {
-        Set<String> elements = new LinkedHashSet<>();
+        Set<String> elements = new LinkedHashSet<String>();
         String separator = ",";
         elements.add("world");
         String join = CorsFilter.join(elements, separator);
@@ -1326,7 +1334,7 @@ public class TestCorsFilter {
 
     @Test
     public void testJoinSepNull() {
-        Set<String> elements = new LinkedHashSet<>();
+        Set<String> elements = new LinkedHashSet<String>();
         String separator = null;
         elements.add("world");
         elements.add("peace");
@@ -1345,7 +1353,7 @@ public class TestCorsFilter {
 
     @Test
     public void testJoinOneNullElement() {
-        Set<String> elements = new LinkedHashSet<>();
+        Set<String> elements = new LinkedHashSet<String>();
         String separator = ",";
         elements.add(null);
         elements.add("peace");
@@ -1355,7 +1363,7 @@ public class TestCorsFilter {
 
     @Test
     public void testJoinAllNullElements() {
-        Set<String> elements = new LinkedHashSet<>();
+        Set<String> elements = new LinkedHashSet<String>();
         String separator = ",";
         elements.add(null);
         elements.add(null);
@@ -1365,7 +1373,7 @@ public class TestCorsFilter {
 
     @Test
     public void testJoinAllEmptyElements() {
-        Set<String> elements = new LinkedHashSet<>();
+        Set<String> elements = new LinkedHashSet<String>();
         String separator = ",";
         elements.add("");
         elements.add("");
@@ -1375,7 +1383,7 @@ public class TestCorsFilter {
 
     @Test
     public void testJoinPipeSeparator() {
-        Set<String> elements = new LinkedHashSet<>();
+        Set<String> elements = new LinkedHashSet<String>();
         String separator = "|";
         elements.add("world");
         elements.add("peace");
@@ -1416,7 +1424,7 @@ public class TestCorsFilter {
         Assert.assertTrue(corsFilter.getPreflightMaxAge() == 0);
     }
 
-    /*
+    /**
      * If an init param is null, it's default value will be used.
      *
      * @throws ServletException

@@ -14,7 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.catalina;
+
 
 import java.net.URL;
 import java.util.Locale;
@@ -23,21 +26,24 @@ import java.util.Set;
 
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.ServletContext;
-import javax.servlet.ServletRegistration;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletSecurityElement;
 import javax.servlet.descriptor.JspConfigDescriptor;
 
-import org.apache.catalina.deploy.NamingResourcesImpl;
+import org.apache.catalina.core.ApplicationServletRegistration;
+import org.apache.catalina.deploy.ApplicationListener;
+import org.apache.catalina.deploy.ApplicationParameter;
+import org.apache.catalina.deploy.ErrorPage;
+import org.apache.catalina.deploy.FilterDef;
+import org.apache.catalina.deploy.FilterMap;
+import org.apache.catalina.deploy.LoginConfig;
+import org.apache.catalina.deploy.NamingResources;
+import org.apache.catalina.deploy.SecurityConstraint;
+import org.apache.catalina.util.CharsetMapper;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.JarScanner;
-import org.apache.tomcat.util.descriptor.web.ApplicationParameter;
-import org.apache.tomcat.util.descriptor.web.ErrorPage;
-import org.apache.tomcat.util.descriptor.web.FilterDef;
-import org.apache.tomcat.util.descriptor.web.FilterMap;
-import org.apache.tomcat.util.descriptor.web.LoginConfig;
-import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
-import org.apache.tomcat.util.http.CookieProcessor;
+import org.apache.tomcat.util.http.mapper.Mapper;
+
 
 /**
  * A <b>Context</b> is a Container that represents a servlet context, and
@@ -57,10 +63,19 @@ import org.apache.tomcat.util.http.CookieProcessor;
  *
  * @author Craig R. McClanahan
  */
+
 public interface Context extends Container {
 
 
     // ----------------------------------------------------- Manifest Constants
+
+
+    /**
+     * The LifecycleEvent type sent when a context is reloaded.
+     * @deprecated Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public static final String RELOAD_EVENT = "reload";
 
     /**
      * Container event for adding a welcome file.
@@ -81,7 +96,6 @@ public interface Context extends Container {
      * Container event for changing the ID of a session.
      */
     public static final String CHANGE_SESSION_ID_EVENT = "changeSessionId";
-
 
     // ------------------------------------------------------------- Properties
 
@@ -109,11 +123,12 @@ public interface Context extends Container {
 
 
     /**
-     * Obtain the registered application event listeners.
+     * Return the set of initialized application event listener objects,
+     * in the order they were specified in the web application deployment
+     * descriptor, for this application.
      *
-     * @return An array containing the application event listener instances for
-     *         this web application in the order they were specified in the web
-     *         application deployment descriptor
+     * @exception IllegalStateException if this method is called before
+     *  this application has started, or after it has been stopped
      */
     public Object[] getApplicationEventListeners();
 
@@ -129,11 +144,12 @@ public interface Context extends Container {
 
 
     /**
-     * Obtain the registered application lifecycle listeners.
+     * Return the set of initialized application lifecycle listener objects,
+     * in the order they were specified in the web application deployment
+     * descriptor, for this application.
      *
-     * @return An array containing the application lifecycle listener instances
-     *         for this web application in the order they were specified in the
-     *         web application deployment descriptor
+     * @exception IllegalStateException if this method is called before
+     *  this application has started, or after it has been stopped
      */
     public Object[] getApplicationLifecycleListeners();
 
@@ -149,22 +165,45 @@ public interface Context extends Container {
 
 
     /**
+     * Return the application available flag for this Context.
+     *
+     * @deprecated  This will be removed in Tomcat 8.0.x onwards. Use
+     *              {@link #getState()}.{@link LifecycleState#isAvailable()
+     *              isAvailable()} instead
+     */
+    @Deprecated
+    public boolean getAvailable();
+
+
+    /**
+     * Return the Locale to character set mapper for this Context.
+     * @deprecated Use {@link #getCharset(Locale)}
+     */
+    @Deprecated
+    public CharsetMapper getCharsetMapper();
+
+
+    /**
+     * Set the Locale to character set mapper for this Context.
+     *
+     * @param mapper The new mapper
+     *
+     * @deprecated
+     */
+    @Deprecated
+    public void setCharsetMapper(CharsetMapper mapper);
+
+
+    /**
      * Obtain the character set name to use with the given Locale. Note that
      * different Contexts may have different mappings of Locale to character
      * set.
-     *
-     * @param locale The locale for which the mapped character set should be
-     *               returned
-     *
-     * @return The name of the character set to use with the given Locale
      */
     public String getCharset(Locale locale);
 
 
     /**
      * Return the URL of the XML descriptor for this context.
-     *
-     * @return The URL of the XML descriptor for this context
      */
     public URL getConfigFile();
 
@@ -179,9 +218,6 @@ public interface Context extends Container {
 
     /**
      * Return the "correctly configured" flag for this Context.
-     *
-     * @return <code>true</code> if the Context has been correctly configured,
-     *         otherwise <code>false</code>
      */
     public boolean getConfigured();
 
@@ -198,10 +234,6 @@ public interface Context extends Container {
 
     /**
      * Return the "use cookies for session ids" flag.
-     *
-     * @return <code>true</code> if it is permitted to use cookies to track
-     *         session IDs for this web application, otherwise
-     *         <code>false</code>
      */
     public boolean getCookies();
 
@@ -315,9 +347,6 @@ public interface Context extends Container {
 
     /**
      * Return the "allow crossing servlet contexts" flag.
-     *
-     * @return <code>true</code> if cross-contest requests are allowed from this
-     *         web applications, otherwise <code>false</code>
      */
     public boolean getCrossContext();
 
@@ -340,20 +369,6 @@ public interface Context extends Container {
      * @param crossContext The new cross contexts flag
      */
     public void setCrossContext(boolean crossContext);
-
-
-    /**
-     * Return the deny-uncovered-http-methods flag for this web application.
-     */
-    public boolean getDenyUncoveredHttpMethods();
-
-
-    /**
-     * Set the deny-uncovered-http-methods flag for this web application.
-     *
-     * @param denyUncoveredHttpMethods The new deny-uncovered-http-methods flag
-     */
-    public void setDenyUncoveredHttpMethods(boolean denyUncoveredHttpMethods);
 
 
     /**
@@ -436,9 +451,15 @@ public interface Context extends Container {
 
 
     /**
+     * Get the request dispatcher mapper.
+     */
+    public Mapper getMapper();
+
+
+    /**
      * Return the naming resources associated with this web application.
      */
-    public NamingResourcesImpl getNamingResources();
+    public NamingResources getNamingResources();
 
 
     /**
@@ -446,7 +467,7 @@ public interface Context extends Container {
      *
      * @param namingResources The new naming resources
      */
-    public void setNamingResources(NamingResourcesImpl namingResources);
+    public void setNamingResources(NamingResources namingResources);
 
 
     /**
@@ -602,7 +623,7 @@ public interface Context extends Container {
      */
     public boolean getXmlNamespaceAware();
 
-
+    
     /**
      * Controls whether the parsing of web.xml and web-fragment.xml files for
      * this Context will be performed by a namespace aware parser.
@@ -611,7 +632,7 @@ public interface Context extends Container {
      */
     public void setXmlNamespaceAware(boolean xmlNamespaceAware);
 
-
+    
     /**
      * Will the parsing of web.xml and web-fragment.xml files for this Context
      * be performed by a validating parser?
@@ -628,6 +649,28 @@ public interface Context extends Container {
      * @param xmlValidation true to enable xml validation
      */
     public void setXmlValidation(boolean xmlValidation);
+
+
+    /**
+     * *.tld files are always parsed using a namespace aware parser.
+     *
+     * @return Always <code>true</code>
+     * 
+     * @deprecated This option will be removed in 8.0.x.
+     */
+    @Deprecated
+    public boolean getTldNamespaceAware();
+
+
+    /**
+     * *.tld files are always parsed using a namespace aware parser.
+     *
+     * @param tldNamespaceAware ignored
+     * 
+     * @deprecated This option will be removed in 8.0.x.
+     */
+    @Deprecated
+    public void setTldNamespaceAware(boolean tldNamespaceAware);
 
 
     /**
@@ -735,6 +778,33 @@ public interface Context extends Container {
 
 
     // --------------------------------------------------------- Public Methods
+
+    /**
+     * Add a new Listener class name to the set of Listeners configured for this
+     * application.
+     *
+     * <p>
+     * The {@link ApplicationListener} class is used to pass an additional
+     * parameter that allows to differentiate listeners to Web Application added
+     * via configuration (web.xml or annotations) vs. ones added by frameworks,
+     * such as listeners declared in JSP tag libraries (TLD files) that are
+     * added by Jasper JSP Engine.
+     *
+     * <p>
+     * The recommended method to call for the first use case is
+     * {@link #addApplicationListener(String)}. The recommended replacement for
+     * the second use case is to use {@code addListener(...)} methods in
+     * {@link javax.servlet.ServletContext}.
+     *
+     * @param listener
+     *            Definition of a listener, including its java class name.
+     * @deprecated This method is removed from Tomcat 8.0.9 onwards. Use
+     *             {@link #addApplicationListener(String)} or
+     *             {@link javax.servlet.ServletContext#addListener(String)}.
+     */
+    @Deprecated
+    public void addApplicationListener(ApplicationListener listener);
+
 
     /**
      * Add a new Listener class name to the set of Listeners
@@ -1083,18 +1153,6 @@ public interface Context extends Container {
 
 
     /**
-     * Get the associated ThreadBindingListener.
-     */
-    public ThreadBindingListener getThreadBindingListener();
-
-
-    /**
-     * Get the associated ThreadBindingListener.
-     */
-    public void setThreadBindingListener(ThreadBindingListener threadBindingListener);
-
-
-    /**
      * Return the set of watched resources for this Context. If none are
      * defined, a zero length array will be returned.
      */
@@ -1335,15 +1393,17 @@ public interface Context extends Container {
 
     /**
      * Obtain the JSP configuration for this context.
-     * Will be null if there is no JSP configuration.
      */
     public JspConfigDescriptor getJspConfigDescriptor();
 
+
     /**
-     * Set the JspConfigDescriptor for this context.
-     * A null value indicates there is not JSP configuration.
+     * Add a URL for a JAR that contains static resources in a
+     * META-INF/resources directory that should be included in the static
+     * resources for this context.
      */
-    public void setJspConfigDescriptor(JspConfigDescriptor descriptor);
+    public void addResourceJarUrl(URL url);
+
 
     /**
      * Add a ServletContainerInitializer instance to this web application.
@@ -1374,7 +1434,7 @@ public interface Context extends Container {
      * @return urls currently mapped to this registration that are already
      *         present in web.xml
      */
-    Set<String> addServletSecurity(ServletRegistration.Dynamic registration,
+    Set<String> addServletSecurity(ApplicationServletRegistration registration,
             ServletSecurityElement servletSecurityElement);
 
     /**
@@ -1457,60 +1517,6 @@ public interface Context extends Container {
      * part of a redirect response.
      */
     public boolean getSendRedirectBody();
-
-    /**
-     * Return the Loader with which this Context is associated.
-     */
-    public Loader getLoader();
-
-    /**
-     * Set the Loader with which this Context is associated.
-     *
-     * @param loader The newly associated loader
-     */
-    public void setLoader(Loader loader);
-
-    /**
-     * Return the Resources with which this Context is associated.
-     */
-    public WebResourceRoot getResources();
-
-    /**
-     * Set the Resources object with which this Context is associated.
-     *
-     * @param resources The newly associated Resources
-     */
-    public void setResources(WebResourceRoot resources);
-
-    /**
-     * Return the Manager with which this Context is associated.  If there is
-     * no associated Manager, return <code>null</code>.
-     */
-    public Manager getManager();
-
-
-    /**
-     * Set the Manager with which this Context is associated.
-     *
-     * @param manager The newly associated Manager
-     */
-    public void setManager(Manager manager);
-
-    /**
-     * Sets the flag that indicates if /WEB-INF/classes should be treated like
-     * an exploded JAR and JAR resources made available as if they were in a
-     * JAR.
-     *
-     * @param addWebinfClassesResources The new value for the flag
-     */
-    public void setAddWebinfClassesResources(boolean addWebinfClassesResources);
-
-    /**
-     * Gets the flag that indicates if /WEB-INF/classes should be treated like
-     * an exploded JAR and JAR resources made available as if they were in a
-     * JAR.
-     */
-    public boolean getAddWebinfClassesResources();
 
     /**
      * Add a post construct method definition for the given class, if there is
@@ -1608,63 +1614,4 @@ public interface Context extends Container {
      *         method names.
      */
     public Map<String, String> findPreDestroyMethods();
-
-    /**
-     * Change the current thread context class loader to the web application
-     * class loader. If no web application class loader is defined, or if the
-     * current thread is already using the web application class loader then no
-     * change will be made. If the class loader is changed and a
-     * {@link ThreadBindingListener} is configured then
-     * {@link ThreadBindingListener#bind()} will be called after the change has
-     * been made.
-     *
-     * @param usePrivilegedAction
-     *          Should a {@link java.security.PrivilegedAction} be used when
-     *          obtaining the current thread context class loader and setting
-     *          the new one?
-     * @param originalClassLoader
-     *          The current class loader if known to save this method having to
-     *          look it up
-     *
-     * @return If the class loader has been changed by the method it will return
-     *         the thread context class loader in use when the method was
-     *         called. If no change was made then this method returns null.
-     */
-    public ClassLoader bind(boolean usePrivilegedAction, ClassLoader originalClassLoader);
-
-    /**
-     * Restore the current thread context class loader to the original class
-     * loader in used before {@link #bind(boolean, ClassLoader)} was called. If
-     * no original class loader is passed to this method then no change will be
-     * made. If the class loader is changed and a {@link ThreadBindingListener}
-     * is configured then {@link ThreadBindingListener#unbind()} will be called
-     * before the change is made.
-     *
-     * @param usePrivilegedAction
-     *          Should a {@link java.security.PrivilegedAction} be used when
-     *          setting the current thread context class loader?
-     * @param originalClassLoader
-     *          The class loader to restore as the thread context class loader
-     */
-    public void unbind(boolean usePrivilegedAction, ClassLoader originalClassLoader);
-
-    /**
-     * Obtain the token necessary for operations on the associated JNDI naming
-     * context.
-     */
-    public Object getNamingToken();
-
-    /**
-     * Sets the {@link CookieProcessor} that will be used to process cookies
-     * for this Context.
-     *
-     * @param cookieProcessor   The new cookie processor
-     */
-    public void setCookieProcessor(CookieProcessor cookieProcessor);
-
-    /**
-     * Obtains the {@link CookieProcessor} that will be used to process cookies
-     * for this Context.
-     */
-    public CookieProcessor getCookieProcessor();
 }

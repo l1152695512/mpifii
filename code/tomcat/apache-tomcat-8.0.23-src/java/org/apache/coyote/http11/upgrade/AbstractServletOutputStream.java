@@ -19,22 +19,18 @@ package org.apache.coyote.http11.upgrade;
 import java.io.IOException;
 
 import javax.servlet.ServletOutputStream;
-import javax.servlet.WriteListener;
 
-import org.apache.juli.logging.Log;
-import org.apache.juli.logging.LogFactory;
+import org.apache.coyote.http11.upgrade.servlet31.WriteListener;
 import org.apache.tomcat.util.ExceptionUtils;
-import org.apache.tomcat.util.net.DispatchType;
-import org.apache.tomcat.util.net.SocketWrapper;
 import org.apache.tomcat.util.res.StringManager;
 
-public abstract class AbstractServletOutputStream<S> extends ServletOutputStream {
+/**
+ * Implements the new Servlet 3.1 methods for {@link ServletOutputStream}.
+ */
+public abstract class AbstractServletOutputStream extends ServletOutputStream {
 
-    private static final Log log = LogFactory.getLog(AbstractServletOutputStream.class);
     protected static final StringManager sm =
             StringManager.getManager(Constants.Package);
-
-    protected final SocketWrapper<S> socketWrapper;
 
     // Used to ensure that isReady() and onWritePossible() have a consistent
     // view of buffer and fireListener when determining if the listener should
@@ -65,15 +61,15 @@ public abstract class AbstractServletOutputStream<S> extends ServletOutputStream
     private final int asyncWriteBufferSize;
 
 
-    public AbstractServletOutputStream(SocketWrapper<S> socketWrapper,
-            int asyncWriteBufferSize) {
-        this.socketWrapper = socketWrapper;
+    public AbstractServletOutputStream(int asyncWriteBufferSize) {
         this.asyncWriteBufferSize = asyncWriteBufferSize;
         buffer = new byte[asyncWriteBufferSize];
     }
 
 
-    @Override
+    /**
+     * New Servlet 3.1 method.
+     */
     public final boolean isReady() {
         if (listener == null) {
             throw new IllegalStateException(
@@ -89,8 +85,9 @@ public abstract class AbstractServletOutputStream<S> extends ServletOutputStream
         }
     }
 
-
-    @Override
+    /**
+     * New Servlet 3.1 method.
+     */
     public final void setWriteListener(WriteListener listener) {
         if (listener == null) {
             throw new IllegalArgumentException(
@@ -100,21 +97,13 @@ public abstract class AbstractServletOutputStream<S> extends ServletOutputStream
             throw new IllegalArgumentException(
                     sm.getString("upgrade.sos.writeListener.set"));
         }
-        // Container is responsible for first call to onWritePossible() but only
-        // need to do this if setting the listener for the first time.
-        synchronized (fireListenerLock) {
-            fireListener = true;
-        }
-        socketWrapper.addDispatch(DispatchType.NON_BLOCKING_WRITE);
         this.listener = listener;
         this.applicationLoader = Thread.currentThread().getContextClassLoader();
     }
 
-
-    final boolean isCloseRequired() {
+    protected final boolean isCloseRequired() {
         return closeRequired;
     }
-
 
     @Override
     public void write(int b) throws IOException {
@@ -139,7 +128,6 @@ public abstract class AbstractServletOutputStream<S> extends ServletOutputStream
         closeRequired = true;
         doClose();
     }
-
 
     private void preWriteChecks() {
         if (bufferLimit != 0) {
@@ -188,7 +176,7 @@ public abstract class AbstractServletOutputStream<S> extends ServletOutputStream
     }
 
 
-    final void onWritePossible() {
+    protected final void onWritePossible() throws IOException {
         try {
             synchronized (writeLock) {
                 if (bufferLimit > 0) {
@@ -198,35 +186,34 @@ public abstract class AbstractServletOutputStream<S> extends ServletOutputStream
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
             onError(t);
-            return;
+            if (t instanceof IOException) {
+                throw (IOException) t;
+            } else {
+                throw new IOException(t);
+            }
         }
 
-        // Make sure isReady() and onWritePossible() have a consistent view
-        // of buffer and fireListener when determining if the listener
-        // should fire
+        // Make sure isReady() and onWritePossible() have a consistent view of
+        // buffer and fireListener when determining if the listener should fire
         boolean fire = false;
+
         synchronized (fireListenerLock) {
             if (bufferLimit == 0 && fireListener) {
                 fireListener = false;
                 fire = true;
             }
         }
-
         if (fire) {
             Thread thread = Thread.currentThread();
             ClassLoader originalClassLoader = thread.getContextClassLoader();
             try {
                 thread.setContextClassLoader(applicationLoader);
                 listener.onWritePossible();
-            } catch (Throwable t) {
-                ExceptionUtils.handleThrowable(t);
-                onError(t);
             } finally {
                 thread.setContextClassLoader(originalClassLoader);
             }
         }
     }
-
 
     protected final void onError(Throwable t) {
         if (listener == null) {
@@ -237,18 +224,8 @@ public abstract class AbstractServletOutputStream<S> extends ServletOutputStream
         try {
             thread.setContextClassLoader(applicationLoader);
             listener.onError(t);
-        } catch (Throwable t2) {
-            ExceptionUtils.handleThrowable(t2);
-            log.warn(sm.getString("upgrade.sos.onErrorFail"), t2);
         } finally {
             thread.setContextClassLoader(originalClassLoader);
-        }
-        try {
-            close();
-        } catch (IOException ioe) {
-            if (log.isDebugEnabled()) {
-                log.debug(sm.getString("upgrade.sos.errorCloseFail"), ioe);
-            }
         }
     }
 

@@ -31,6 +31,7 @@ import javax.sql.XAConnection;
  * </ul>
  * By default method comparisons is done on a String reference level, unless the {@link PoolConfiguration#setUseEquals(boolean)} has been called
  * with a <code>true</code> argument.
+ * @author Filip Hanik
  */
 public class ProxyConnection extends JdbcInterceptor {
 
@@ -54,8 +55,7 @@ public class ProxyConnection extends JdbcInterceptor {
         this.pool = pool;
     }
 
-    protected ProxyConnection(ConnectionPool parent, PooledConnection con,
-            boolean useEquals) {
+    protected ProxyConnection(ConnectionPool parent, PooledConnection con, boolean useEquals) throws SQLException {
         pool = parent;
         connection = con;
         setUseEquals(useEquals);
@@ -67,7 +67,7 @@ public class ProxyConnection extends JdbcInterceptor {
         this.connection = con;
     }
 
-    public boolean isWrapperFor(Class<?> iface) {
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
         if (iface == XAConnection.class && connection.getXAConnection()!=null) {
             return true;
         } else {

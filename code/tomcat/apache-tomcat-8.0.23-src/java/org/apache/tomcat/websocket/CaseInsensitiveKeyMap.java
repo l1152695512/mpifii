@@ -42,7 +42,7 @@ public class CaseInsensitiveKeyMap<V> extends AbstractMap<String,V> {
     private static final StringManager sm =
             StringManager.getManager(Constants.PACKAGE_NAME);
 
-    private final Map<Key,V> map = new HashMap<>();
+    private final Map<Key,V> map = new HashMap<Key,V>();
 
 
     @Override
@@ -88,7 +88,7 @@ public class CaseInsensitiveKeyMap<V> extends AbstractMap<String,V> {
 
     @Override
     public Set<Entry<String, V>> entrySet() {
-        return new EntrySet<>(map.entrySet());
+        return new EntrySet<V>(map.entrySet());
     }
 
 
@@ -102,7 +102,7 @@ public class CaseInsensitiveKeyMap<V> extends AbstractMap<String,V> {
 
         @Override
         public Iterator<Entry<String,V>> iterator() {
-            return new EntryIterator<>(entrySet.iterator());
+            return new EntryIterator<V>(entrySet.iterator());
         }
 
         @Override
@@ -128,7 +128,7 @@ public class CaseInsensitiveKeyMap<V> extends AbstractMap<String,V> {
         @Override
         public Entry<String,V> next() {
             Entry<Key,V> entry = iterator.next();
-            return new EntryImpl<>(entry.getKey().getKey(), entry.getValue());
+            return new EntryImpl<V>(entry.getKey().getKey(), entry.getValue());
         }
 
         @Override

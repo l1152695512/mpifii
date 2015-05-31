@@ -136,6 +136,14 @@ public interface Session {
 
 
     /**
+     * Return descriptive information about this Session implementation and
+     * the corresponding version number, in the format
+     * <code>&lt;description&gt;/&lt;version&gt;</code>.
+     */
+    public String getInfo();
+
+
+    /**
      * Return the last time the client sent a request associated with this
      * session, as the number of milliseconds since midnight, January 1, 1970
      * GMT.  Actions that your application takes, such as getting or setting
@@ -164,17 +172,6 @@ public interface Session {
      * @see #getLastAccessedTime()
      */
     public long getLastAccessedTimeInternal();
-
-    /**
-     * Return the idle time (in milliseconds) from last client access time.
-     */
-    public long getIdleTime();
-
-    /**
-     * Return the idle time from last client access time without invalidation check
-     * @see #getIdleTime()
-     */
-    public long getIdleTimeInternal();
 
     /**
      * Return the Manager within which this Session is valid.
@@ -334,20 +331,6 @@ public interface Session {
      * @param value Object to be bound to the specified name
      */
     public void setNote(String name, Object value);
-
-
-    /**
-     * Inform the listeners about the change session ID.
-     *
-     * @param newId  new session ID
-     * @param oldId  old session ID
-     * @param notifySessionListeners  Should any associated sessionListeners be
-     *        notified that session ID has been changed?
-     * @param notifyContainerListeners  Should any associated ContainerListeners
-     *        be notified that session ID has been changed?
-     */
-    public void tellChangedSessionId(String newId, String oldId,
-            boolean notifySessionListeners, boolean notifyContainerListeners);
 
 
 }

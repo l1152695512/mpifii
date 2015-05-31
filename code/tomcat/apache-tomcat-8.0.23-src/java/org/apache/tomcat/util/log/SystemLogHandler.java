@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.tomcat.util.log;
 
 import java.io.IOException;
@@ -52,19 +53,20 @@ public class SystemLogHandler extends PrintStream {
     /**
      * Wrapped PrintStream.
      */
-    private final PrintStream out;
+    protected PrintStream out = null;
 
 
     /**
      * Thread <-> CaptureLog associations.
      */
-    private static final ThreadLocal<Stack<CaptureLog>> logs = new ThreadLocal<>();
+    protected static ThreadLocal<Stack<CaptureLog>> logs =
+        new ThreadLocal<Stack<CaptureLog>>();
 
 
     /**
      * Spare CaptureLog ready for reuse.
      */
-    private static final Stack<CaptureLog> reuse = new Stack<>();
+    protected static Stack<CaptureLog> reuse = new Stack<CaptureLog>();
 
 
     // --------------------------------------------------------- Public Methods
@@ -86,7 +88,7 @@ public class SystemLogHandler extends PrintStream {
         }
         Stack<CaptureLog> stack = logs.get();
         if (stack == null) {
-            stack = new Stack<>();
+            stack = new Stack<CaptureLog>();
             logs.set(stack);
         }
         stack.push(log);

@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,7 @@ public class XMLWriter {
     /**
      * Writer.
      */
-    protected final Writer writer;
+    protected Writer writer = null;
 
 
     // ----------------------------------------------------------- Constructors
@@ -71,7 +71,6 @@ public class XMLWriter {
      * Constructor.
      */
     public XMLWriter() {
-        this(null);
     }
 
 
@@ -101,6 +100,23 @@ public class XMLWriter {
      * Write property to the XML.
      *
      * @param namespace Namespace
+     * @param namespaceInfo Namespace info
+     * @param name Property name
+     * @param value Property value
+     */
+    public void writeProperty(String namespace, String namespaceInfo,
+                              String name, String value) {
+        writeElement(namespace, namespaceInfo, name, OPENING);
+        buffer.append(value);
+        writeElement(namespace, namespaceInfo, name, CLOSING);
+
+    }
+
+
+    /**
+     * Write property to the XML.
+     *
+     * @param namespace Namespace
      * @param name Property name
      * @param value Property value
      */
@@ -108,6 +124,17 @@ public class XMLWriter {
         writeElement(namespace, name, OPENING);
         buffer.append(value);
         writeElement(namespace, name, CLOSING);
+    }
+
+
+    /**
+     * Write property to the XML.
+     *
+     * @param namespace Namespace
+     * @param name Property name
+     */
+    public void writeProperty(String namespace, String name) {
+        writeElement(namespace, name, NO_CONTENT);
     }
 
 

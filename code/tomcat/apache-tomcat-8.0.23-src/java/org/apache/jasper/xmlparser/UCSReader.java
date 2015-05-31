@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 
-/**
+/** 
  * Reader for UCS-2 and UCS-4 encodings.
  * (i.e., encodings from ISO-10646-UCS-(2|4)).
  *
@@ -31,16 +31,16 @@ public class UCSReader extends Reader {
 
     private final org.apache.juli.logging.Log log=
         org.apache.juli.logging.LogFactory.getLog( UCSReader.class );
-
+    
     //
     // Constants
     //
 
     /** Default byte buffer size (8192, larger than that of ASCIIReader
      * since it's reasonable to surmise that the average UCS-4-encoded
-     * file should be 4 times as large as the average ASCII-encoded file).
+     * file should be 4 times as large as the average ASCII-encoded file). 
      */
-    private static final int DEFAULT_BUFFER_SIZE = 8192;
+    public static final int DEFAULT_BUFFER_SIZE = 8192;
 
     public static final short UCS2LE = 1;
     public static final short UCS2BE = 2;
@@ -52,20 +52,20 @@ public class UCSReader extends Reader {
     //
 
     /** Input stream. */
-    private final InputStream fInputStream;
+    protected InputStream fInputStream;
 
     /** Byte buffer. */
-    private final byte[] fBuffer;
+    protected byte[] fBuffer;
 
     // what kind of data we're dealing with
-    private final short fEncoding;
+    protected short fEncoding;
 
     //
     // Constructors
     //
 
-    /**
-     * Constructs an ASCII reader from the specified input stream
+    /** 
+     * Constructs an ASCII reader from the specified input stream 
      * using the default buffer size.  The Endian-ness and whether this is
      * UCS-2 or UCS-4 needs also to be known in advance.
      *
@@ -76,8 +76,8 @@ public class UCSReader extends Reader {
         this(inputStream, DEFAULT_BUFFER_SIZE, encoding);
     } // <init>(InputStream, short)
 
-    /**
-     * Constructs an ASCII reader from the specified input stream
+    /** 
+     * Constructs an ASCII reader from the specified input stream 
      * and buffer size.  The Endian-ness and whether this is
      * UCS-2 or UCS-4 needs also to be known in advance.
      *
@@ -109,7 +109,7 @@ public class UCSReader extends Reader {
      * @exception  IOException  If an I/O error occurs
      */
     @Override
-    public int read() throws IOException {
+    public int read() throws IOException { 
         int b0 = fInputStream.read() & 0xff;
         if (b0 == 0xff)
             return -1;
@@ -170,7 +170,7 @@ public class UCSReader extends Reader {
                         fBuffer[count+j] = 0;
                     break;
                 } else {
-                    fBuffer[count+i] = (byte)charRead;
+                    fBuffer[count+i] = (byte)charRead; 
                 }
             }
             count += numToRead;

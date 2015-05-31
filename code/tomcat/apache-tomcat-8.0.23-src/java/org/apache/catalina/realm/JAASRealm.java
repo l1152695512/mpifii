@@ -142,19 +142,26 @@ public class JAASRealm extends RealmBase {
     /**
      * Descriptive information about this <code>Realm</code> implementation.
      */
+    protected static final String info =
+        "org.apache.catalina.realm.JAASRealm/1.0";
+
+
+    /**
+     * Descriptive information about this <code>Realm</code> implementation.
+     */
     protected static final String name = "JAASRealm";
 
 
     /**
      * The list of role class names, split out for easy processing.
      */
-    protected final List<String> roleClasses = new ArrayList<>();
+    protected List<String> roleClasses = new ArrayList<String>();
 
 
     /**
      * The set of user class names, split out for easy processing.
      */
-    protected final List<String> userClasses = new ArrayList<>();
+    protected List<String> userClasses = new ArrayList<String>();
 
 
     /**
@@ -318,8 +325,21 @@ public class JAASRealm extends RealmBase {
         this.userClassNames = userClassNames;
     }
 
+    /**
+     * Return descriptive information about this Realm implementation and
+     * the corresponding version number, in the format
+     * <code>&lt;description&gt;/&lt;version&gt;</code>.
+     */
+    @Override
+    public String getInfo() {
+
+        return info;
+
+    }
+
 
     // --------------------------------------------------------- Public Methods
+
 
     /**
      * Return the <code>Principal</code> associated with the specified username
@@ -513,7 +533,7 @@ public class JAASRealm extends RealmBase {
             LoginContext loginContext) {
         // Prepare to scan the Principals for this Subject
 
-        List<String> roles = new ArrayList<>();
+        List<String> roles = new ArrayList<String>();
         Principal userPrincipal = null;
 
         // Scan the Principals for this Subject

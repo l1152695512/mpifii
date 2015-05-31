@@ -55,8 +55,9 @@ public class TestPojoMethodMapping extends TomcatBaseTest {
         ServerConfigListener.setPojoClazz(Server.class);
 
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(ServerConfigListener.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -102,7 +103,7 @@ public class TestPojoMethodMapping extends TomcatBaseTest {
             configurator=SingletonConfigurator.class)
     public static final class Server {
 
-        private final List<String> errors = new ArrayList<>();
+        private final List<String> errors = new ArrayList<String>();
         private volatile boolean closed;
 
         @OnOpen

@@ -46,8 +46,7 @@ public class TestClientCert extends TomcatBaseTest {
     }
 
     private void doTestClientCertGet(boolean preemtive) throws Exception {
-        Assume.assumeTrue("SSL renegotiation has to be supported for this test",
-                TesterSupport.isRenegotiationSupported(getTomcatInstance()));
+        Assume.assumeTrue(TesterSupport.isRenegotiationSupported(getTomcatInstance()));
 
         if (preemtive) {
             Tomcat tomcat = getTomcatInstance();
@@ -96,8 +95,7 @@ public class TestClientCert extends TomcatBaseTest {
 
     private void doTestClientCertPost(int bodySize, boolean expectProtectedFail)
             throws Exception {
-        Assume.assumeTrue("SSL renegotiation has to be supported for this test",
-                TesterSupport.isRenegotiationSupported(getTomcatInstance()));
+        Assume.assumeTrue(TesterSupport.isRenegotiationSupported(getTomcatInstance()));
 
         getTomcatInstance().start();
 
@@ -122,6 +120,11 @@ public class TestClientCert extends TomcatBaseTest {
 
     @Override
     public void setUp() throws Exception {
+        if (!TesterSupport.RFC_5746_SUPPORTED) {
+            // Make sure SSL renegotiation is not disabled in the JVM
+            System.setProperty("sun.security.ssl.allowUnsafeRenegotiation", "true");
+        }
+
         super.setUp();
 
         Tomcat tomcat = getTomcatInstance();

@@ -46,7 +46,7 @@ public abstract class SessionIdGeneratorBase extends LifecycleBase
      * designed this way since random number generators use a sync to make them
      * thread-safe and the sync makes using a a single object slow(er).
      */
-    private final Queue<SecureRandom> randoms = new ConcurrentLinkedQueue<>();
+    private final Queue<SecureRandom> randoms = new ConcurrentLinkedQueue<SecureRandom>();
 
 
     /**

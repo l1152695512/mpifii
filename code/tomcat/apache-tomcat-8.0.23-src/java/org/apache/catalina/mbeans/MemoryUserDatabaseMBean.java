@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,34 +69,34 @@ public class MemoryUserDatabaseMBean extends BaseModelMBean {
     /**
      * The configuration information registry for our managed beans.
      */
-    protected final Registry registry = MBeanUtils.createRegistry();
+    protected Registry registry = MBeanUtils.createRegistry();
 
 
     /**
      * The <code>ManagedBean</code> information describing this MBean.
      */
-    protected final ManagedBean managed =
+    protected ManagedBean managed =
         registry.findManagedBean("MemoryUserDatabase");
 
 
     /**
      * The <code>ManagedBean</code> information describing Group MBeans.
      */
-    protected final ManagedBean managedGroup =
+    protected ManagedBean managedGroup =
         registry.findManagedBean("Group");
 
 
     /**
      * The <code>ManagedBean</code> information describing Group MBeans.
      */
-    protected final ManagedBean managedRole =
+    protected ManagedBean managedRole =
         registry.findManagedBean("Role");
 
 
     /**
      * The <code>ManagedBean</code> information describing User MBeans.
      */
-    protected final ManagedBean managedUser =
+    protected ManagedBean managedUser =
         registry.findManagedBean("User");
 
 
@@ -109,7 +109,7 @@ public class MemoryUserDatabaseMBean extends BaseModelMBean {
     public String[] getGroups() {
 
         UserDatabase database = (UserDatabase) this.resource;
-        ArrayList<String> results = new ArrayList<>();
+        ArrayList<String> results = new ArrayList<String>();
         Iterator<Group> groups = database.getGroups();
         while (groups.hasNext()) {
             Group group = groups.next();
@@ -126,7 +126,7 @@ public class MemoryUserDatabaseMBean extends BaseModelMBean {
     public String[] getRoles() {
 
         UserDatabase database = (UserDatabase) this.resource;
-        ArrayList<String> results = new ArrayList<>();
+        ArrayList<String> results = new ArrayList<String>();
         Iterator<Role> roles = database.getRoles();
         while (roles.hasNext()) {
             Role role = roles.next();
@@ -143,7 +143,7 @@ public class MemoryUserDatabaseMBean extends BaseModelMBean {
     public String[] getUsers() {
 
         UserDatabase database = (UserDatabase) this.resource;
-        ArrayList<String> results = new ArrayList<>();
+        ArrayList<String> results = new ArrayList<String>();
         Iterator<User> users = database.getUsers();
         while (users.hasNext()) {
             User user = users.next();

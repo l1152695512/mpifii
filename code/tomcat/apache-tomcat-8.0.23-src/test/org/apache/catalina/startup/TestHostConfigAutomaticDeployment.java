@@ -17,19 +17,17 @@
 package org.apache.catalina.startup;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.apache.catalina.Container;
 import org.apache.catalina.Context;
+import org.apache.catalina.Engine;
+import org.apache.catalina.Globals;
 import org.apache.catalina.Host;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleEvent;
@@ -38,6 +36,8 @@ import org.apache.catalina.LifecycleState;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.core.StandardHost;
 import org.apache.catalina.util.ContextName;
+import org.apache.catalina.util.IOTools;
+import org.apache.tomcat.util.buf.B2CConverter;
 
 /**
  * The purpose of this class is to test the automatic deployment features of the
@@ -610,12 +610,12 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
         }
 
         File xml = new File(
-                host.getConfigBaseFile(), APP_NAME.getBaseName() + ".xml");
+                getConfigBaseFile(host), APP_NAME.getBaseName() + ".xml");
         Assert.assertEquals(
                 Boolean.valueOf(resultXml), Boolean.valueOf(xml.isFile()));
 
         File war = new File(
-                host.getAppBaseFile(), APP_NAME.getBaseName() + ".war");
+                getAppBaseFile(host), APP_NAME.getBaseName() + ".war");
         Assert.assertEquals(
                 Boolean.valueOf(resultWar), Boolean.valueOf(war.isFile()));
 
@@ -835,6 +835,9 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
 
         if ((startWar || startExternalWar) && !startDir) {
             host.setUnpackWARs(false);
+            // WARDirContext always locks the WAR file so need to use
+            // anti-resource locking to enable the WAR to be deleted
+            host.setContextClass(AntiResourceLockingContext.class.getName());
         }
 
         // Deploy the files we copied
@@ -1135,16 +1138,24 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
                 if (ext == null) {
                     Assert.fail();
                 } else {
-                    ext.setLastModified(System.currentTimeMillis() -
-                            10 * HostConfig.FILE_MODIFICATION_RESOLUTION_MS);
+                    if (!ext.setLastModified(System.currentTimeMillis() -
+                            10 * HostConfig.FILE_MODIFICATION_RESOLUTION_MS)){
+                        Assert.fail("Failed to set last modified time for " +
+                                "external WAR file. This is expected (due to " +
+                                "a JVM bug) with Java 6 on Windows.");
+                    }
                 }
                 break;
             case WAR:
                 if (war == null) {
                     Assert.fail();
                 } else {
-                    war.setLastModified(System.currentTimeMillis() -
-                            10 * HostConfig.FILE_MODIFICATION_RESOLUTION_MS);
+                    if (!war.setLastModified(System.currentTimeMillis() -
+                            10 * HostConfig.FILE_MODIFICATION_RESOLUTION_MS)) {
+                        Assert.fail("Failed to set last modified time for WAR " +
+                                "file. This is expected (due to a JVM bug) " +
+                                "with Java 6 on Windows.");
+                    }
                 }
                 break;
             case DIR:
@@ -1650,7 +1661,7 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
         File war = createWar(WAR_BROKEN_SOURCE, false);
         createXmlInConfigBaseForExternal(war, true);
 
-        File dir = new File(host.getAppBaseFile(), APP_NAME.getBaseName());
+        File dir = new File(getAppBaseFile(host), APP_NAME.getBaseName());
 
         tomcat.start();
 
@@ -1664,29 +1675,29 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
     }
 
     private File createDirInAppbase(boolean withXml) throws IOException {
-        File dir = new File(getTomcatInstance().getHost().getAppBaseFile(),
+        File dir = new File(getAppBaseFile(getTomcatInstance().getHost()),
                 APP_NAME.getBaseName());
         if (withXml) {
-            recurrsiveCopy(DIR_XML_SOURCE.toPath(), dir.toPath());
+            recurrsiveCopy(DIR_XML_SOURCE, dir);
         } else {
-            recurrsiveCopy(DIR_SOURCE.toPath(), dir.toPath());
+            recurrsiveCopy(DIR_SOURCE, dir);
         }
         return dir;
     }
 
     private File createDirXmlInAppbase() throws IOException {
-        File dir = new File(getTomcatInstance().getHost().getAppBaseFile(),
+        File dir = new File(getAppBaseFile(getTomcatInstance().getHost()),
                 APP_NAME.getBaseName() + "/META-INF");
-        recurrsiveCopy(DIR_XML_SOURCE_META_INF.toPath(), dir.toPath());
+        recurrsiveCopy(DIR_XML_SOURCE_META_INF, dir);
         return dir;
     }
 
     private File createDirInExternal(boolean withXml) throws IOException {
         File ext = new File(external, "external" + ".war");
         if (withXml) {
-            recurrsiveCopy(DIR_XML_SOURCE.toPath(), ext.toPath());
+            recurrsiveCopy(DIR_XML_SOURCE, ext);
         } else {
-            recurrsiveCopy(DIR_SOURCE.toPath(), ext.toPath());
+            recurrsiveCopy(DIR_SOURCE, ext);
         }
         return ext;
     }
@@ -1694,12 +1705,12 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
     private File createWar(File src, boolean useAppbase) throws IOException {
         File dest;
         if (useAppbase) {
-            dest = new File(getTomcatInstance().getHost().getAppBaseFile(),
+            dest = new File(getAppBaseFile(getTomcatInstance().getHost()),
                 APP_NAME.getBaseName() + ".war");
         } else {
             dest = new File(external, "external" + ".war");
         }
-        Files.copy(src.toPath(), dest.toPath());
+        copy(src, dest);
         // Make sure that HostConfig thinks the WAR has been modified.
         dest.setLastModified(
                 System.currentTimeMillis() - 2 * HostConfig.FILE_MODIFICATION_RESOLUTION_MS);
@@ -1712,7 +1723,7 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
         if (!parent.isDirectory()) {
             Assert.assertTrue(parent.mkdirs());
         }
-        Files.copy(XML_SOURCE.toPath(), xml.toPath());
+        copy(XML_SOURCE, xml);
         // Make sure that HostConfig thinks the xml has been modified.
         xml.setLastModified(
                 System.currentTimeMillis() - 2 * HostConfig.FILE_MODIFICATION_RESOLUTION_MS);
@@ -1721,7 +1732,7 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
 
     private File getXmlInConfigBaseForAppbase() {
         Host host = getTomcatInstance().getHost();
-        return new File(host.getConfigBaseFile(), APP_NAME + ".xml");
+        return new File(getConfigBaseFile(host), APP_NAME + ".xml");
     }
 
     private File createXmlInConfigBaseForExternal(File ext) throws IOException {
@@ -1730,14 +1741,16 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
 
     private File createXmlInConfigBaseForExternal(File ext, boolean antiLocking)
             throws IOException {
-        File xml = new File(getTomcatInstance().getHost().getConfigBaseFile(),
+        File xml = new File(getConfigBaseFile(getTomcatInstance().getHost()),
                 APP_NAME + ".xml");
         File parent = xml.getParentFile();
         if (!parent.isDirectory()) {
             Assert.assertTrue(parent.mkdirs());
         }
 
-        try (FileOutputStream fos = new FileOutputStream(xml)) {
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(xml);
             StringBuilder context = new StringBuilder();
             context.append("<Context sessionCookieName=\"");
             context.append(XML_COOKIE_NAME);
@@ -1747,7 +1760,11 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
                 context.append("\" antiResourceLocking=\"true");
             }
             context.append("\" />");
-            fos.write(context.toString().getBytes(StandardCharsets.ISO_8859_1));
+            fos.write(context.toString().getBytes(B2CConverter.ISO_8859_1));
+        } finally {
+            if (fos != null) {
+                fos.close();
+            }
         }
         // Make sure that HostConfig thinks the xml has been modified.
         xml.setLastModified(
@@ -1755,41 +1772,45 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
         return xml;
     }
 
-    private static void recurrsiveCopy(final Path src, final Path dest)
-            throws IOException {
 
-        Files.walkFileTree(src, new FileVisitor<Path>() {
-            @Override
-            public FileVisitResult preVisitDirectory(Path dir,
-                    BasicFileAttributes attrs) throws IOException {
-                Files.copy(dir, dest.resolve(src.relativize(dir)));
-                return FileVisitResult.CONTINUE;
-            }
+    @Test
+    public void testSetContextClassName() throws Exception {
 
-            @Override
-            public FileVisitResult visitFile(Path file,
-                    BasicFileAttributes attrs) throws IOException {
-                Path destPath = dest.resolve(src.relativize(file));
-                Files.copy(file, destPath);
-                // Make sure that HostConfig thinks all newly copied files have
-                // been modified.
-                destPath.toFile().setLastModified(
-                        System.currentTimeMillis() - 2 * HostConfig.FILE_MODIFICATION_RESOLUTION_MS);
-                return FileVisitResult.CONTINUE;
-            }
+        Tomcat tomcat = getTomcatInstance();
 
-            @Override
-            public FileVisitResult visitFileFailed(Path file, IOException ioe)
-                    throws IOException {
-                throw ioe;
-            }
+        Host host = tomcat.getHost();
+        if (host instanceof StandardHost) {
+            StandardHost standardHost = (StandardHost) host;
+            standardHost.setContextClass(TesterContext.class.getName());
+        }
 
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException ioe)
-                    throws IOException {
-                // NO-OP
-                return FileVisitResult.CONTINUE;
-            }});
+        // Copy the WAR file
+        File war = new File(getAppBaseFile(host),
+                APP_NAME.getBaseName() + ".war");
+        copy(WAR_XML_SOURCE, war);
+
+        // Deploy the copied war
+        tomcat.start();
+        host.backgroundProcess();
+
+        // Check the Context class
+        Context ctxt = (Context) host.findChild(APP_NAME.getName());
+
+        Assert.assertTrue(ctxt instanceof TesterContext);
+    }
+
+    
+    public static class AntiResourceLockingContext extends StandardContext {
+
+        @Override
+        public boolean getAntiResourceLocking() {
+            return true;
+        }
+    }
+
+
+    public static class TesterContext extends StandardContext {
+        // No functional change
     }
 
 
@@ -1883,7 +1904,7 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
 
         host.backgroundProcess();
 
-        File xml = new File(host.getConfigBaseFile(),
+        File xml = new File(getConfigBaseFile(host),
                 APP_NAME.getBaseName() + ".xml");
         Assert.assertEquals(
                 Boolean.valueOf(resultXml), Boolean.valueOf(xml.isFile()));
@@ -1898,35 +1919,89 @@ public class TestHostConfigAutomaticDeployment extends TomcatBaseTest {
         }
     }
 
-
-    @Test
-    public void testSetContextClassName() throws Exception {
-
-        Tomcat tomcat = getTomcatInstance();
-
-        Host host = tomcat.getHost();
-        if (host instanceof StandardHost) {
-            StandardHost standardHost = (StandardHost) host;
-            standardHost.setContextClass(TesterContext.class.getName());
+    
+    // Static methods to compensate for methods that are present in 8.0.x but
+    // not in 7.0.x
+    
+    private static File getConfigBaseFile(Host host) {
+        String path = null;
+        if (host.getXmlBase() != null) {
+            path = host.getXmlBase();
+        } else {
+            StringBuilder xmlDir = new StringBuilder("conf");
+            Container parent = host.getParent();
+            if (parent instanceof Engine) {
+                xmlDir.append('/');
+                xmlDir.append(parent.getName());
+            }
+            xmlDir.append('/');
+            xmlDir.append(host.getName());
+            path = xmlDir.toString();
         }
+        
+        return getCanonicalPath(path);
+    }
+    
+    private static File getAppBaseFile(Host host) {
+        return getCanonicalPath(host.getAppBase());
+    }
+ 
+    private static File getCanonicalPath(String path) {
+        File file = new File(path);
+        File base = new File(System.getProperty(Globals.CATALINA_BASE_PROP));
+        if (!file.isAbsolute())
+            file = new File(base,path);
+        try {
+            return file.getCanonicalFile();
+        } catch (IOException e) {
+            return file;
+        }
+    }
+    
+    
+    // Static methods to replace the java.nio.file.Files methods used in Tomcat
+    // 8 that aren't available in Tomcat 7. These methods are not intended to be
+    // 100% robust - just good enough for the unit tests to pass.
 
-        // Copy the WAR file
-        File war = new File(host.getAppBaseFile(),
-                APP_NAME.getBaseName() + ".war");
-        Files.copy(WAR_XML_SOURCE.toPath(), war.toPath());
-
-        // Deploy the copied war
-        tomcat.start();
-        host.backgroundProcess();
-
-        // Check the Context class
-        Context ctxt = (Context) host.findChild(APP_NAME.getName());
-
-        Assert.assertTrue(ctxt instanceof TesterContext);
+    private static void copy(File src, File dest) throws IOException {
+        FileInputStream in = null;
+        FileOutputStream out = null;
+        try {
+            in = new FileInputStream(src);
+            out = new FileOutputStream(dest);
+            IOTools.flow(in, out);
+        } finally {
+            if (in != null) {
+                try {
+                    in.close();
+                } catch (IOException e) {
+                    // Ignore
+                }
+            }
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (IOException e) {
+                    // Ignore
+                }
+            }
+        }
+        dest.setLastModified(
+                System.currentTimeMillis() - 2 * HostConfig.FILE_MODIFICATION_RESOLUTION_MS);
     }
 
-
-    public static class TesterContext extends StandardContext {
-        // No functional change
+    
+    private static void recurrsiveCopy(File src, File dest) throws IOException {
+        dest.mkdirs();
+        File[] files = src.listFiles();
+        
+        for (File file : files) {
+            File newFile = new File(dest, file.getName());
+            if (file.isDirectory()) {
+                recurrsiveCopy(file, newFile);
+            } else {
+                copy(file, newFile);
+            }
+        }
     }
 }

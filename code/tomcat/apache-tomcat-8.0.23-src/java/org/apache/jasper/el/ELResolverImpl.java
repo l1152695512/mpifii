@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.util.Iterator;
 import javax.el.ELContext;
 import javax.el.ELException;
 import javax.el.ELResolver;
-import javax.el.ExpressionFactory;
+import javax.el.PropertyNotFoundException;
 import javax.el.PropertyNotWritableException;
 import javax.servlet.jsp.el.VariableResolver;
 
@@ -32,20 +32,20 @@ public final class ELResolverImpl extends ELResolver {
     private final VariableResolver variableResolver;
     private final ELResolver elResolver;
 
-    public ELResolverImpl(VariableResolver variableResolver,
-            ExpressionFactory factory) {
+    public ELResolverImpl(VariableResolver variableResolver) {
         this.variableResolver = variableResolver;
-        this.elResolver = ELContextImpl.getDefaultResolver(factory);
+        this.elResolver = ELContextImpl.getDefaultResolver();
     }
 
     @Override
-    public Object getValue(ELContext context, Object base, Object property) {
+    public Object getValue(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base == null) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
             if (property != null) {
                 try {
                     return this.variableResolver.resolveVariable(property
@@ -63,13 +63,14 @@ public final class ELResolverImpl extends ELResolver {
     }
 
     @Override
-    public Class<?> getType(ELContext context, Object base, Object property) {
+    public Class<?> getType(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base == null) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
             if (property != null) {
                 try {
                     Object obj = this.variableResolver.resolveVariable(property
@@ -89,13 +90,15 @@ public final class ELResolverImpl extends ELResolver {
 
     @Override
     public void setValue(ELContext context, Object base, Object property,
-            Object value) {
+            Object value) throws NullPointerException,
+            PropertyNotFoundException, PropertyNotWritableException,
+            ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base == null) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
             throw new PropertyNotWritableException(
                     "Legacy VariableResolver wrapped, not writable");
         }
@@ -106,13 +109,14 @@ public final class ELResolverImpl extends ELResolver {
     }
 
     @Override
-    public boolean isReadOnly(ELContext context, Object base, Object property) {
+    public boolean isReadOnly(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base == null) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
             return true;
         }
 
@@ -130,5 +134,14 @@ public final class ELResolverImpl extends ELResolver {
             return String.class;
         }
         return elResolver.getCommonPropertyType(context, base);
+    }
+
+    /**
+     * @deprecated  Use {@link ELContextImpl#getDefaultResolver()} instead. This
+     *              method will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public static ELResolver getDefaultResolver() {
+        return ELContextImpl.getDefaultResolver();
     }
 }

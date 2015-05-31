@@ -5,15 +5,16 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.juli;
 
 import java.io.File;
@@ -54,7 +55,7 @@ public class ClassLoaderLogManager extends LogManager {
             ClassLoaderLogManager.class.getName() + ".debug";
 
     private final class Cleaner extends Thread {
-
+        
         @Override
         public void run() {
             if (useShutdownHook) {
@@ -64,12 +65,12 @@ public class ClassLoaderLogManager extends LogManager {
 
     }
 
-
+    
     // ------------------------------------------------------------Constructors
 
     public ClassLoaderLogManager() {
         super();
-        try {
+        try { 
             Runtime.getRuntime().addShutdownHook(new Cleaner());
         } catch (IllegalStateException ise) {
             // We are probably already being shutdown. Ignore this error.
@@ -82,18 +83,18 @@ public class ClassLoaderLogManager extends LogManager {
 
     /**
      * Map containing the classloader information, keyed per classloader. A
-     * weak hashmap is used to ensure no classloader reference is leaked from
+     * weak hashmap is used to ensure no classloader reference is leaked from 
      * application redeployment.
      */
-    protected final Map<ClassLoader, ClassLoaderLogInfo> classLoaderLoggers =
-        new WeakHashMap<>();
+    protected final Map<ClassLoader, ClassLoaderLogInfo> classLoaderLoggers = 
+        new WeakHashMap<ClassLoader, ClassLoaderLogInfo>();
 
-
+    
     /**
      * This prefix is used to allow using prefixes for the properties names
      * of handlers and their subcomponents.
      */
-    protected final ThreadLocal<String> prefix = new ThreadLocal<>();
+    protected ThreadLocal<String> prefix = new ThreadLocal<String>();
 
 
     /**
@@ -104,7 +105,7 @@ public class ClassLoaderLogManager extends LogManager {
      */
     protected volatile boolean useShutdownHook = true;
 
-
+    
     // ------------------------------------------------------------- Properties
 
 
@@ -123,7 +124,7 @@ public class ClassLoaderLogManager extends LogManager {
 
     /**
      * Add the specified logger to the classloader local configuration.
-     *
+     * 
      * @param logger The logger to be added
      */
     @Override
@@ -131,7 +132,7 @@ public class ClassLoaderLogManager extends LogManager {
 
         final String loggerName = logger.getName();
 
-        ClassLoader classLoader =
+        ClassLoader classLoader = 
             Thread.currentThread().getContextClassLoader();
         ClassLoaderLogInfo info = getClassLoaderInfo(classLoader);
         if (info.loggers.containsKey(loggerName)) {
@@ -155,7 +156,7 @@ public class ClassLoaderLogManager extends LogManager {
             }
         }
 
-        // Always instantiate parent loggers so that
+        // Always instantiate parent loggers so that 
         // we can control log categories even during runtime
         int dotIndex = loggerName.lastIndexOf('.');
         if (dotIndex >= 0) {
@@ -209,18 +210,18 @@ public class ClassLoaderLogManager extends LogManager {
         if (Boolean.valueOf(useParentHandlersString).booleanValue()) {
             logger.setUseParentHandlers(true);
         }
-
+        
         return true;
     }
 
-
+    
     /**
-     * Get the logger associated with the specified name inside
+     * Get the logger associated with the specified name inside 
      * the classloader local configuration. If this returns null,
      * and the call originated for Logger.getLogger, a new
      * logger with the specified name will be instantiated and
      * added using addLogger.
-     *
+     * 
      * @param name The name of the logger to retrieve
      */
     @Override
@@ -229,10 +230,10 @@ public class ClassLoaderLogManager extends LogManager {
                 .getContextClassLoader();
         return getClassLoaderInfo(classLoader).loggers.get(name);
     }
-
-
+    
+    
     /**
-     * Get an enumeration of the logger names currently defined in the
+     * Get an enumeration of the logger names currently defined in the 
      * classloader local configuration.
      */
     @Override
@@ -242,13 +243,13 @@ public class ClassLoaderLogManager extends LogManager {
         return Collections.enumeration(getClassLoaderInfo(classLoader).loggers.keySet());
     }
 
-
+    
     /**
      * Get the value of the specified property in the classloader local
      * configuration.
-     *
+     * 
      * @param name The property name
-     */
+     */    
     @Override
     public String getProperty(String name) {
         String prefix = this.prefix.get();
@@ -278,7 +279,7 @@ public class ClassLoaderLogManager extends LogManager {
                 .getContextClassLoader();
         ClassLoaderLogInfo info = getClassLoaderInfo(classLoader);
         String result = info.props.getProperty(name);
-        // If the property was not found, and the current classloader had no
+        // If the property was not found, and the current classloader had no 
         // configuration (property list is empty), look for the parent classloader
         // properties.
         if ((result == null) && (info.props.isEmpty())) {
@@ -300,25 +301,26 @@ public class ClassLoaderLogManager extends LogManager {
         return result;
     }
 
+    
     @Override
     public void readConfiguration()
         throws IOException, SecurityException {
-
+        
         checkAccess();
-
+        
         readConfiguration(Thread.currentThread().getContextClassLoader());
-
+        
     }
-
+        
     @Override
     public void readConfiguration(InputStream is)
         throws IOException, SecurityException {
-
+        
         checkAccess();
         reset();
 
         readConfiguration(is, Thread.currentThread().getContextClassLoader());
-
+    
     }
 
     @Override
@@ -333,11 +335,7 @@ public class ClassLoaderLogManager extends LogManager {
         ClassLoader classLoader = thread.getContextClassLoader();
         ClassLoaderLogInfo clLogInfo = getClassLoaderInfo(classLoader);
         resetLoggers(clLogInfo);
-        // Do not call super.reset(). It should be a NO-OP as all loggers should
-        // have been registered via this manager. Very rarely a
-        // ConcurrentModificationException has been seen in the unit tests when
-        // calling super.reset() and that exception could cause the stop of a
-        // web application to fail.
+        super.reset();
     }
 
     /**
@@ -383,12 +381,12 @@ public class ClassLoaderLogManager extends LogManager {
     /**
      * Retrieve the configuration associated with the specified classloader. If
      * it does not exist, it will be created.
-     *
-     * @param classLoader The classloader for which we will retrieve or build the
+     * 
+     * @param classLoader The classloader for which we will retrieve or build the 
      *                    configuration
      */
     protected ClassLoaderLogInfo getClassLoaderInfo(ClassLoader classLoader) {
-
+        
         if (classLoader == null) {
             classLoader = ClassLoader.getSystemClassLoader();
         }
@@ -411,18 +409,18 @@ public class ClassLoaderLogManager extends LogManager {
         return info;
     }
 
-
+    
     /**
      * Read configuration for the specified classloader.
-     *
-     * @param classLoader
+     * 
+     * @param classLoader 
      * @throws IOException Error
      */
     protected void readConfiguration(ClassLoader classLoader)
         throws IOException {
-
+        
         InputStream is = null;
-        // Special case for URL classloaders which are used in containers:
+        // Special case for URL classloaders which are used in containers: 
         // only look in the local repositories to avoid redefining loggers 20 times
         try {
             if (classLoader instanceof URLClassLoader) {
@@ -473,7 +471,7 @@ public class ClassLoaderLogManager extends LogManager {
             }
             // Try the default JVM configuration
             if (is == null) {
-                File defaultFile = new File(new File(System.getProperty("java.home"), "lib"),
+                File defaultFile = new File(new File(System.getProperty("java.home"), "lib"), 
                     "logging.properties");
                 try {
                     is = new FileInputStream(defaultFile);
@@ -483,7 +481,7 @@ public class ClassLoaderLogManager extends LogManager {
                 }
             }
         }
-
+        
         Logger localRootLogger = new RootLogger();
         if (is == null) {
             // Retrieve the root logger of the parent classloader instead
@@ -497,30 +495,30 @@ public class ClassLoaderLogManager extends LogManager {
                 localRootLogger.setParent(info.rootNode.logger);
             }
         }
-        ClassLoaderLogInfo info =
+        ClassLoaderLogInfo info = 
             new ClassLoaderLogInfo(new LogNode(null, localRootLogger));
         classLoaderLoggers.put(classLoader, info);
-
+        
         if (is != null) {
             readConfiguration(is, classLoader);
         }
         addLogger(localRootLogger);
-
+        
     }
-
-
+    
+    
     /**
      * Load specified configuration.
-     *
+     * 
      * @param is InputStream to the properties file
      * @param classLoader for which the configuration will be loaded
      * @throws IOException If something wrong happens during loading
      */
     protected void readConfiguration(InputStream is, ClassLoader classLoader)
         throws IOException {
-
+        
         ClassLoaderLogInfo info = classLoaderLoggers.get(classLoader);
-
+        
         try {
             info.props.load(is);
         } catch (IOException e) {
@@ -534,7 +532,7 @@ public class ClassLoaderLogManager extends LogManager {
                 // Ignore
             }
         }
-
+        
         // Create handlers for the root logger of this classloader
         String rootHandlers = info.props.getProperty(".handlers");
         String handlers = info.props.getProperty("handlers");
@@ -548,7 +546,7 @@ public class ClassLoaderLogManager extends LogManager {
                 if (handlerClassName.length() <= 0) {
                     continue;
                 }
-                // Parse and remove a prefix (prefix start with a digit, such as
+                // Parse and remove a prefix (prefix start with a digit, such as 
                 // "10WebappFooHanlder.")
                 if (Character.isDigit(handlerClassName.charAt(0))) {
                     int pos = handlerClassName.indexOf('.');
@@ -559,9 +557,9 @@ public class ClassLoaderLogManager extends LogManager {
                 }
                 try {
                     this.prefix.set(prefix);
-                    Handler handler =
+                    Handler handler = 
                         (Handler) classLoader.loadClass(handlerClassName).newInstance();
-                    // The specification strongly implies all configuration should be done
+                    // The specification strongly implies all configuration should be done 
                     // during the creation of the handler object.
                     // This includes setting level, filter, formatter and encoding.
                     this.prefix.set(null);
@@ -575,15 +573,15 @@ public class ClassLoaderLogManager extends LogManager {
                     e.printStackTrace();
                 }
             }
-
+            
         }
-
+        
     }
-
-
+    
+    
     /**
      * Set parent child relationship between the two specified loggers.
-     *
+     * 
      * @param logger
      * @param parent
      */
@@ -598,10 +596,10 @@ public class ClassLoaderLogManager extends LogManager {
         });
     }
 
-
+    
     /**
      * System property replacement in the given string.
-     *
+     * 
      * @param str The original string
      * @return the modified string
      */
@@ -619,11 +617,8 @@ public class ClassLoaderLogManager extends LogManager {
                     break;
                 }
                 String propName = str.substring(pos_start + 2, pos_end);
-
-                String replacement = replaceWebApplicationProperties(propName);
-                if (replacement == null) {
-                    replacement = propName.length() > 0 ? System.getProperty(propName) : null;
-                }
+                String replacement = propName.length() > 0 ? System
+                        .getProperty(propName) : null;
                 if (replacement != null) {
                     builder.append(replacement);
                 } else {
@@ -637,33 +632,14 @@ public class ClassLoaderLogManager extends LogManager {
         return result;
     }
 
-
-    private String replaceWebApplicationProperties(String propName) {
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        if (cl instanceof WebappProperties) {
-            WebappProperties wProps = (WebappProperties) cl;
-            if ("classloader.webappName".equals(propName)) {
-                return wProps.getWebappName();
-            } else if ("classloader.hostName".equals(propName)) {
-                return wProps.getHostName();
-            } else if ("classloader.serviceName".equals(propName)) {
-                return wProps.getServiceName();
-            } else {
-                return null;
-            }
-        } else {
-            return null;
-        }
-    }
-
-
     // ---------------------------------------------------- LogNode Inner Class
 
 
     protected static final class LogNode {
         Logger logger;
 
-        protected final Map<String, LogNode> children = new HashMap<>();
+        protected final Map<String, LogNode> children = 
+            new HashMap<String, LogNode>();
 
         protected final LogNode parent;
 
@@ -731,8 +707,8 @@ public class ClassLoaderLogManager extends LogManager {
 
     protected static final class ClassLoaderLogInfo {
         final LogNode rootNode;
-        final Map<String, Logger> loggers = new ConcurrentHashMap<>();
-        final Map<String, Handler> handlers = new HashMap<>();
+        final Map<String, Logger> loggers = new ConcurrentHashMap<String, Logger>();
+        final Map<String, Handler> handlers = new HashMap<String, Handler>();
         final Properties props = new Properties();
 
         ClassLoaderLogInfo(final LogNode rootNode) {
@@ -746,7 +722,7 @@ public class ClassLoaderLogManager extends LogManager {
 
 
     /**
-     * This class is needed to instantiate the root of each per classloader
+     * This class is needed to instantiate the root of each per classloader 
      * hierarchy.
      */
     protected static class RootLogger extends Logger {

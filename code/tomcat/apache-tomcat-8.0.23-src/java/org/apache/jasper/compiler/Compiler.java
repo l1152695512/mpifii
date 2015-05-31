@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ package org.apache.jasper.compiler;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -36,12 +37,10 @@ import org.apache.jasper.Options;
 import org.apache.jasper.servlet.JspServletWrapper;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
-import org.apache.tomcat.util.scan.Jar;
-import org.apache.tomcat.util.scan.JarFactory;
 
 /**
  * Main JSP compiler class. This class uses Ant for compiling.
- *
+ * 
  * @author Anil K. Vijendran
  * @author Mandar Raje
  * @author Pierre Delisle
@@ -50,7 +49,7 @@ import org.apache.tomcat.util.scan.JarFactory;
  * @author Mark Roth
  */
 public abstract class Compiler {
-
+    
     private final Log log = LogFactory.getLog(Compiler.class); // must not be static
 
     // ----------------------------------------------------- Instance Variables
@@ -92,7 +91,7 @@ public abstract class Compiler {
 
     /**
      * Compile the jsp file into equivalent servlet in .java file
-     *
+     * 
      * @return a smap for the current JSP page, if one is generated, null
      *         otherwise
      */
@@ -173,6 +172,7 @@ public abstract class Compiler {
         ctxt.checkOutputDir();
         String javaFileName = ctxt.getServletJavaFileName();
 
+        ServletWriter writer = null;
         try {
             /*
              * The setting of isELIgnored changes the behaviour of the parser
@@ -185,16 +185,16 @@ public abstract class Compiler {
              * solutions. We now use two passes to parse the translation unit.
              * The first just parses the directives and the second parses the
              * whole translation unit once we know how isELIgnored has been set.
-             * TODO There are some possible optimisations of this process.
-             */
+             * TODO There are some possible optimisations of this process.  
+             */ 
             // Parse the file
             ParserController parserCtl = new ParserController(ctxt, this);
-
+            
             // Pass 1 - the directives
             Node.Nodes directives =
                 parserCtl.parseDirectives(ctxt.getJspFile());
             Validator.validateDirectives(this, directives);
-
+            
             // Pass 2 - the whole translation unit
             pageNodes = parserCtl.parse(ctxt.getJspFile());
 
@@ -206,10 +206,11 @@ public abstract class Compiler {
 
             if (ctxt.isPrototypeMode()) {
                 // generate prototype .java file for the tag file
-                try (ServletWriter writer = setupContextWriter(javaFileName)) {
-                    Generator.generate(writer, this, pageNodes);
-                    return null;
-                }
+                writer = setupContextWriter(javaFileName);
+                Generator.generate(writer, this, pageNodes);
+                writer.close();
+                writer = null;
+                return null;
             }
 
             // Validate and process attributes - don't re-validate the
@@ -246,9 +247,10 @@ public abstract class Compiler {
             ELFunctionMapper.map(pageNodes);
 
             // generate servlet .java file
-            try (ServletWriter writer = setupContextWriter(javaFileName)) {
-                Generator.generate(writer, this, pageNodes);
-            }
+            writer = setupContextWriter(javaFileName);
+            Generator.generate(writer, this, pageNodes);
+            writer.close();
+            writer = null;
 
             // The writer is only used during the compile, dereference
             // it in the JspCompilationContext when done to allow it
@@ -262,6 +264,14 @@ public abstract class Compiler {
             }
 
         } catch (Exception e) {
+            if (writer != null) {
+                try {
+                    writer.close();
+                    writer = null;
+                } catch (Exception e1) {
+                    // do nothing
+                }
+            }
             // Remove the generated .java file
             File file = new File(javaFileName);
             if (file.exists()) {
@@ -272,6 +282,14 @@ public abstract class Compiler {
                 }
             }
             throw e;
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (Exception e2) {
+                    // do nothing
+                }
+            }
         }
 
         // JSR45 Support
@@ -326,7 +344,7 @@ public abstract class Compiler {
     /**
      * Compile the jsp file from the current engine context. As an side- effect,
      * tag files that are referenced by this page are also compiled.
-     *
+     * 
      * @param compileClass
      *            If true, generate both .java and .class file If false,
      *            generate only .java file
@@ -339,7 +357,7 @@ public abstract class Compiler {
     /**
      * Compile the jsp file from the current engine context. As an side- effect,
      * tag files that are referenced by this page are also compiled.
-     *
+     * 
      * @param compileClass
      *            If true, generate both .java and .class file If false,
      *            generate only .java file
@@ -413,7 +431,7 @@ public abstract class Compiler {
      * JSP page with that of the corresponding .class or .java file. If the page
      * has dependencies, the check is also extended to its dependents, and so
      * on. This method can by overridden by a subclasses of Compiler.
-     *
+     * 
      * @param checkClass
      *            If true, check against .class file, if false, check against
      *            .java file.
@@ -476,34 +494,26 @@ public abstract class Compiler {
         Iterator<Entry<String,Long>> it = depends.entrySet().iterator();
         while (it.hasNext()) {
             Entry<String,Long> include = it.next();
+            URLConnection iuc = null;
             try {
                 String key = include.getKey();
                 URL includeUrl;
-                long includeLastModified = 0;
-                if (key.startsWith("jar:jar:")) {
-                    // Assume we constructed this correctly
-                    int entryStart = key.lastIndexOf("!/");
-                    String entry = key.substring(entryStart + 2);
-                    try (Jar jar = JarFactory.newInstance(new URL(key.substring(4, entryStart)))) {
-                        includeLastModified = jar.getLastModified(entry);
-                    }
+                if (key.startsWith("jar:") || key.startsWith("file:")) {
+                    includeUrl = new URL(key);
                 } else {
-                    if (key.startsWith("jar:") || key.startsWith("file:")) {
-                        includeUrl = new URL(key);
-                    } else {
-                        includeUrl = ctxt.getResource(include.getKey());
-                    }
-                    if (includeUrl == null) {
-                        return true;
-                    }
-                    URLConnection iuc = includeUrl.openConnection();
-                    if (iuc instanceof JarURLConnection) {
-                        includeLastModified =
-                            ((JarURLConnection) iuc).getJarEntry().getTime();
-                    } else {
-                        includeLastModified = iuc.getLastModified();
-                    }
-                    iuc.getInputStream().close();
+                    includeUrl = ctxt.getResource(include.getKey());
+                }
+                if (includeUrl == null) {
+                    return true;
+                }
+
+                iuc = includeUrl.openConnection();
+                long includeLastModified = 0;
+                if (iuc instanceof JarURLConnection) {
+                    includeLastModified =
+                        ((JarURLConnection) iuc).getJarEntry().getTime();
+                } else {
+                    includeLastModified = iuc.getLastModified();
                 }
 
                 if (includeLastModified != include.getValue().longValue()) {
@@ -514,6 +524,13 @@ public abstract class Compiler {
                     log.debug("Problem accessing resource. Treat as outdated.",
                             e);
                 return true;
+            } finally {
+                if (iuc != null) {
+                    try {
+                        iuc.getInputStream().close();
+                    } catch (IOException e) {
+                    }
+                }
             }
         }
 

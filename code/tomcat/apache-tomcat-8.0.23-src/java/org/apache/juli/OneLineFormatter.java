@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,12 +19,6 @@ package org.apache.juli;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadInfo;
-import java.lang.management.ThreadMXBean;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Formatter;
 import java.util.logging.LogRecord;
 
@@ -38,28 +32,8 @@ import java.util.logging.LogRecord;
  */
 public class OneLineFormatter extends Formatter {
 
-    private static final String ST_SEP = System.lineSeparator() + " ";
-    private static final String UNKONWN_THREAD_NAME = "Unknown thread with ID ";
-    private static final Object threadMxBeanLock = new Object();
-    private static volatile ThreadMXBean threadMxBean = null;
-    private static final int THREAD_NAME_CACHE_SIZE = 10000;
-    private static ThreadLocal<LinkedHashMap<Integer,String>> threadNameCache =
-            new ThreadLocal<LinkedHashMap<Integer,String>>() {
-
-        @Override
-        protected LinkedHashMap<Integer,String> initialValue() {
-            return new LinkedHashMap<Integer,String>() {
-
-                private static final long serialVersionUID = 1L;
-
-                @Override
-                protected boolean removeEldestEntry(
-                        Entry<Integer, String> eldest) {
-                    return (size() > THREAD_NAME_CACHE_SIZE);
-                }
-            };
-        }
-    };
+    private static final String LINE_SEP = System.getProperty("line.separator");
+    private static final String ST_SEP = LINE_SEP + " ";
 
     /* Timestamp format */
     private static final String timeFormat = "dd-MMM-yyyy HH:mm:ss";
@@ -105,13 +79,7 @@ public class OneLineFormatter extends Formatter {
         // Thread
         sb.append(' ');
         sb.append('[');
-        if (Thread.currentThread() instanceof AsyncFileHandler.LoggerThread) {
-            // If using the async handler can't get the thread name from the
-            // current thread.
-            sb.append(getThreadName(record.getThreadID()));
-        } else {
-            sb.append(Thread.currentThread().getName());
-        }
+        sb.append(Thread.currentThread().getName());
         sb.append(']');
 
         // Source
@@ -135,7 +103,7 @@ public class OneLineFormatter extends Formatter {
         }
 
         // New line for next record
-        sb.append(System.lineSeparator());
+        sb.append(LINE_SEP);
 
         return sb.toString();
     }
@@ -153,51 +121,5 @@ public class OneLineFormatter extends Formatter {
             }
         }
         buf.append(frac);
-    }
-
-
-    /**
-     * LogRecord has threadID but no thread name.
-     * LogRecord uses an int for thread ID but thread IDs are longs.
-     * If the real thread ID > (Integer.MAXVALUE / 2) LogRecord uses it's own
-     * ID in an effort to avoid clashes due to overflow.
-     * <p>
-     * Words fail me to describe what I think of the design decision to use an
-     * int in LogRecord for a long value and the resulting mess that follows.
-     */
-    private static String getThreadName(int logRecordThreadId) {
-        Map<Integer,String> cache = threadNameCache.get();
-        String result = null;
-
-        if (logRecordThreadId > (Integer.MAX_VALUE / 2)) {
-            result = cache.get(Integer.valueOf(logRecordThreadId));
-        }
-
-        if (result != null) {
-            return result;
-        }
-
-        if (logRecordThreadId > Integer.MAX_VALUE / 2) {
-            result = UNKONWN_THREAD_NAME + logRecordThreadId;
-        } else {
-            // Double checked locking OK as threadMxBean is volatile
-            if (threadMxBean == null) {
-                synchronized (threadMxBeanLock) {
-                    if (threadMxBean == null) {
-                        threadMxBean = ManagementFactory.getThreadMXBean();
-                    }
-                }
-            }
-            ThreadInfo threadInfo =
-                    threadMxBean.getThreadInfo(logRecordThreadId);
-            if (threadInfo == null) {
-                return Long.toString(logRecordThreadId);
-            }
-            result = threadInfo.getThreadName();
-        }
-
-        cache.put(Integer.valueOf(logRecordThreadId), result);
-
-        return result;
     }
 }

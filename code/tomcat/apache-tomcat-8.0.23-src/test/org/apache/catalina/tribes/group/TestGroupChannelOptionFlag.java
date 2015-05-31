@@ -27,6 +27,16 @@ import org.apache.catalina.tribes.Channel;
 import org.apache.catalina.tribes.ChannelException;
 import org.apache.catalina.tribes.ChannelInterceptor;
 
+/**
+ * <p>Title: </p>
+ *
+ * <p>Description: </p>
+ *
+ * <p>Company: </p>
+ *
+ * @author not attributable
+ * @version 1.0
+ */
 public class TestGroupChannelOptionFlag {
     private GroupChannel channel = null;
 
@@ -37,13 +47,7 @@ public class TestGroupChannelOptionFlag {
 
     @After
     public void tearDown() throws Exception {
-        if (channel != null) {
-            try {
-                channel.stop(Channel.DEFAULT);
-            } catch (Exception ignore) {
-                // Ignore
-            }
-        }
+        if ( channel != null ) try {channel.stop(Channel.DEFAULT);}catch ( Exception ignore) { /* Ignore */ }
         channel = null;
     }
 

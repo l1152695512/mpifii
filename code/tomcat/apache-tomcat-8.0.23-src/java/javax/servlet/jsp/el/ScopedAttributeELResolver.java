@@ -22,10 +22,11 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.el.ELClass;
 import javax.el.ELContext;
+import javax.el.ELException;
 import javax.el.ELResolver;
-import javax.el.ImportHandler;
+import javax.el.PropertyNotFoundException;
+import javax.el.PropertyNotWritableException;
 import javax.servlet.jsp.JspContext;
 import javax.servlet.jsp.PageContext;
 
@@ -40,60 +41,34 @@ public class ScopedAttributeELResolver extends ELResolver {
     }
 
     @Override
-    public Object getValue(ELContext context, Object base, Object property) {
+    public Object getValue(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
-        Object result = null;
-
         if (base == null) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
             if (property != null) {
                 String key = property.toString();
                 PageContext page = (PageContext) context
                         .getContext(JspContext.class);
-                result = page.findAttribute(key);
-
-                if (result == null) {
-                    // This might be the name of an imported class
-                    ImportHandler importHandler = context.getImportHandler();
-                    if (importHandler != null) {
-                        Class<?> clazz = importHandler.resolveClass(key);
-                        if (clazz != null) {
-                            result = new ELClass(clazz);
-                        }
-                        if (result == null) {
-                            // This might be the name of an imported static field
-                            clazz = importHandler.resolveStatic(key);
-                            if (clazz != null) {
-                                try {
-                                    result = clazz.getField(key).get(null);
-                                } catch (IllegalArgumentException | IllegalAccessException |
-                                        NoSuchFieldException | SecurityException e) {
-                                    // Most (all?) of these should have been
-                                    // prevented by the checks when the import
-                                    // was defined.
-                                }
-                            }
-                        }
-                    }
-                }
+                return page.findAttribute(key);
             }
         }
 
-        return result;
+        return null;
     }
 
     @Override
-    public Class<Object> getType(ELContext context, Object base,
-            Object property) {
+    public Class<Object> getType(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base == null) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
             return Object.class;
         }
 
@@ -102,13 +77,15 @@ public class ScopedAttributeELResolver extends ELResolver {
 
     @Override
     public void setValue(ELContext context, Object base, Object property,
-            Object value) {
+            Object value) throws NullPointerException,
+            PropertyNotFoundException, PropertyNotWritableException,
+            ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base == null) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
             if (property != null) {
                 String key = property.toString();
                 PageContext page = (PageContext) context
@@ -124,13 +101,14 @@ public class ScopedAttributeELResolver extends ELResolver {
     }
 
     @Override
-    public boolean isReadOnly(ELContext context, Object base, Object property) {
+    public boolean isReadOnly(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base == null) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
         }
 
         return false;
@@ -141,7 +119,7 @@ public class ScopedAttributeELResolver extends ELResolver {
             Object base) {
 
         PageContext ctxt = (PageContext) context.getContext(JspContext.class);
-        List<FeatureDescriptor> list = new ArrayList<>();
+        List<FeatureDescriptor> list = new ArrayList<FeatureDescriptor>();
         Enumeration<String> e;
         Object value;
         String name;

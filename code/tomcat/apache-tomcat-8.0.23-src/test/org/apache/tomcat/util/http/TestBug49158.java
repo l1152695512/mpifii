@@ -37,8 +37,8 @@ import org.apache.catalina.startup.Tomcat;
 import org.apache.tomcat.util.buf.ByteChunk;
 
 /**
- * Test case for {@link LegacyCookieProcessor}. <b>Note</b> because of the use of <code>final
- * static</code> constants in {@link LegacyCookieProcessor}, each of these tests must be
+ * Test case for {@link Cookies}. <b>Note</b> because of the use of <code>final
+ * static</code> constants in {@link Cookies}, each of these tests must be
  * executed in a new JVM instance. The tests have been place in separate classes
  * to facilitate this when running the unit tests via Ant.
  */
@@ -51,7 +51,7 @@ public class TestBug49158 extends CookiesBaseTest {
         Tomcat tomcat = getTomcatInstance();
         addServlets(tomcat);
         tomcat.start();
-        Map<String,List<String>> headers = new HashMap<>();
+        Map<String,List<String>> headers = new HashMap<String,List<String>>();
         ByteChunk res = new ByteChunk();
         getUrl("http://localhost:" + getPort() + "/"+path, res, headers);
         List<String> cookieHeaders = headers.get("Set-Cookie");
@@ -60,8 +60,9 @@ public class TestBug49158 extends CookiesBaseTest {
     }
 
     public static void addServlets(Tomcat tomcat) {
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, path, new TestBug49158Servlet());
         ctx.addServletMapping("/"+path, path);

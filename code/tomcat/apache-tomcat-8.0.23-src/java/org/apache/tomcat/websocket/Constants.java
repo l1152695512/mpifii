@@ -96,7 +96,7 @@ public class Constants {
         if (DISABLE_BUILTIN_EXTENSIONS) {
             INSTALLED_EXTENSIONS = Collections.unmodifiableList(new ArrayList<Extension>());
         } else {
-            List<Extension> installed = new ArrayList<>(1);
+            List<Extension> installed = new ArrayList<Extension>(1);
             installed.add(new WsExtension("permessage-deflate"));
             INSTALLED_EXTENSIONS = Collections.unmodifiableList(installed);
         }

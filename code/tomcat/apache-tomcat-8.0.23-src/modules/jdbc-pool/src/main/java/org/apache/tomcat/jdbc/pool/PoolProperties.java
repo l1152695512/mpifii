@@ -16,6 +16,7 @@
  */
 package org.apache.tomcat.jdbc.pool;
 
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.Serializable;
@@ -30,6 +31,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
+/**
+ * @author Filip Hanik
+ *
+ */
 public class PoolProperties implements PoolConfiguration, Cloneable, Serializable {
 
     private static final long serialVersionUID = -8519283440854213745L;
@@ -89,6 +94,7 @@ public class PoolProperties implements PoolConfiguration, Cloneable, Serializabl
     private volatile boolean logValidationErrors = false;
     private volatile boolean propagateInterruptState = false;
     private volatile boolean ignoreExceptionOnPreLoad = false;
+
 
     /**
      * {@inheritDoc}
@@ -481,7 +487,7 @@ public class PoolProperties implements PoolConfiguration, Cloneable, Serializabl
                     } else {
                         String name = interceptorValues[i].substring(0,propIndex).trim();
                         definitions[i+1] = new InterceptorDefinition(name);
-                        String propsAsString = interceptorValues[i].substring(propIndex+1, endIndex);
+                        String propsAsString = interceptorValues[i].substring(propIndex+1, interceptorValues[i].length()-1);
                         String[] props = propsAsString.split(",");
                         for (int j=0; j<props.length; j++) {
                             int pidx = props[j].indexOf("=");
@@ -767,11 +773,7 @@ public class PoolProperties implements PoolConfiguration, Cloneable, Serializabl
 
         try {
             @SuppressWarnings("unchecked")
-            Class<Validator> validatorClass = (Class<Validator>)ClassLoaderUtil.loadClass(
-                className,
-                PoolProperties.class.getClassLoader(),
-                Thread.currentThread().getContextClassLoader()
-            );
+            Class<Validator> validatorClass = (Class<Validator>)Class.forName(className);
             validator = validatorClass.newInstance();
         } catch (ClassNotFoundException e) {
             log.warn("The class "+className+" cannot be found.", e);
@@ -791,7 +793,7 @@ public class PoolProperties implements PoolConfiguration, Cloneable, Serializabl
 
     @Override
     public void setInitSQL(String initSQL) {
-        this.initSQL = initSQL!=null && initSQL.trim().length()>0 ? initSQL : null;
+        this.initSQL = initSQL;
     }
 
     /**
@@ -924,10 +926,9 @@ public class PoolProperties implements PoolConfiguration, Cloneable, Serializabl
     }
 
 
-    public static class InterceptorDefinition implements Serializable {
-        private static final long serialVersionUID = 1L;
+    public static class InterceptorDefinition {
         protected String className;
-        protected Map<String,InterceptorProperty> properties = new HashMap<>();
+        protected Map<String,InterceptorProperty> properties = new HashMap<String,InterceptorProperty>();
         protected volatile Class<?> clazz = null;
         public InterceptorDefinition(String className) {
             this.className = className;
@@ -961,28 +962,19 @@ public class PoolProperties implements PoolConfiguration, Cloneable, Serializabl
                     if (log.isDebugEnabled()) {
                         log.debug("Loading interceptor class:"+PoolConfiguration.PKG_PREFIX+getClassName());
                     }
-                    clazz = ClassLoaderUtil.loadClass(
-                        PoolConfiguration.PKG_PREFIX+getClassName(),
-                        PoolProperties.class.getClassLoader(),
-                        Thread.currentThread().getContextClassLoader()
-                    );
+                    clazz = Class.forName(PoolConfiguration.PKG_PREFIX+getClassName(), true, this.getClass().getClassLoader());
                 } else {
                     if (log.isDebugEnabled()) {
                         log.debug("Loading interceptor class:"+getClassName());
                     }
-                    clazz = ClassLoaderUtil.loadClass(
-                        getClassName(),
-                        PoolProperties.class.getClassLoader(),
-                        Thread.currentThread().getContextClassLoader()
-                    );
+                    clazz = Class.forName(getClassName(), true, this.getClass().getClassLoader());
                 }
             }
             return (Class<? extends JdbcInterceptor>)clazz;
         }
     }
 
-    public static class InterceptorProperty implements Serializable {
-        private static final long serialVersionUID = 1L;
+    public static class InterceptorProperty {
         String name;
         String value;
         public InterceptorProperty(String name, String value) {
@@ -1144,9 +1136,6 @@ public class PoolProperties implements PoolConfiguration, Cloneable, Serializabl
      */
     @Override
     public void setDataSource(Object ds) {
-        if (ds instanceof DataSourceProxy) {
-            throw new IllegalArgumentException("Layered pools are not allowed.");
-        }
         this.dataSource = ds;
     }
 

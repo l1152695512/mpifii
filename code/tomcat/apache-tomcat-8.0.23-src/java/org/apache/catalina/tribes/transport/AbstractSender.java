@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.catalina.tribes.transport;
 
 import java.io.IOException;
@@ -22,6 +23,16 @@ import java.net.UnknownHostException;
 
 import org.apache.catalina.tribes.Member;
 
+/**
+ * <p>Title: </p>
+ *
+ * <p>Description: </p>
+ *
+ * <p>Company: </p>
+ *
+ * @author not attributable
+ * @version 1.0
+ */
 public abstract class AbstractSender implements DataSender {
 
     private boolean connected = false;
@@ -173,8 +184,16 @@ public abstract class AbstractSender implements DataSender {
         return maxRetryAttempts;
     }
 
+    public void setDirect(boolean direct) {
+        setDirectBuffer(direct);
+    }
+
     public void setDirectBuffer(boolean directBuffer) {
         this.directBuffer = directBuffer;
+    }
+
+    public boolean getDirect() {
+        return getDirectBuffer();
     }
 
     public boolean getDirectBuffer() {

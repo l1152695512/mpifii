@@ -39,19 +39,19 @@ import org.apache.jasper.JasperException;
 
 class PageInfo {
 
-    private final Vector<String> imports;
-    private final Map<String,Long> dependants;
+    private Vector<String> imports;
+    private Map<String,Long> dependants;
 
-    private final BeanRepository beanRepository;
-    private final Set<String> varInfoNames;
-    private final HashMap<String,TagLibraryInfo> taglibsMap;
-    private final HashMap<String, String> jspPrefixMapper;
-    private final HashMap<String, LinkedList<String>> xmlPrefixMapper;
-    private final HashMap<String, Mark> nonCustomTagPrefixMap;
-    private final String jspFile;
-    private final String defaultLanguage = "java";
+    private BeanRepository beanRepository;
+    private Set<String> varInfoNames;
+    private HashMap<String,TagLibraryInfo> taglibsMap;
+    private HashMap<String, String> jspPrefixMapper;
+    private HashMap<String, LinkedList<String>> xmlPrefixMapper;
+    private HashMap<String, Mark> nonCustomTagPrefixMap;
+    private String jspFile;
+    private String defaultLanguage = "java";
     private String language;
-    private final String defaultExtends = Constants.JSP_SERVLET_BASE;
+    private String defaultExtends = Constants.JSP_SERVLET_BASE;
     private String xtends;
     private String contentType = null;
     private String session;
@@ -69,18 +69,18 @@ class PageInfo {
 
     private boolean scriptless = false;
     private boolean scriptingInvalid = false;
-
+    
     private String isELIgnoredValue;
     private boolean isELIgnored = false;
-
+    
     // JSP 2.1
     private String deferredSyntaxAllowedAsLiteralValue;
     private boolean deferredSyntaxAllowedAsLiteral = false;
-    private final ExpressionFactory expressionFactory =
+    private ExpressionFactory expressionFactory =
         ExpressionFactory.newInstance();
     private String trimDirectiveWhitespacesValue;
     private boolean trimDirectiveWhitespaces = false;
-
+    
     private String omitXmlDecl = null;
     private String doctypeName = null;
     private String doctypePublic = null;
@@ -89,33 +89,33 @@ class PageInfo {
     private boolean isJspPrefixHijacked;
 
     // Set of all element and attribute prefixes used in this translation unit
-    private final HashSet<String> prefixes;
+    private HashSet<String> prefixes;
 
     private boolean hasJspRoot = false;
-    private Collection<String> includePrelude;
-    private Collection<String> includeCoda;
-    private final Vector<String> pluginDcls;  // Id's for tagplugin declarations
+    private Vector<String> includePrelude;
+    private Vector<String> includeCoda;
+    private Vector<String> pluginDcls;      // Id's for tagplugin declarations
 
     // JSP 2.2
     private boolean errorOnUndeclaredNamepsace = false;
 
-    private final boolean isTagFile;
+    private boolean isTagFile = false;
 
     PageInfo(BeanRepository beanRepository, String jspFile, boolean isTagFile) {
         this.isTagFile = isTagFile;
         this.jspFile = jspFile;
         this.beanRepository = beanRepository;
-        this.varInfoNames = new HashSet<>();
-        this.taglibsMap = new HashMap<>();
-        this.jspPrefixMapper = new HashMap<>();
-        this.xmlPrefixMapper = new HashMap<>();
-        this.nonCustomTagPrefixMap = new HashMap<>();
-        this.imports = new Vector<>();
-        this.dependants = new HashMap<>();
-        this.includePrelude = new Vector<>();
-        this.includeCoda = new Vector<>();
-        this.pluginDcls = new Vector<>();
-        this.prefixes = new HashSet<>();
+        this.varInfoNames = new HashSet<String>();
+        this.taglibsMap = new HashMap<String, TagLibraryInfo>();
+        this.jspPrefixMapper = new HashMap<String, String>();
+        this.xmlPrefixMapper = new HashMap<String, LinkedList<String>>();
+        this.nonCustomTagPrefixMap = new HashMap<String, Mark>();
+        this.imports = new Vector<String>();
+        this.dependants = new HashMap<String,Long>();
+        this.includePrelude = new Vector<String>();
+        this.includeCoda = new Vector<String>();
+        this.pluginDcls = new Vector<String>();
+        this.prefixes = new HashSet<String>();
 
         // Enter standard imports
         imports.addAll(Constants.STANDARD_IMPORTS);
@@ -182,19 +182,19 @@ class PageInfo {
         return scriptingInvalid;
     }
 
-    public Collection<String> getIncludePrelude() {
+    public List<String> getIncludePrelude() {
         return includePrelude;
     }
 
-    public void setIncludePrelude(Collection<String> prelude) {
+    public void setIncludePrelude(Vector<String> prelude) {
         includePrelude = prelude;
     }
 
-    public Collection<String> getIncludeCoda() {
+    public List<String> getIncludeCoda() {
         return includeCoda;
     }
 
-    public void setIncludeCoda(Collection<String> coda) {
+    public void setIncludeCoda(Vector<String> coda) {
         includeCoda = coda;
     }
 
@@ -329,7 +329,7 @@ class PageInfo {
     public void pushPrefixMapping(String prefix, String uri) {
         LinkedList<String> stack = xmlPrefixMapper.get(prefix);
         if (stack == null) {
-            stack = new LinkedList<>();
+            stack = new LinkedList<String>();
             xmlPrefixMapper.put(prefix, stack);
         }
         stack.addFirst(uri);
@@ -343,6 +343,9 @@ class PageInfo {
      */
     public void popPrefixMapping(String prefix) {
         LinkedList<String> stack = xmlPrefixMapper.get(prefix);
+        if (stack == null || stack.size() == 0) {
+            // XXX throw new Exception("XXX");
+        }
         stack.removeFirst();
     }
 
@@ -391,10 +394,23 @@ class PageInfo {
         return (language == null && useDefault ? defaultLanguage : language);
     }
 
+    public String getLanguage() {
+        return getLanguage(true);
+    }
+
+
     /*
      * extends
      */
     public void setExtends(String value) {
+        xtends = value;
+    }
+
+    /**
+     * @deprecated Use {@link #setExtends(String)}
+     */
+    @Deprecated
+    public void setExtends(String value, @SuppressWarnings("unused") Node.PageDirective n) {
         xtends = value;
     }
 
@@ -454,7 +470,6 @@ class PageInfo {
                 }
             }
             try {
-                @SuppressWarnings("null") // value can't be null here
                 Integer k = new Integer(value.substring(0, value.length()-2));
                 buffer = k.intValue() * 1024;
             } catch (NumberFormatException e) {
@@ -622,7 +637,7 @@ class PageInfo {
 
         isELIgnoredValue = value;
     }
-
+    
     /*
      * deferredSyntaxAllowedAsLiteral
      */
@@ -643,7 +658,7 @@ class PageInfo {
 
         deferredSyntaxAllowedAsLiteralValue = value;
     }
-
+    
     /*
      * trimDirectiveWhitespaces
      */
@@ -684,7 +699,7 @@ class PageInfo {
     public Mark getNonCustomTagPrefix(String prefix) {
         return nonCustomTagPrefixMap.get(prefix);
     }
-
+    
     public String getDeferredSyntaxAllowedAsLiteral() {
         return deferredSyntaxAllowedAsLiteralValue;
     }
@@ -716,13 +731,13 @@ class PageInfo {
     public Set<String> getVarInfoNames() {
         return varInfoNames;
     }
-
+    
     public boolean isErrorOnUndeclaredNamespace() {
         return errorOnUndeclaredNamepsace;
     }
-
+    
     public void setErrorOnUndeclaredNamespace(
             boolean errorOnUndeclaredNamespace) {
-        this.errorOnUndeclaredNamepsace = errorOnUndeclaredNamespace;
+        this.errorOnUndeclaredNamepsace = errorOnUndeclaredNamespace; 
     }
 }

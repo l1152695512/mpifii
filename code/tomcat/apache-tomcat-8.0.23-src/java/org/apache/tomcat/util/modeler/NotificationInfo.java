@@ -5,22 +5,22 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.modeler;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import javax.management.MBeanNotificationInfo;
+
 
 /**
  * <p>Internal configuration information for a <code>Notification</code>
@@ -28,8 +28,8 @@ import javax.management.MBeanNotificationInfo;
  *
  * @author Craig R. McClanahan
  */
-public class NotificationInfo extends FeatureInfo {
 
+public class NotificationInfo extends FeatureInfo {
     static final long serialVersionUID = -6319885418912650856L;
 
     // ----------------------------------------------------- Instance Variables
@@ -41,7 +41,6 @@ public class NotificationInfo extends FeatureInfo {
      */
     transient MBeanNotificationInfo info = null;
     protected String notifTypes[] = new String[0];
-    protected ReadWriteLock notifTypesLock = new ReentrantReadWriteLock();
 
     // ------------------------------------------------------------- Properties
 
@@ -74,13 +73,7 @@ public class NotificationInfo extends FeatureInfo {
      * The set of notification types for this MBean.
      */
     public String[] getNotifTypes() {
-        Lock readLock = notifTypesLock.readLock();
-        readLock.lock();
-        try {
-            return this.notifTypes;
-        } finally {
-            readLock.unlock();
-        }
+        return (this.notifTypes);
     }
 
 
@@ -94,18 +87,14 @@ public class NotificationInfo extends FeatureInfo {
      */
     public void addNotifType(String notifType) {
 
-        Lock writeLock = notifTypesLock.writeLock();
-        writeLock.lock();
-        try {
-
+        synchronized (notifTypes) {
             String results[] = new String[notifTypes.length + 1];
             System.arraycopy(notifTypes, 0, results, 0, notifTypes.length);
             results[notifTypes.length] = notifType;
             notifTypes = results;
             this.info = null;
-        } finally {
-            writeLock.unlock();
         }
+
     }
 
 
@@ -117,7 +106,7 @@ public class NotificationInfo extends FeatureInfo {
 
         // Return our cached information (if any)
         if (info != null)
-            return info;
+            return (info);
 
         // Create and return a new information object
         info = new MBeanNotificationInfo
@@ -125,7 +114,7 @@ public class NotificationInfo extends FeatureInfo {
         //Descriptor descriptor = info.getDescriptor();
         //addFields(descriptor);
         //info.setDescriptor(descriptor);
-        return info;
+        return (info);
 
     }
 
@@ -142,14 +131,11 @@ public class NotificationInfo extends FeatureInfo {
         sb.append(", description=");
         sb.append(description);
         sb.append(", notifTypes=");
-        Lock readLock = notifTypesLock.readLock();
-        readLock.lock();
-        try {
-            sb.append(notifTypes.length);
-        } finally {
-            readLock.unlock();
-        }
+        sb.append(notifTypes.length);
         sb.append("]");
         return (sb.toString());
+
     }
+
+
 }

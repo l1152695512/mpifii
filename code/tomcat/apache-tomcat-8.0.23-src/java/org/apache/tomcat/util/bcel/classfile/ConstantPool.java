@@ -57,7 +57,7 @@ public class ConstantPool {
              * "All eight byte constants take up two spots in the constant pool.
              * If this is the n'th byte in the constant pool, then the next item
              * will be numbered n+2"
-             *
+             * 
              * Thus we have to increment the index counter.
              */
             if (constant_pool[i] != null) {

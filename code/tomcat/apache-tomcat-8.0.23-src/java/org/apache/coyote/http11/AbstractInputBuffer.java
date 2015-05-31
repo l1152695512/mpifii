@@ -17,11 +17,9 @@
 package org.apache.coyote.http11;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
-import org.apache.juli.logging.Log;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.http.MimeHeaders;
 import org.apache.tomcat.util.net.AbstractEndpoint;
@@ -147,7 +145,7 @@ public abstract class AbstractInputBuffer<S> implements InputBuffer{
 
     /**
      * Filter library.
-     * Note: Filter[Constants.CHUNKED_FILTER] is always the "chunked" filter.
+     * Note: Filter[0] is always the "chunked" filter.
      */
     protected InputFilter[] filterLibrary;
 
@@ -166,18 +164,15 @@ public abstract class AbstractInputBuffer<S> implements InputBuffer{
 
     // ------------------------------------------------------------- Properties
 
+
     /**
      * Add an input filter to the filter library.
-     *
-     * @throws NullPointerException if the supplied filter is null
      */
     public void addFilter(InputFilter filter) {
 
-        if (filter == null) {
-            throw new NullPointerException(sm.getString("iib.filter.npe"));
-        }
+        // FIXME: Check for null ?
 
-        InputFilter[] newFilterLibrary =
+        InputFilter[] newFilterLibrary = 
             new InputFilter[filterLibrary.length + 1];
         for (int i = 0; i < filterLibrary.length; i++) {
             newFilterLibrary[i] = filterLibrary[i];
@@ -186,6 +181,7 @@ public abstract class AbstractInputBuffer<S> implements InputBuffer{
         filterLibrary = newFilterLibrary;
 
         activeFilters = new InputFilter[filterLibrary.length];
+
     }
 
 
@@ -235,27 +231,20 @@ public abstract class AbstractInputBuffer<S> implements InputBuffer{
      */
     public abstract boolean parseRequestLine(boolean useAvailableDataOnly)
         throws IOException;
-
+    
     public abstract boolean parseHeaders() throws IOException;
-
-    /**
-     * Attempts to read some data into the input buffer.
-     *
-     * @return <code>true</code> if more data was added to the input buffer
-     *         otherwise <code>false</code>
-     */
-    protected abstract boolean fill(boolean block) throws IOException;
+    
+    protected abstract boolean fill(boolean block) throws IOException; 
 
     protected abstract void init(SocketWrapper<S> socketWrapper,
             AbstractEndpoint<S> endpoint) throws IOException;
 
-    protected abstract Log getLog();
-
 
     // --------------------------------------------------------- Public Methods
 
+
     /**
-     * Recycle the input buffer. This should be called when closing the
+     * Recycle the input buffer. This should be called when closing the 
      * connection.
      */
     public void recycle() {
@@ -279,7 +268,7 @@ public abstract class AbstractInputBuffer<S> implements InputBuffer{
 
     /**
      * End processing of current HTTP request.
-     * Note: All bytes of the current request should have been already
+     * Note: All bytes of the current request should have been already 
      * consumed. This method only resets all the pointers so that we are ready
      * to parse the next HTTP request.
      */
@@ -310,7 +299,7 @@ public abstract class AbstractInputBuffer<S> implements InputBuffer{
 
     /**
      * End request (consumes leftover bytes).
-     *
+     * 
      * @throws IOException an underlying I/O error occurred
      */
     public void endRequest() throws IOException {
@@ -320,84 +309,20 @@ public abstract class AbstractInputBuffer<S> implements InputBuffer{
             pos = pos - extraBytes;
         }
     }
-
+    
 
     /**
      * Available bytes in the buffers (note that due to encoding, this may not
      * correspond).
      */
     public int available() {
-        int available = lastValid - pos;
-        if ((available == 0) && (lastActiveFilter >= 0)) {
-            for (int i = 0; (available == 0) && (i <= lastActiveFilter); i++) {
-                available = activeFilters[i].available();
+        int result = (lastValid - pos);
+        if ((result == 0) && (lastActiveFilter >= 0)) {
+            for (int i = 0; (result == 0) && (i <= lastActiveFilter); i++) {
+                result = activeFilters[i].available();
             }
         }
-        if (available > 0) {
-            return available;
-        }
-
-        try {
-            fill(false);
-            available = lastValid - pos;
-        } catch (IOException ioe) {
-            if (getLog().isDebugEnabled()) {
-                getLog().debug(sm.getString("iib.available.readFail"), ioe);
-            }
-            // Not ideal. This will indicate that data is available which should
-            // trigger a read which in turn will trigger another IOException and
-            // that one can be thrown.
-            available = 1;
-        }
-        return available;
-    }
-
-
-    /**
-     * Has all of the request body been read? There are subtle differences
-     * between this and available() &gt; 0 primarily because of having to handle
-     * faking non-blocking reads with the blocking IO connector.
-     */
-    public boolean isFinished() {
-        if (lastValid > pos) {
-            // Data to read in the buffer so not finished
-            return false;
-        }
-
-        /*
-         * Don't use fill(false) here because in the following circumstances
-         * BIO will block - possibly indefinitely
-         * - client is using keep-alive and connection is still open
-         * - client has sent the complete request
-         * - client has not sent any of the next request (i.e. no pipelining)
-         * - application has read the complete request
-         */
-
-        // Check the InputFilters
-
-        if (lastActiveFilter >= 0) {
-            return activeFilters[lastActiveFilter].isFinished();
-        } else {
-            // No filters. Assume request is not finished. EOF will signal end of
-            // request.
-            return false;
-        }
-    }
-
-    ByteBuffer getLeftover() {
-        int available = lastValid - pos;
-        if (available > 0) {
-            return ByteBuffer.wrap(buf, pos, available);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * Is standard Servlet blocking IO being used for input?
-     */
-    protected final boolean isBlocking() {
-        return request.getReadListener() == null;
+        return result;
     }
 
 
@@ -407,7 +332,7 @@ public abstract class AbstractInputBuffer<S> implements InputBuffer{
      * Read some bytes.
      */
     @Override
-    public int doRead(ByteChunk chunk, Request req)
+    public int doRead(ByteChunk chunk, Request req) 
         throws IOException {
 
         if (lastActiveFilter == -1)

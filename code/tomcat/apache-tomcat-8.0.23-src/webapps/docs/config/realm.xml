@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -143,15 +143,11 @@
         <p>The name of the <code>MessageDigest</code> algorithm used
         to encode user passwords stored in the database.  If not specified,
         user passwords are assumed to be stored in clear-text.</p>
-        <p>This attribute is deprecated. Set the algorithm on a nested
-        <strong>CredentialHandler</strong> element instead.</p>
       </attribute>
 
       <attribute name="digestEncoding" required="false">
         <p>The charset for encoding digests.  If not specified, the platform
         default will be used.</p>
-        <p>This attribute is deprecated. Set the encoding on a nested
-        <strong>CredentialHandler</strong> element instead.</p>
       </attribute>
 
       <attribute name="driverName" required="true">
@@ -269,8 +265,6 @@
         <p>The name of the <code>MessageDigest</code> algorithm used
         to encode user passwords stored in the database.  If not specified,
         user passwords are assumed to be stored in clear-text.</p>
-        <p>This attribute is deprecated. Set the algorithm on a nested
-        <strong>CredentialHandler</strong> element instead.</p>
       </attribute>
 
       <attribute name="localDataSource" required="false">
@@ -471,8 +465,6 @@
         by the <code>java.security.MessageDigest</code> class. If not
         specified the plaintext password is assumed to be retrieved. Not
         required unless <code>userPassword</code> is specified</p>
-        <p>This attribute is deprecated. Set the algorithm on a nested
-        <strong>CredentialHandler</strong> element instead.</p>
       </attribute>
 
       <attribute name="hostnameVerifierClassName" required="false">
@@ -816,8 +808,6 @@
         formats. Valid values are those accepted for the algorithm name by the
         <code>java.security.MessageDigest</code> class. If not specified,
         passwords are stored in clear text.</p>
-        <p>This attribute is deprecated. Set the algorithm on a nested
-        <strong>CredentialHandler</strong> element instead.</p>
       </attribute>
 
       <attribute name="pathname" required="false">
@@ -984,14 +974,14 @@
     will be attempted against each <code>Realm</code> in the order they are
     listed. Authentication against any Realm will be sufficient to authenticate
     the user.</p>
-
+    
     <p>See the <a href="../realm-howto.html">Container-Managed Security
     Guide</a> for more information on setting up container managed security
     using the CombinedRealm component.</p>
 
     <p>The CombinedRealm implementation supports the following additional
     attributes.</p>
-
+    
     <attributes>
 
       <attribute name="allRolesMode" required="false">
@@ -1006,7 +996,7 @@
         are defined in web.xml in which case the user must be assigned at least
         one of those roles.</p>
       </attribute>
-
+     
     </attributes>
   </subsection>
 
@@ -1050,7 +1040,7 @@
         are defined in web.xml in which case the user must be assigned at least
         one of those roles.</p>
       </attribute>
-
+      
       <attribute name="cacheRemovalWarningTime" required="false">
        <p>If a failed user is removed from the cache because the cache is too
        big before it has been in the cache for at least this period of time (in
@@ -1086,19 +1076,15 @@
 
 <section name="Nested Components">
 
-  <p>You can nest the following components by nesting the corresponding element
-  inside your <strong>Realm</strong> element:</p>
-  <ul>
-  <li><strong>CombinedRealm Implementation</strong> - If you are using the
-    <em>CombinedRealm Implementation</em> or a Realm
-    that extends the CombinedRealm, e.g. the LockOutRealm, one or more
-    <strong>&lt;Realm&gt;</strong> elements may be nested inside it.</li>
-  <li><a href="credentialhandler.html"><strong>CredentialHandler</strong></a> -
-      You may next at most one instance of this element inside a Realm. This
-      configures the credential handler that will be used to validate provided
-      credentials with those stored by the Realm. If not specified a default
-      <em>MessageDigestCredentialHandler</em> will configured.</li>
-  </ul>
+  <h3>CombinedRealm Implementation</h3>
+
+  <p>If you are using the <em>CombinedRealm Implementation</em> or a Realm
+  that extends the CombinedRealm, e.g. the LockOutRealm,
+  <strong>&lt;Realm&gt;</strong> elements may be nested inside it.</p>
+
+  <h3>Other Realm Implementations</h3>
+
+  <p>No other Realm implementation supports nested components.</p>
 
 </section>
 

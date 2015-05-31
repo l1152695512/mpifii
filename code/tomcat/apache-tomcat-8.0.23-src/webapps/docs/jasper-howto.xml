@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -36,8 +36,8 @@
 
 <section name="Introduction">
 
-<p>Tomcat <version-major-minor/> uses the Jasper 2 JSP Engine to implement
-the <a href="http://wiki.apache.org/tomcat/Specifications">JavaServer Pages 2.3</a>
+<p>Tomcat 7.0 uses the Jasper 2 JSP Engine to implement
+the <a href="http://wiki.apache.org/tomcat/Specifications">JavaServer Pages 2.2</a>
 specification.</p>
 
 <p>Jasper 2 has been redesigned to significantly improve performance over
@@ -106,10 +106,10 @@ set then <code>setenv.[sh|bat]</code> should be used to add
 to the <code>CLASSPATH</code> environment variable.</li>
 
 <li><strong>compilerSourceVM</strong> - What JDK version are the source files
-compatible with? (Default value: <code>1.7</code>)</li>
+compatible with? (Default value: <code>1.6</code>)</li>
 
 <li><strong>compilerTargetVM</strong> - What JDK version are the generated files
-compatible with? (Default value: <code>1.7</code>)</li>
+compatible with? (Default value: <code>1.6</code>)</li>
 
 <li><strong>development</strong> - Is Jasper used in development mode? If true,
 the frequency at which JSPs are checked for modification may be specified via
@@ -384,16 +384,16 @@ The first of these extension points is the tag plug-in mechanism. This allows
 alternative implementations of tag handlers to be provided for a web application
 to use. Tag plug-ins are registered via a <code>tagPlugins.xml</code> file
 located under <code>WEB-INF</code>. A sample plug-in for the JSTL is included
-with Jasper.
+with Jasper. 
 </p>
 
 <p>
 The second extension point is the Expression Language interpreter. Alternative
 interpreters may be configured through the <code>ServletContext</code>. See the
 <code>ELInterpreterFactory</code> javadoc for details of how to configure an
-alternative EL interpreter.
+alternative EL interpreter. 
 </p>
-</section>
+</section> 
 
 </body>
 

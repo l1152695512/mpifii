@@ -18,7 +18,6 @@
 package org.apache.tomcat.util.net;
 
 import java.io.IOException;
-import java.security.cert.X509Certificate;
 
 /**
  * Defines an interface to interact with SSL sessions.
@@ -63,18 +62,41 @@ public interface SSLSupport {
             "org.apache.tomcat.util.net.secure_protocol_version";
 
     /**
+     * A mapping table to determine the number of effective bits in the key
+     * when using a cipher suite containing the specified cipher name.  The
+     * underlying data came from the TLS Specification (RFC 2246), Appendix C.
+     */
+     static final CipherData ciphers[] = {
+        new CipherData("_WITH_NULL_", 0),
+        new CipherData("_WITH_IDEA_CBC_", 128),
+        new CipherData("_WITH_RC2_CBC_40_", 40),
+        new CipherData("_WITH_RC4_40_", 40),
+        new CipherData("_WITH_RC4_128_", 128),
+        new CipherData("_WITH_DES40_CBC_", 40),
+        new CipherData("_WITH_DES_CBC_", 56),
+        new CipherData("_WITH_3DES_EDE_CBC_", 168),
+        new CipherData("_WITH_AES_128_CBC_", 128),
+        new CipherData("_WITH_AES_256_CBC_", 256)
+    };
+
+    /**
      * The cipher suite being used on this connection.
      */
     public String getCipherSuite() throws IOException;
 
     /**
      * The client certificate chain (if any).
-     *
-     * @param force If <code>true</code>, then re-negotiate the connection and
-     *              request a client certificate if a client certificate has not
-     *              already been requested.
      */
-    public X509Certificate[] getPeerCertificateChain(boolean force) throws IOException;
+    public Object[] getPeerCertificateChain()
+        throws IOException;
+
+    /**
+     * The client certificate chain (if any).
+     * @param force If <code>true</code>, then re-negotiate the
+     *              connection if necessary.
+     */
+    public Object[] getPeerCertificateChain(boolean force)
+        throws IOException;
 
     /**
      * Get the keysize.
@@ -96,7 +118,27 @@ public interface SSLSupport {
     /**
      * The current session Id.
      */
-    public String getSessionId() throws IOException;
+    public String getSessionId()
+        throws IOException;
+    /**
+     * Simple data class that represents the cipher being used, along with the
+     * corresponding effective key size.  The specified phrase must appear in the
+     * name of the cipher suite to be recognized.
+     */
+
+    final class CipherData {
+
+        public String phrase = null;
+
+        public int keySize = 0;
+
+        public CipherData(String phrase, int keySize) {
+            this.phrase = phrase;
+            this.keySize = keySize;
+        }
+
+    }
+
 
     /**
      * @return the protocol String indicating how the SSL socket was created

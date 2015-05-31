@@ -18,9 +18,7 @@
 
 package org.apache.catalina;
 
-import java.io.File;
-
-import org.apache.catalina.deploy.NamingResourcesImpl;
+import org.apache.catalina.deploy.NamingResources;
 import org.apache.catalina.startup.Catalina;
 
 /**
@@ -48,12 +46,22 @@ import org.apache.catalina.startup.Catalina;
  */
 public interface Server extends Lifecycle {
 
+
     // ------------------------------------------------------------- Properties
+
+
+    /**
+     * Return descriptive information about this Server implementation and
+     * the corresponding version number, in the format
+     * <code>&lt;description&gt;/&lt;version&gt;</code>.
+     */
+    public String getInfo();
+
 
     /**
      * Return the global naming resources.
      */
-    public NamingResourcesImpl getGlobalNamingResources();
+    public NamingResources getGlobalNamingResources();
 
 
     /**
@@ -62,7 +70,7 @@ public interface Server extends Lifecycle {
      * @param globalNamingResources The new global naming resources
      */
     public void setGlobalNamingResources
-        (NamingResourcesImpl globalNamingResources);
+        (NamingResources globalNamingResources);
 
 
     /**
@@ -139,34 +147,6 @@ public interface Server extends Lifecycle {
      */
     public void setCatalina(Catalina catalina);
 
-
-    /**
-     * Obtain the configured base (instance) directory. Note that home and base
-     * may be the same (and are by default). If this is not set the value
-     * returned by {@link #getCatalinaHome()} will be used.
-     */
-    public File getCatalinaBase();
-
-    /**
-     * Set the configured base (instance) directory. Note that home and base
-     * may be the same (and are by default).
-     */
-    public void setCatalinaBase(File catalinaBase);
-
-
-    /**
-     * Obtain the configured home (binary) directory. Note that home and base
-     * may be the same (and are by default).
-     */
-    public File getCatalinaHome();
-
-    /**
-     * Set the configured home (binary) directory. Note that home and base
-     * may be the same (and are by default).
-     */
-    public void setCatalinaHome(File catalinaHome);
-
-
     // --------------------------------------------------------- Public Methods
 
 
@@ -206,11 +186,4 @@ public interface Server extends Lifecycle {
      * @param service The Service to be removed
      */
     public void removeService(Service service);
-
-
-    /**
-     * Obtain the token necessary for operations on the associated JNDI naming
-     * context.
-     */
-    public Object getNamingToken();
 }

@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,8 @@ package org.apache.jasper.compiler;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FilePermission;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.net.URLDecoder;
 import java.security.CodeSource;
 import java.security.PermissionCollection;
 import java.security.Policy;
@@ -34,10 +32,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.ServletContext;
+import javax.servlet.jsp.JspFactory;
 
 import org.apache.jasper.Constants;
 import org.apache.jasper.JspCompilationContext;
 import org.apache.jasper.Options;
+import org.apache.jasper.runtime.JspFactoryImpl;
+import org.apache.jasper.security.SecurityClassLoad;
 import org.apache.jasper.servlet.JspServletWrapper;
 import org.apache.jasper.util.ExceptionUtils;
 import org.apache.jasper.util.FastRemovalDequeue;
@@ -47,7 +48,7 @@ import org.apache.juli.logging.LogFactory;
 
 /**
  * Class for tracking JSP compile time file dependencies when the
- * &gt;%@include file="..."%&lt; directive is used.
+ * &060;%@include file="..."%&062; directive is used.
  *
  * A background thread periodically checks the files a JSP page
  * is dependent upon.  If a dependent file changes the JSP page
@@ -65,12 +66,42 @@ public final class JspRuntimeContext {
     /*
      * Counts how many times the webapp's JSPs have been reloaded.
      */
-    private final AtomicInteger jspReloadCount = new AtomicInteger(0);
+    private AtomicInteger jspReloadCount = new AtomicInteger(0);
 
     /*
      * Counts how many times JSPs have been unloaded in this webapp.
      */
-    private final AtomicInteger jspUnloadCount = new AtomicInteger(0);
+    private AtomicInteger jspUnloadCount = new AtomicInteger(0);
+
+    /**
+     * Preload classes required at runtime by a JSP servlet so that
+     * we don't get a defineClassInPackage security exception.
+     */
+    static {
+        JspFactoryImpl factory = new JspFactoryImpl();
+        SecurityClassLoad.securityClassLoad(factory.getClass().getClassLoader());
+        if( System.getSecurityManager() != null ) {
+            String basePackage = "org.apache.jasper.";
+            try {
+                factory.getClass().getClassLoader().loadClass( basePackage +
+                                                               "runtime.JspFactoryImpl$PrivilegedGetPageContext");
+                factory.getClass().getClassLoader().loadClass( basePackage +
+                                                               "runtime.JspFactoryImpl$PrivilegedReleasePageContext");
+                factory.getClass().getClassLoader().loadClass( basePackage +
+                                                               "runtime.JspRuntimeLibrary");
+                factory.getClass().getClassLoader().loadClass( basePackage +
+                                                               "runtime.JspRuntimeLibrary$PrivilegedIntrospectHelper");
+                factory.getClass().getClassLoader().loadClass( basePackage +
+                                                               "runtime.ServletResponseWrapperInclude");
+                factory.getClass().getClassLoader().loadClass( basePackage +
+                                                               "servlet.JspServletWrapper");
+            } catch (ClassNotFoundException ex) {
+                throw new IllegalStateException(ex);
+            }
+        }
+
+        JspFactory.setDefaultFactory(factory);
+    }
 
     // ----------------------------------------------------------- Constructors
 
@@ -122,15 +153,15 @@ public final class JspRuntimeContext {
 
         // If this web application context is running from a
         // directory, start the background compilation thread
-        String appBase = context.getRealPath("/");
+        String appBase = context.getRealPath("/");         
         if (!options.getDevelopment()
                 && appBase != null
                 && options.getCheckInterval() > 0) {
             lastCompileCheck = System.currentTimeMillis();
-        }
+        }                                            
 
         if (options.getMaxLoadedJsps() > 0) {
-            jspQueue = new FastRemovalDequeue<>(options.getMaxLoadedJsps());
+            jspQueue = new FastRemovalDequeue<JspServletWrapper>(options.getMaxLoadedJsps());
             if (log.isDebugEnabled()) {
                 log.debug(Localizer.getMessage("jsp.message.jsp_queue_created",
                                                "" + options.getMaxLoadedJsps(), context.getContextPath()));
@@ -150,7 +181,7 @@ public final class JspRuntimeContext {
     private final Options options;
     private final ClassLoader parentClassLoader;
     private final PermissionCollection permissionCollection;
-    private final CodeSource codeSource;
+    private final CodeSource codeSource;                    
     private final String classpath;
     private volatile long lastCompileCheck = -1L;
     private volatile long lastJspQueueUpdate = System.currentTimeMillis();
@@ -160,11 +191,10 @@ public final class JspRuntimeContext {
     /**
      * Maps JSP pages to their JspServletWrapper's
      */
-    private final Map<String, JspServletWrapper> jsps =
-            new ConcurrentHashMap<>();
+    private Map<String, JspServletWrapper> jsps = new ConcurrentHashMap<String, JspServletWrapper>();
 
     /**
-     * Keeps JSP pages ordered by last access.
+     * Keeps JSP pages ordered by last access. 
      */
     private FastRemovalDequeue<JspServletWrapper> jspQueue = null;
 
@@ -223,7 +253,7 @@ public final class JspRuntimeContext {
         }
         return entry;
     }
-
+    
     /**
      * Push unloadHandle for JspServletWrapper to front of the queue.
      *
@@ -237,7 +267,7 @@ public final class JspRuntimeContext {
         }
         jspQueue.moveFirst(unloadHandle);
     }
-
+    
     /**
      * Returns the number of JSPs for which JspServletWrappers exist, i.e.,
      * the number of JSPs that have been loaded into the webapp.
@@ -279,7 +309,7 @@ public final class JspRuntimeContext {
 
     /**
      * Process a "destroy" event for this web application context.
-     */
+     */                                                        
     public void destroy() {
         Iterator<JspServletWrapper> servlets = jsps.values().iterator();
         while (servlets.hasNext()) {
@@ -326,6 +356,13 @@ public final class JspRuntimeContext {
     }
 
     /**
+     * Increments the JSP unload counter.
+     */
+    public void incrementJspUnloadCount() {
+        jspUnloadCount.incrementAndGet();
+    }
+
+    /**
      * Gets the number of JSPs that have been unloaded.
      *
      * @return The number of JSPs (in the webapp with which this JspServlet is
@@ -352,7 +389,7 @@ public final class JspRuntimeContext {
         } else {
             return;
         }
-
+        
         Object [] wrappers = jsps.values().toArray();
         for (int i = 0; i < wrappers.length; i++ ) {
             JspServletWrapper jsw = (JspServletWrapper)wrappers[i];
@@ -401,21 +438,15 @@ public final class JspRuntimeContext {
 
         if (parentClassLoader instanceof URLClassLoader) {
             URL [] urls = ((URLClassLoader)parentClassLoader).getURLs();
-
-            for (int i = 0; i < urls.length; i++) {
-                // Tomcat can use URLs other than file URLs. However, a protocol
-                // other than file: will generate a bad file system path, so
-                // only add file: protocol URLs to the classpath.
-
-                if (urls[i].getProtocol().equals("file") ) {
-                    try {
-                        // Need to decode the URL, primarily to convert %20
-                        // sequences back to spaces
-                        String decoded = URLDecoder.decode(urls[i].getPath(), "UTF-8");
-                        cpath.append(decoded + File.pathSeparator);
-                    } catch (UnsupportedEncodingException e) {
-                        // All JREs are required to support UTF-8
-                    }
+    
+            for(int i = 0; i < urls.length; i++) {
+                // Tomcat 4 can use URL's other than file URL's,
+                // a protocol other than file: will generate a
+                // bad file system path, so only add file:
+                // protocol URL's to the classpath.
+                
+                if( urls[i].getProtocol().equals("file") ) {
+                    cpath.append(urls[i].getFile()+File.pathSeparator);
                 }
             }
         }
@@ -457,7 +488,7 @@ public final class JspRuntimeContext {
         CodeSource source = null;
         PermissionCollection permissions = null;
         if( policy != null ) {
-            try {
+            try {          
                 // Get the permissions for the web app context
                 String docBase = context.getRealPath("/");
                 if( docBase == null ) {

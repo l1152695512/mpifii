@@ -5,16 +5,19 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.catalina.realm;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -33,6 +36,7 @@ import javax.security.auth.login.LoginException;
 import javax.security.auth.spi.LoginModule;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.catalina.Globals;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.digester.Digester;
@@ -184,7 +188,7 @@ public class JAASMemoryLoginModule extends MemoryRealm implements LoginModule {
                     subject.getPrincipals().add(
                             new GenericPrincipal(roles[i], null, null));
                 }
-
+                
             }
         }
 
@@ -193,7 +197,7 @@ public class JAASMemoryLoginModule extends MemoryRealm implements LoginModule {
 
     }
 
-
+    
     /**
      * Initialize this <code>LoginModule</code> with the specified
      * configuration information.
@@ -338,15 +342,8 @@ public class JAASMemoryLoginModule extends MemoryRealm implements LoginModule {
 
         // Validate the existence of our configuration file
         File file = new File(pathname);
-        if (!file.isAbsolute()) {
-            String catalinaBase = getCatalinaBase();
-            if (catalinaBase == null) {
-                log.warn("Unable to determine Catalina base to load file " + pathname);
-                return;
-            } else {
-                file = new File(catalinaBase, pathname);
-            }
-        }
+        if (!file.isAbsolute())
+            file = new File(System.getProperty(Globals.CATALINA_BASE_PROP), pathname);
         if (!file.exists() || !file.canRead()) {
             log.warn("Cannot load configuration file " + file.getAbsolutePath());
             return;
@@ -366,29 +363,6 @@ public class JAASMemoryLoginModule extends MemoryRealm implements LoginModule {
         } finally {
             digester.reset();
         }
-    }
 
-    private String getCatalinaBase() {
-        // Have to get this via a callback as that is the only link we have back
-        // to the defining Realm. Can't use the system property as that may not
-        // be set/correct in an embedded scenario
-
-        if (callbackHandler == null) {
-            return null;
-        }
-
-        Callback callbacks[] = new Callback[1];
-        callbacks[0] = new TextInputCallback("catalinaBase");
-
-        String result = null;
-
-        try {
-            callbackHandler.handle(callbacks);
-            result = ((TextInputCallback) callbacks[0]).getText();
-        } catch (IOException | UnsupportedCallbackException e) {
-            return null;
-        }
-
-        return result;
     }
 }

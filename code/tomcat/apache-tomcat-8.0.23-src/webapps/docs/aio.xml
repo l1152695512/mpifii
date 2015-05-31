@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -343,15 +343,6 @@
   <li><code>org.apache.tomcat.sendfile.start</code>: Start offset as a Long</li>
   <li><code>org.apache.tomcat.sendfile.end</code>: End offset as a Long</li>
   </ul>
-  <p>
-    In addition to setting these parameters it is necessary to set the content-length header.
-    Tomcat will not do that for you, since you may have already written data to the output stream.
-  </p>
-
-  <p>
-    Note that the use of sendfile will disable any compression that Tomcat may
-    otherwise have performed on the response.
-  </p>
 
   </section>
 

@@ -36,9 +36,7 @@ public class CreateTestTable extends DefaultTestCase {
         Statement st = con.createStatement();
         try {
             st.execute("create table test(id int not null, val1 varchar(255), val2 varchar(255), val3 varchar(255), val4 varchar(255))");
-        } catch (Exception ignore) {
-            // Ignore
-        }
+        }catch (Exception ignore) {}
         st.close();
         con.close();
     }
@@ -81,9 +79,7 @@ public class CreateTestTable extends DefaultTestCase {
             Statement st = con.createStatement();
             try {
                 st.execute("drop table test");
-            } catch (Exception ignore) {
-                // Ignore
-            }
+            }catch (Exception ignore) {}
             st.execute("create table test(id int not null, val1 varchar(255), val2 varchar(255), val3 varchar(255), val4 varchar(255))");
             st.close();
         }

@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,11 +45,8 @@ public class JspHelper {
 
     /**
      * Try to get user locale from the session, if possible.
-     * IMPLEMENTATION NOTE: this method has explicit support for Tapestry 3 and
-     * Struts 1.x
-     *
-     * @param in_session Session from which the locale should be guessed
-     *
+     * IMPLEMENTATION NOTE: this method has explicit support for Tapestry 3 and Struts 1.x
+     * @param in_session
      * @return String
      */
     public static String guessDisplayLocaleFromSession(Session in_session) {
@@ -171,8 +168,7 @@ public class JspHelper {
      */
 
     private static final int HIGHEST_SPECIAL = '>';
-    private static final char[][] specialCharactersRepresentation =
-            new char[HIGHEST_SPECIAL + 1][];
+    private static char[][] specialCharactersRepresentation = new char[HIGHEST_SPECIAL + 1][];
     static {
         specialCharactersRepresentation['&'] = "&amp;".toCharArray();
         specialCharactersRepresentation['<'] = "&lt;".toCharArray();
@@ -195,11 +191,11 @@ public class JspHelper {
      * Performs the following substring replacements
      * (to facilitate output to XML/HTML pages):
      *
-     *    &amp; -&gt; &amp;amp;
-     *    &lt; -&gt; &amp;lt;
-     *    &gt; -&gt; &amp;gt;
-     *    " -&gt; &amp;#034;
-     *    ' -&gt; &amp;#039;
+     *    & -> &amp;
+     *    < -> &lt;
+     *    > -> &gt;
+     *    " -> &#034;
+     *    ' -> &#039;
      *
      * See also OutSupport.writeEscapedXml().
      */

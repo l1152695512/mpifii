@@ -33,11 +33,11 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import org.apache.catalina.Context;
+import org.apache.catalina.deploy.FilterDef;
+import org.apache.catalina.deploy.FilterMap;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.descriptor.web.FilterDef;
-import org.apache.tomcat.util.descriptor.web.FilterMap;
 
 public class TestAddCharSetFilter extends TomcatBaseTest {
 
@@ -91,8 +91,9 @@ public class TestAddCharSetFilter extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         // Add the Servlet
         CharsetServlet servlet = new CharsetServlet(mode);
@@ -114,7 +115,7 @@ public class TestAddCharSetFilter extends TomcatBaseTest {
 
         tomcat.start();
 
-        Map<String, List<String>> headers = new HashMap<>();
+        Map<String, List<String>> headers = new HashMap<String, List<String>>();
         getUrl("http://localhost:" + getPort() + "/", new ByteChunk(), headers);
 
         List<String> ctHeaders = headers.get("Content-Type");

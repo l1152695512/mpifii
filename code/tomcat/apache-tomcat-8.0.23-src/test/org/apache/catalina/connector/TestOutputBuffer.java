@@ -35,12 +35,6 @@ import org.apache.tomcat.util.buf.ByteChunk;
 
 public class TestOutputBuffer extends TomcatBaseTest{
 
-    /*
-     * Expect that the buffered results are slightly slower since Tomcat now has
-     * an internal buffer so an extra one just adds overhead.
-     *
-     * @see "https://bz.apache.org/bugzilla/show_bug.cgi?id=52328"
-     */
     @Test
     public void testWriteSpeed() throws Exception {
         Tomcat tomcat = getTomcatInstance();

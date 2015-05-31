@@ -20,7 +20,6 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -39,6 +38,7 @@ import org.apache.catalina.Context;
 import org.apache.catalina.servlets.DefaultServlet;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
+import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.websocket.TesterMessageCountClient.AsyncBinary;
 import org.apache.tomcat.websocket.TesterMessageCountClient.AsyncHandler;
 import org.apache.tomcat.websocket.TesterMessageCountClient.AsyncText;
@@ -82,8 +82,9 @@ public class TestWsRemoteEndpoint extends TomcatBaseTest {
 
     private void doTestWriter(Class<?> clazz, boolean useWriter) throws Exception {
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -131,7 +132,7 @@ public class TestWsRemoteEndpoint extends TomcatBaseTest {
             OutputStream s = wsSession.getBasicRemote().getSendStream();
 
             for (int i = 0; i < 8; i++) {
-                s.write(TEST_MESSAGE_5K.getBytes(StandardCharsets.UTF_8));
+                s.write(TEST_MESSAGE_5K.getBytes(B2CConverter.UTF_8));
             }
 
             s.close();
@@ -141,7 +142,7 @@ public class TestWsRemoteEndpoint extends TomcatBaseTest {
 
         Assert.assertTrue(latchResult);
 
-        List<String> results = new ArrayList<>();
+        List<String> results = new ArrayList<String>();
         if (useWriter) {
             @SuppressWarnings("unchecked")
             List<String> messages = (List<String>) handler.getMessages();
@@ -155,7 +156,7 @@ public class TestWsRemoteEndpoint extends TomcatBaseTest {
             for (ByteBuffer message : messages) {
                 byte[] bytes = new byte[message.limit()];
                 message.get(bytes);
-                results.add(new String(bytes, StandardCharsets.UTF_8));
+                results.add(new String(bytes, B2CConverter.UTF_8));
             }
         }
 

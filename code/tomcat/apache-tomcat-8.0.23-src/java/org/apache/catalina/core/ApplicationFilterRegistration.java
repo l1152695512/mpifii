@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,9 +27,9 @@ import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 
 import org.apache.catalina.Context;
+import org.apache.catalina.deploy.FilterDef;
+import org.apache.catalina.deploy.FilterMap;
 import org.apache.catalina.util.ParameterMap;
-import org.apache.tomcat.util.descriptor.web.FilterDef;
-import org.apache.tomcat.util.descriptor.web.FilterMap;
 import org.apache.tomcat.util.res.StringManager;
 
 public class ApplicationFilterRegistration
@@ -40,15 +40,15 @@ public class ApplicationFilterRegistration
      */
     private static final StringManager sm =
       StringManager.getManager(Constants.Package);
-
-    private final FilterDef filterDef;
-    private final Context context;
-
+    
+    private FilterDef filterDef;
+    private Context context;
+    
     public ApplicationFilterRegistration(FilterDef filterDef,
             Context context) {
         this.filterDef = filterDef;
         this.context = context;
-
+        
     }
 
     @Override
@@ -57,20 +57,20 @@ public class ApplicationFilterRegistration
             String... servletNames) {
 
         FilterMap filterMap = new FilterMap();
-
+        
         filterMap.setFilterName(filterDef.getFilterName());
-
+        
         if (dispatcherTypes != null) {
             for (DispatcherType dispatcherType : dispatcherTypes) {
                 filterMap.setDispatcher(dispatcherType.name());
             }
         }
-
+        
         if (servletNames != null) {
             for (String servletName : servletNames) {
                 filterMap.addServletName(servletName);
             }
-
+        
             if (isMatchAfter) {
                 context.addFilterMap(filterMap);
             } else {
@@ -94,12 +94,12 @@ public class ApplicationFilterRegistration
                 filterMap.setDispatcher(dispatcherType.name());
             }
         }
-
+        
         if (urlPatterns != null) {
             for (String urlPattern : urlPatterns) {
                 filterMap.addURLPattern(urlPattern);
             }
-
+        
             if (isMatchAfter) {
                 context.addFilterMap(filterMap);
             } else {
@@ -107,15 +107,15 @@ public class ApplicationFilterRegistration
             }
         }
         // else error?
-
+        
     }
 
     @Override
     public Collection<String> getServletNameMappings() {
-        Collection<String> result = new HashSet<>();
-
+        Collection<String> result = new HashSet<String>();
+        
         FilterMap[] filterMaps = context.findFilterMaps();
-
+        
         for (FilterMap filterMap : filterMaps) {
             if (filterMap.getFilterName().equals(filterDef.getFilterName())) {
                 for (String servletName : filterMap.getServletNames()) {
@@ -128,10 +128,10 @@ public class ApplicationFilterRegistration
 
     @Override
     public Collection<String> getUrlPatternMappings() {
-        Collection<String> result = new HashSet<>();
-
+        Collection<String> result = new HashSet<String>();
+        
         FilterMap[] filterMaps = context.findFilterMaps();
-
+        
         for (FilterMap filterMap : filterMaps) {
             if (filterMap.getFilterName().equals(filterDef.getFilterName())) {
                 for (String urlPattern : filterMap.getURLPatterns()) {
@@ -154,7 +154,7 @@ public class ApplicationFilterRegistration
 
     @Override
     public Map<String, String> getInitParameters() {
-        ParameterMap<String,String> result = new ParameterMap<>();
+        ParameterMap<String,String> result = new ParameterMap<String,String>();
         result.putAll(filterDef.getParameterMap());
         result.setLocked(true);
         return result;
@@ -175,7 +175,7 @@ public class ApplicationFilterRegistration
         if (getInitParameter(name) != null) {
             return false;
         }
-
+        
         filterDef.addInitParameter(name, value);
 
         return true;
@@ -183,9 +183,9 @@ public class ApplicationFilterRegistration
 
     @Override
     public Set<String> setInitParameters(Map<String, String> initParameters) {
-
-        Set<String> conflicts = new HashSet<>();
-
+        
+        Set<String> conflicts = new HashSet<String>();
+        
         for (Map.Entry<String, String> entry : initParameters.entrySet()) {
             if (entry.getKey() == null || entry.getValue() == null) {
                 throw new IllegalArgumentException(sm.getString(
@@ -202,7 +202,7 @@ public class ApplicationFilterRegistration
         for (Map.Entry<String, String> entry : initParameters.entrySet()) {
             setInitParameter(entry.getKey(), entry.getValue());
         }
-
+        
         return conflicts;
     }
 
@@ -210,5 +210,5 @@ public class ApplicationFilterRegistration
     public void setAsyncSupported(boolean asyncSupported) {
         filterDef.setAsyncSupported(Boolean.valueOf(asyncSupported).toString());
     }
-
+    
 }

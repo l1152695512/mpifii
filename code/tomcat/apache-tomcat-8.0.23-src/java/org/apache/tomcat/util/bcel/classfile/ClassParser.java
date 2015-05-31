@@ -37,7 +37,7 @@ import org.apache.tomcat.util.bcel.Constants;
  * JVM specification 1.0</a>. See this paper for
  * further details about the structure of a bytecode file.
  *
- * @author <A HREF="mailto:m.dahm@gmx.de">M. Dahm</A>
+ * @author <A HREF="mailto:m.dahm@gmx.de">M. Dahm</A> 
  */
 public final class ClassParser {
 

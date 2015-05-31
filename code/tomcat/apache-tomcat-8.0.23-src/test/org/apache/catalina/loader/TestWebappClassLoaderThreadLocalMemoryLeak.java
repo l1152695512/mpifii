@@ -16,6 +16,7 @@
  */
 package org.apache.catalina.loader;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -63,8 +64,9 @@ public class TestWebappClassLoaderThreadLocalMemoryLeak extends TomcatBaseTest {
         tomcat.getServer().addLifecycleListener(
                 new JreMemoryLeakPreventionListener());
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext("",
+                System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "leakServlet1",
                 "org.apache.tomcat.unittest.TesterLeakingServlet1");
@@ -77,9 +79,9 @@ public class TestWebappClassLoaderThreadLocalMemoryLeak extends TomcatBaseTest {
 
         // Configure logging filter to check leak message appears
         LogValidationFilter f = new LogValidationFilter(
-                "The web application [ROOT] created a ThreadLocal with key of");
+                "The web application [] created a ThreadLocal with key of");
         LogManager.getLogManager().getLogger(
-                "org.apache.catalina.loader.WebappClassLoaderBase").setFilter(f);
+                "org.apache.catalina.loader.WebappClassLoader").setFilter(f);
 
         // Need to force loading of all web application classes via the web
         // application class loader
@@ -119,8 +121,9 @@ public class TestWebappClassLoaderThreadLocalMemoryLeak extends TomcatBaseTest {
         tomcat.getServer().addLifecycleListener(
                 new JreMemoryLeakPreventionListener());
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext("",
+                System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "leakServlet2",
                 "org.apache.tomcat.unittest.TesterLeakingServlet2");
@@ -133,9 +136,9 @@ public class TestWebappClassLoaderThreadLocalMemoryLeak extends TomcatBaseTest {
 
         // Configure logging filter to check leak message appears
         LogValidationFilter f = new LogValidationFilter(
-                "The web application [ROOT] created a ThreadLocal with key of");
+                "The web application [] created a ThreadLocal with key of");
         LogManager.getLogManager().getLogger(
-                "org.apache.catalina.loader.WebappClassLoaderBase").setFilter(f);
+                "org.apache.catalina.loader.WebappClassLoader").setFilter(f);
 
         // Need to force loading of all web application classes via the web
         // application class loader
@@ -180,12 +183,14 @@ public class TestWebappClassLoaderThreadLocalMemoryLeak extends TomcatBaseTest {
      * This method assumes that all classes are in the current package.
      */
     private void loadClass(String name, WebappClassLoader cl) throws Exception {
-        try (InputStream is = cl.getResourceAsStream(
-                "org/apache/tomcat/unittest/" + name + ".class")) {
-            // We know roughly how big the class will be (~ 1K) so allow 2k as a
-            // starting point
-            byte[] classBytes = new byte[2048];
-            int offset = 0;
+
+        InputStream is = cl.getResourceAsStream(
+                "org/apache/tomcat/unittest/" + name + ".class");
+        // We know roughly how big the class will be (~ 1K) so allow 2k as a
+        // starting point
+        byte[] classBytes = new byte[2048];
+        int offset = 0;
+        try {
             int read = is.read(classBytes, offset, classBytes.length-offset);
             while (read > -1) {
                 offset += read;
@@ -203,6 +208,14 @@ public class TestWebappClassLoaderThreadLocalMemoryLeak extends TomcatBaseTest {
             // Make sure we can create an instance
             Object obj = lpClass.newInstance();
             obj.toString();
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException ioe) {
+                    // Ignore
+                }
+            }
         }
     }
 

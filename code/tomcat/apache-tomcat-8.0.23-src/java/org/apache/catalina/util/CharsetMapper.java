@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@
 package org.apache.catalina.util;
 
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Locale;
 import java.util.Properties;
@@ -69,11 +70,20 @@ public class CharsetMapper {
      *  resource could not be loaded for any reason.
      */
     public CharsetMapper(String name) {
-        try (InputStream stream = this.getClass().getResourceAsStream(name)) {
+        InputStream stream = null;
+        try {
+            stream = this.getClass().getResourceAsStream(name);
             map.load(stream);
         } catch (Throwable t) {
             ExceptionUtils.handleThrowable(t);
             throw new IllegalArgumentException(t.toString());
+        } finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                }
+            }
         }
     }
 
@@ -99,11 +109,11 @@ public class CharsetMapper {
      * @param locale The locale for which to calculate a character set
      */
     public String getCharset(Locale locale) {
-        // Match full language_country_variant first, then language_country,
+        // Match full language_country_variant first, then language_country, 
         // then language only
         String charset = map.getProperty(locale.toString());
         if (charset == null) {
-            charset = map.getProperty(locale.getLanguage() + "_"
+            charset = map.getProperty(locale.getLanguage() + "_" 
                     + locale.getCountry());
             if (charset == null) {
                 charset = map.getProperty(locale.getLanguage());
@@ -112,7 +122,7 @@ public class CharsetMapper {
         return (charset);
     }
 
-
+    
     /**
      * The deployment descriptor can have a
      * locale-encoding-mapping-list element which describes the

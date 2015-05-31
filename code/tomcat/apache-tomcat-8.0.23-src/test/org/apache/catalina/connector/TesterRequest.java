@@ -53,11 +53,11 @@ public class TesterRequest extends Request {
         return method;
     }
 
-    private final Map<String,List<String>> headers = new HashMap<>();
+    private final Map<String,List<String>> headers = new HashMap<String, List<String>>();
     protected void addHeader(String name, String value) {
         List<String> values = headers.get(name);
         if (values == null) {
-            values = new ArrayList<>();
+            values = new ArrayList<String>();
             headers.put(name, values);
         }
         values.add(value);
@@ -72,10 +72,6 @@ public class TesterRequest extends Request {
     }
     @Override
     public Enumeration<String> getHeaders(String name) {
-        List<String> values = headers.get(name);
-        if (values == null || values.size() == 0) {
-            return Collections.emptyEnumeration();
-        }
         return Collections.enumeration(headers.get(name));
     }
 

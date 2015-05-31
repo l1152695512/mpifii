@@ -17,6 +17,7 @@
 
 package org.apache.catalina.connector;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
@@ -50,15 +51,16 @@ public class TestResponse extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         Tomcat.addServlet(ctx, "servlet", new Bug49598Servlet());
         ctx.addServletMapping("/", "servlet");
 
         tomcat.start();
 
-        Map<String,List<String>> headers = new HashMap<>();
+        Map<String,List<String>> headers = new HashMap<String,List<String>>();
         getUrl("http://localhost:" + getPort() + "/", new ByteChunk(), headers);
 
         // Check for headers without a name
@@ -98,7 +100,7 @@ public class TestResponse extends TomcatBaseTest {
     }
 
 
-    /*
+    /**
      * Tests an issue noticed during the investigation of BZ 52811.
      */
     @Test
@@ -106,8 +108,9 @@ public class TestResponse extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         Tomcat.addServlet(ctx, "servlet", new CharsetServlet());
         ctx.addServletMapping("/", "servlet");
@@ -145,8 +148,9 @@ public class TestResponse extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        File docBase = new File(System.getProperty("java.io.tmpdir"));
+        Context ctx = tomcat.addContext("", docBase.getAbsolutePath());
 
         Tomcat.addServlet(ctx, "servlet", new Bug52811Servlet());
         ctx.addServletMapping("/", "servlet");

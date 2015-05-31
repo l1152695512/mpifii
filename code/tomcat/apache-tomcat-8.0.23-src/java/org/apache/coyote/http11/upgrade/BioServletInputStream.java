@@ -19,39 +19,22 @@ package org.apache.coyote.http11.upgrade;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
-import java.nio.ByteBuffer;
 
 import org.apache.tomcat.util.net.SocketWrapper;
 
 public class BioServletInputStream extends AbstractServletInputStream {
 
     private final InputStream inputStream;
-    private ByteBuffer leftoverInput;
 
-    public BioServletInputStream(SocketWrapper<Socket> wrapper, ByteBuffer leftoverInput)
+    public BioServletInputStream(SocketWrapper<Socket> wrapper)
             throws IOException {
         inputStream = wrapper.getSocket().getInputStream();
-        if (leftoverInput != null) {
-            this.leftoverInput = ByteBuffer.allocate(leftoverInput.remaining());
-            this.leftoverInput.put(leftoverInput);
-        }
     }
 
     @Override
     protected int doRead(boolean block, byte[] b, int off, int len)
             throws IOException {
-        if (leftoverInput != null) {
-            if (leftoverInput.remaining() < len) {
-                len = leftoverInput.remaining();
-            }
-            leftoverInput.get(b, off, len);
-            if (leftoverInput.remaining() == 0) {
-                leftoverInput = null;
-            }
-            return len;
-        } else {
-            return inputStream.read(b, off, len);
-        }
+        return inputStream.read(b, off, len);
     }
 
     @Override

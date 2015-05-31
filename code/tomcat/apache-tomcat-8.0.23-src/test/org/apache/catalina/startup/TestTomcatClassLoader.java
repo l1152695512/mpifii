@@ -40,8 +40,9 @@ public class TestTomcatClassLoader extends TomcatBaseTest {
     public void testDefaultClassLoader() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "ClassLoaderReport", new ClassLoaderReport(null));
         ctx.addServletMapping("/", "ClassLoaderReport");
@@ -63,8 +64,9 @@ public class TestTomcatClassLoader extends TomcatBaseTest {
         Tomcat tomcat = getTomcatInstance();
         tomcat.getServer().setParentClassLoader(cl);
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "ClassLoaderReport", new ClassLoaderReport(cl));
         ctx.addServletMapping("/", "ClassLoaderReport");

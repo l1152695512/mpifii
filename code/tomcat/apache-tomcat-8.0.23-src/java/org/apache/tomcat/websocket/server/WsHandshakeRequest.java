@@ -70,7 +70,7 @@ public class WsHandshakeRequest implements HandshakeRequest {
         // ParameterMap
         Map<String,String[]> originalParameters = request.getParameterMap();
         Map<String,List<String>> newParameters =
-                new HashMap<>(originalParameters.size());
+                new HashMap<String, List<String>>(originalParameters.size());
         for (Entry<String,String[]> entry : originalParameters.entrySet()) {
             newParameters.put(entry.getKey(),
                     Collections.unmodifiableList(
@@ -84,7 +84,7 @@ public class WsHandshakeRequest implements HandshakeRequest {
         parameterMap = Collections.unmodifiableMap(newParameters);
 
         // Headers
-        Map<String,List<String>> newHeaders = new CaseInsensitiveKeyMap<>();
+        Map<String,List<String>> newHeaders = new CaseInsensitiveKeyMap<List<String>>();
 
         Enumeration<String> headerNames = request.getHeaderNames();
         while (headerNames.hasMoreElements()) {

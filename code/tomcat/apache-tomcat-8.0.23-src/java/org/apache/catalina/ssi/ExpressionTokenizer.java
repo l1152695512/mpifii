@@ -21,7 +21,7 @@ package org.apache.catalina.ssi;
  * Parses an expression string to return the individual tokens. This is
  * patterned similar to the StreamTokenizer in the JDK but customized for SSI
  * conditional expression parsing.
- *
+ * 
  * @author Paul Speed
  */
 public class ExpressionTokenizer {
@@ -38,10 +38,10 @@ public class ExpressionTokenizer {
     public static final int TOKEN_GT = 10;
     public static final int TOKEN_LT = 11;
     public static final int TOKEN_END = 12;
-    private final char[] expr;
+    private char[] expr;
     private String tokenVal = null;
     private int index;
-    private final int length;
+    private int length;
 
 
     /**
@@ -134,8 +134,8 @@ public class ExpressionTokenizer {
                 break;
         }
         int end = index;
+        // If it's a quoted string then end is the next unescaped quote
         if (currentChar == '"' || currentChar == '\'') {
-            // It's a quoted string and the end is the next unescaped quote
             char endChar = currentChar;
             boolean escaped = false;
             start++;
@@ -149,19 +149,6 @@ public class ExpressionTokenizer {
             }
             end = index;
             index++; // Skip the end quote
-        } else if (currentChar == '/') {
-            // It's a regular expression and the end is the next unescaped /
-            char endChar = currentChar;
-            boolean escaped = false;
-            for (; index < length; index++) {
-                if (expr[index] == '\\' && !escaped) {
-                    escaped = true;
-                    continue;
-                }
-                if (expr[index] == endChar && !escaped) break;
-                escaped = false;
-            }
-            end = ++index;
         } else {
             // End is the next whitespace character
             for (; index < length; index++) {

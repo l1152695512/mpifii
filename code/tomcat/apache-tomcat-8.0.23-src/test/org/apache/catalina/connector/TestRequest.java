@@ -14,6 +14,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package org.apache.catalina.connector;
 
 import java.io.BufferedReader;
@@ -42,20 +43,19 @@ import static org.junit.Assert.fail;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.authenticator.BasicAuthenticator;
+import org.apache.catalina.deploy.FilterDef;
+import org.apache.catalina.deploy.FilterMap;
+import org.apache.catalina.deploy.LoginConfig;
 import org.apache.catalina.filters.FailedRequestFilter;
 import org.apache.catalina.startup.SimpleHttpClient;
-import org.apache.catalina.startup.TesterMapRealm;
+import org.apache.catalina.startup.TestTomcat.MapRealm;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.descriptor.web.FilterDef;
-import org.apache.tomcat.util.descriptor.web.FilterMap;
-import org.apache.tomcat.util.descriptor.web.LoginConfig;
 
 /**
  * Test case for {@link Request}.
@@ -262,7 +262,7 @@ public class TestRequest extends TomcatBaseTest {
 
     }
 
-    /*
+    /**
      * Test case for
      * <a href="https://bz.apache.org/bugzilla/show_bug.cgi?id=38113">bug
      * 38118</a>.
@@ -272,8 +272,9 @@ public class TestRequest extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         // Add the Servlet
         Tomcat.addServlet(ctx, "servlet", new EchoQueryStringServlet());
@@ -307,7 +308,7 @@ public class TestRequest extends TomcatBaseTest {
         }
     }
 
-    /*
+    /**
      * Test case for {@link Request#login(String, String)} and
      * {@link Request#logout()}.
      */
@@ -316,8 +317,9 @@ public class TestRequest extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         LoginConfig config = new LoginConfig();
         config.setAuthMethod("BASIC");
@@ -327,7 +329,7 @@ public class TestRequest extends TomcatBaseTest {
         Tomcat.addServlet(ctx, "servlet", new LoginLogoutServlet());
         ctx.addServletMapping("/", "servlet");
 
-        TesterMapRealm realm = new TesterMapRealm();
+        MapRealm realm = new MapRealm();
         realm.addUser(LoginLogoutServlet.USER, LoginLogoutServlet.PWD);
         ctx.setRealm(realm);
 
@@ -520,8 +522,7 @@ public class TestRequest extends TomcatBaseTest {
 
             PrintWriter out = resp.getWriter();
 
-            TreeMap<String,String[]> parameters =
-                    new TreeMap<>(req.getParameterMap());
+            TreeMap<String,String[]> parameters = new TreeMap<String,String[]>(req.getParameterMap());
 
             boolean first = true;
 
@@ -660,8 +661,10 @@ public class TestRequest extends TomcatBaseTest {
         conn.setRequestProperty("Content-Type",
                 "multipart/form-data; boundary=" + boundary);
 
-        try (OutputStreamWriter osw = new OutputStreamWriter(conn.getOutputStream(), "UTF-8");
-                PrintWriter writer = new PrintWriter(osw, true)) {
+        PrintWriter writer = null;
+        try {
+            writer = new PrintWriter(new OutputStreamWriter(
+                    conn.getOutputStream(), "UTF-8"), true);
             writer.append("--" + boundary).append("\r\n");
             writer.append("Content-Disposition: form-data; name=\"part\"\r\n");
             writer.append("Content-Type: text/plain; charset=UTF-8\r\n");
@@ -673,21 +676,31 @@ public class TestRequest extends TomcatBaseTest {
             writer.flush();
 
             writer.append("--" + boundary + "--").append("\r\n");
+        } finally {
+            if (writer != null) {
+                writer.close();
+            }
         }
     }
 
     private void checkResponseBug54984(HttpURLConnection conn)
             throws Exception {
-        List<String> response = new ArrayList<>();
+        List<String> response = new ArrayList<String>();
         int status = conn.getResponseCode();
         if (status == HttpURLConnection.HTTP_OK) {
-            try (InputStreamReader isr = new InputStreamReader(conn.getInputStream(), "UTF-8");
-                    BufferedReader reader = new BufferedReader(isr)) {
+            BufferedReader reader = null;
+            try {
+                reader = new BufferedReader(new InputStreamReader(
+                        conn.getInputStream(), "UTF-8"));
                 String line = null;
                 while ((line = reader.readLine()) != null) {
                     response.add(line);
                 }
                 assertTrue(response.contains("Part äö"));
+            } finally {
+                if (reader != null) {
+                    reader.close();
+                }
             }
         } else {
             fail("OK status was expected: " + status);
@@ -805,8 +818,9 @@ public class TestRequest extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext(deployPath, null);
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext(deployPath,
+                System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "servlet", new Bug56501Servelet());
         ctx.addServletMapping("/*", "servlet");
@@ -841,7 +855,7 @@ public class TestRequest extends TomcatBaseTest {
         req.addHeader("accept-language", "en-gb");
 
         Locale actual = req.getLocale();
-        Locale expected = Locale.forLanguageTag("en-gb");
+        Locale expected = new Locale("en", "gb");
 
         Assert.assertEquals(expected, actual);
     }
@@ -858,29 +872,9 @@ public class TestRequest extends TomcatBaseTest {
         req.addHeader("accept-language", "en;q=0.5");
 
         Locale actual = req.getLocale();
-        Locale expected = Locale.forLanguageTag("en-gb");
+        Locale expected = new Locale("en", "gb");
 
         Assert.assertEquals(expected, actual);
     }
 
-
-    @Test
-    @Ignore("Used to check performance of different parsing approaches")
-    public void localeParsePerformance() throws Exception {
-        TesterRequest req = new TesterRequest();
-        req.addHeader("accept-encoding", "en-gb,en");
-
-        long start = System.nanoTime();
-
-        // Takes about 0.3s on a quad core 2.7Ghz 2013 MacBook
-        for (int i = 0; i < 10000000; i++) {
-            req.parseLocales();
-            req.localesParsed = false;
-            req.locales.clear();
-        }
-
-        long time = System.nanoTime() - start;
-
-        System.out.println(time);
-    }
 }

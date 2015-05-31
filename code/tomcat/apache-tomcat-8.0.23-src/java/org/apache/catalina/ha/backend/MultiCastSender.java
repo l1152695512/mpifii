@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,7 +22,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.MulticastSocket;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
@@ -34,6 +34,7 @@ public class MultiCastSender
     implements Sender {
 
     private static final Log log = LogFactory.getLog(HeartbeatListener.class);
+    private static final Charset US_ASCII = Charset.forName("US-ASCII");
 
     HeartbeatListener config = null;
 
@@ -51,24 +52,24 @@ public class MultiCastSender
         if (s == null) {
             try {
                 group = InetAddress.getByName(config.getGroup());
-                if (config.getHost() != null) {
-                    InetAddress addr =  InetAddress.getByName(config.getHost());
+                if (config.host != null) {
+                    InetAddress addr =  InetAddress.getByName(config.host);
                     InetSocketAddress addrs = new InetSocketAddress(addr, config.getMultiport());
                     s = new MulticastSocket(addrs);
                 } else
                     s = new MulticastSocket(config.getMultiport());
-
+          
                 s.setTimeToLive(config.getTtl());
                 s.joinGroup(group);
             } catch (Exception ex) {
                 log.error("Unable to use multicast: " + ex);
                 s = null;
                 return -1;
-            }
+            } 
         }
 
         byte[] buf;
-        buf = mess.getBytes(StandardCharsets.US_ASCII);
+        buf = mess.getBytes(US_ASCII);
         DatagramPacket data = new DatagramPacket(buf, buf.length, group, config.getMultiport());
         try {
             s.send(data);

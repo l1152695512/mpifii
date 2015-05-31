@@ -18,7 +18,6 @@ package org.apache.catalina.valves;
 
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -60,6 +59,14 @@ public class CometConnectionManagerValve extends ValveBase
 
 
     // ----------------------------------------------------- Instance Variables
+
+
+    /**
+     * The descriptive information related to this implementation.
+     */
+    protected static final String info =
+        "org.apache.catalina.valves.CometConnectionManagerValve/1.0";
+
 
     /**
      * List of current Comet connections.
@@ -151,6 +158,16 @@ public class CometConnectionManagerValve extends ValveBase
 
     // --------------------------------------------------------- Public Methods
 
+
+    /**
+     * Return descriptive information about this Valve implementation.
+     */
+    @Override
+    public String getInfo() {
+        return (info);
+    }
+
+
     /**
      * Register requests for tracking, whenever needed.
      *
@@ -176,17 +193,13 @@ public class CometConnectionManagerValve extends ValveBase
 
             // Track the connection for session expiration
             synchronized (session) {
-                ConnectionList list = (ConnectionList) session.getAttribute(
-                        cometRequestsAttribute);
-                Request[] requests = null;
-                if (list != null) {
-                    requests = list.get();
-                }
+                Request[] requests = (Request[])
+                        session.getAttribute(cometRequestsAttribute);
                 if (requests == null) {
                     requests = new Request[1];
                     requests[0] = request;
                     session.setAttribute(cometRequestsAttribute,
-                            new ConnectionList(requests));
+                            requests);
                 } else {
                     Request[] newRequests =
                         new Request[requests.length + 1];
@@ -194,8 +207,7 @@ public class CometConnectionManagerValve extends ValveBase
                         newRequests[i] = requests[i];
                     }
                     newRequests[requests.length] = request;
-                    session.setAttribute(cometRequestsAttribute,
-                            new ConnectionList(newRequests));
+                    session.setAttribute(cometRequestsAttribute, newRequests);
                 }
             }
         }
@@ -239,12 +251,8 @@ public class CometConnectionManagerValve extends ValveBase
                     synchronized (session) {
                         Request[] reqs = null;
                         try {
-                            ConnectionList list =
-                                    (ConnectionList) session.getAttribute(
-                                            cometRequestsAttribute);
-                            if (list != null) {
-                                reqs = list.get();
-                            }
+                             reqs = (Request[])
+                                session.getAttribute(cometRequestsAttribute);
                         } catch (IllegalStateException ise) {
                             // Ignore - session has been invalidated
                             // Listener will have cleaned up
@@ -267,8 +275,7 @@ public class CometConnectionManagerValve extends ValveBase
                                     try {
                                         session.setAttribute(
                                                 cometRequestsAttribute,
-                                                new ConnectionList(
-                                                        newConnectionInfos));
+                                                newConnectionInfos);
                                     } catch (IllegalStateException ise) {
                                         // Ignore - session has been invalidated
                                         // Listener will have cleaned up
@@ -301,12 +308,8 @@ public class CometConnectionManagerValve extends ValveBase
     @Override
     public void sessionDestroyed(HttpSessionEvent se) {
         // Close all Comet connections associated with this session
-        ConnectionList list = (ConnectionList) se.getSession().getAttribute(
-                cometRequestsAttribute);
-        Request[] reqs = null;
-        if (list != null) {
-            reqs = list.get();
-        }
+        Request[] reqs = (Request[])
+            se.getSession().getAttribute(cometRequestsAttribute);
         if (reqs != null) {
             for (int i = 0; i < reqs.length; i++) {
                 Request req = reqs[i];
@@ -325,19 +328,4 @@ public class CometConnectionManagerValve extends ValveBase
         }
     }
 
-
-    private static class ConnectionList implements Serializable {
-
-        private static final long serialVersionUID = 1L;
-
-        private transient Request[] connectionList = null;
-
-        private ConnectionList(Request[] connectionList){
-            this.connectionList = connectionList;
-        }
-
-        public Request[] get(){
-            return connectionList;
-        }
-    }
 }

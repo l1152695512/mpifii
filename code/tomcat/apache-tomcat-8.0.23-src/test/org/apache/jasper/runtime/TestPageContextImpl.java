@@ -41,7 +41,12 @@ public class TestPageContextImpl extends TomcatBaseTest {
 
     @Test
     public void testDoForward() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir = new File("test/webapp-3.0");
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         ByteChunk res = new ByteChunk();
 
@@ -59,7 +64,7 @@ public class TestPageContextImpl extends TomcatBaseTest {
     public void testDefaultBufferSize() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir = new File("test/webapp");
+        File appDir = new File("test/webapp-3.0");
         // app dir is relative to server home
         Context ctx = tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
 
@@ -77,7 +82,12 @@ public class TestPageContextImpl extends TomcatBaseTest {
 
     @Test
     public void testIncludeThrowsIOException() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir = new File("test/webapp-3.0");
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         ByteChunk res = new ByteChunk();
 

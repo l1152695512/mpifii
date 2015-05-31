@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,7 +16,6 @@
  */
 package org.apache.jasper.runtime;
 
-import java.io.IOException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
@@ -30,6 +29,9 @@ import javax.servlet.jsp.JspFactory;
 import javax.servlet.jsp.PageContext;
 
 import org.apache.jasper.Constants;
+import org.apache.jasper.util.ExceptionUtils;
+import org.apache.juli.logging.Log;
+import org.apache.juli.logging.LogFactory;
 
 /**
  * Implementation of JspFactory.
@@ -38,13 +40,16 @@ import org.apache.jasper.Constants;
  */
 public class JspFactoryImpl extends JspFactory {
 
-    private static final String SPEC_VERSION = "2.3";
-    private static final boolean USE_POOL =
+    // Logger
+    private final Log log = LogFactory.getLog(JspFactoryImpl.class);
+
+    private static final String SPEC_VERSION = "2.2";
+    private static final boolean USE_POOL = 
         Boolean.valueOf(System.getProperty("org.apache.jasper.runtime.JspFactoryImpl.USE_POOL", "true")).booleanValue();
-    private static final int POOL_SIZE =
+    private static final int POOL_SIZE = 
         Integer.valueOf(System.getProperty("org.apache.jasper.runtime.JspFactoryImpl.POOL_SIZE", "8")).intValue();
 
-    private final ThreadLocal<PageContextPool> localPool = new ThreadLocal<>();
+    private ThreadLocal<PageContextPool> localPool = new ThreadLocal<PageContextPool>();
 
     @Override
     public PageContext getPageContext(Servlet servlet, ServletRequest request,
@@ -89,31 +94,32 @@ public class JspFactoryImpl extends JspFactory {
     private PageContext internalGetPageContext(Servlet servlet, ServletRequest request,
             ServletResponse response, String errorPageURL, boolean needsSession,
             int bufferSize, boolean autoflush) {
-
-        PageContext pc;
-        if (USE_POOL) {
-            PageContextPool pool = localPool.get();
-            if (pool == null) {
-                pool = new PageContextPool();
-                localPool.set(pool);
-            }
-            pc = pool.get();
-            if (pc == null) {
+        try {
+            PageContext pc;
+            if (USE_POOL) {
+                PageContextPool pool = localPool.get();
+                if (pool == null) {
+                    pool = new PageContextPool();
+                    localPool.set(pool);
+                }
+                pc = pool.get();
+                if (pc == null) {
+                    pc = new PageContextImpl();
+                }
+            } else {
                 pc = new PageContextImpl();
             }
-        } else {
-            pc = new PageContextImpl();
-        }
-
-        try {
-            pc.initialize(servlet, request, response, errorPageURL,
+            pc.initialize(servlet, request, response, errorPageURL, 
                     needsSession, bufferSize, autoflush);
-        } catch (IOException ioe) {
-            // Implementation never throws IOE but can't change the signature
-            // since it is part of the JSP API
+            return pc;
+        } catch (Throwable ex) {
+            ExceptionUtils.handleThrowable(ex);
+            if (ex instanceof RuntimeException) {
+                throw (RuntimeException) ex;
+            }
+            log.fatal("Exception initializing page context", ex);
+            return null;
         }
-
-        return pc;
     }
 
     private void internalReleasePageContext(PageContext pc) {
@@ -174,9 +180,9 @@ public class JspFactoryImpl extends JspFactory {
         }
     }
 
-    private static final class PageContextPool  {
+    protected static final class PageContextPool  {
 
-        private final PageContext[] pool;
+        private PageContext[] pool;
 
         private int current = -1;
 

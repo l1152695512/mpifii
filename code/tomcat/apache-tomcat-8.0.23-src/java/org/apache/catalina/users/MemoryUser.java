@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -67,19 +67,19 @@ public class MemoryUser extends AbstractUser {
     /**
      * The {@link MemoryUserDatabase} that owns this user.
      */
-    protected final MemoryUserDatabase database;
+    protected MemoryUserDatabase database = null;
 
 
     /**
      * The set of {@link Group}s that this user is a member of.
      */
-    protected final ArrayList<Group> groups = new ArrayList<>();
+    protected ArrayList<Group> groups = new ArrayList<Group>();
 
 
     /**
      * The set of {@link Role}s associated with this user.
      */
-    protected final ArrayList<Role> roles = new ArrayList<>();
+    protected ArrayList<Role> roles = new ArrayList<Role>();
 
 
     // ------------------------------------------------------------- Properties
@@ -252,7 +252,7 @@ public class MemoryUser extends AbstractUser {
      *
      * <p><strong>IMPLEMENTATION NOTE</strong> - For backwards compatibility,
      * the reader that processes this entry will accept either
-     * <code>username</code> or <code>name</code> for the username
+     * <code>username</code> or </code>name</code> for the username
      * property.</p>
      */
     public String toXml() {

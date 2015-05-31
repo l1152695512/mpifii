@@ -25,7 +25,7 @@ import org.apache.tomcat.util.net.NioEndpoint;
 import org.apache.tomcat.util.net.NioSelectorPool;
 import org.apache.tomcat.util.net.SocketWrapper;
 
-public class NioServletOutputStream extends AbstractServletOutputStream<NioChannel> {
+public class NioServletOutputStream extends AbstractServletOutputStream {
 
     private final NioChannel channel;
     private final NioSelectorPool pool;
@@ -34,7 +34,7 @@ public class NioServletOutputStream extends AbstractServletOutputStream<NioChann
 
     public NioServletOutputStream(SocketWrapper<NioChannel> socketWrapper,
             int asyncWriteBufferSize, NioSelectorPool pool) {
-        super(socketWrapper, asyncWriteBufferSize);
+        super(asyncWriteBufferSize);
         channel = socketWrapper.getSocket();
         this.pool = pool;
         maxWrite = channel.getBufHandler().getWriteBuffer().capacity();

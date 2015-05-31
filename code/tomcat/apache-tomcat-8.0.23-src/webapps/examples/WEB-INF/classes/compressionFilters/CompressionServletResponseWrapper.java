@@ -19,7 +19,6 @@ package compressionFilters;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -57,12 +56,20 @@ public class CompressionServletResponseWrapper
     /**
      * Original response
      */
-    protected final HttpServletResponse origResponse;
+
+    protected HttpServletResponse origResponse = null;
+
+    /**
+     * Descriptive information about this Response implementation.
+     */
+
+    protected static final String info = "CompressionServletResponseWrapper";
 
     /**
      * The ServletOutputStream that has been returned by
      * <code>getOutputStream()</code>, if any.
      */
+
     protected ServletOutputStream stream = null;
 
 
@@ -70,6 +77,7 @@ public class CompressionServletResponseWrapper
      * The PrintWriter that has been returned by
      * <code>getWriter()</code>, if any.
      */
+
     protected PrintWriter writer = null;
 
     /**
@@ -95,7 +103,7 @@ public class CompressionServletResponseWrapper
     /**
      * keeps a copy of all headers set
      */
-    private final Map<String,String> headerCopies = new HashMap<>();
+    private Map<String,String> headerCopies = new HashMap<String,String>();
 
 
     // --------------------------------------------------------- Public Methods
@@ -126,8 +134,7 @@ public class CompressionServletResponseWrapper
      */
     public void setCompressionMimeTypes(String[] mimeTypes) {
         if (debug > 1) {
-            System.out.println("setCompressionMimeTypes to " +
-                    Arrays.toString(mimeTypes));
+            System.out.println("setCompressionMimeTypes to " + mimeTypes);
         }
         this.compressionMimeTypes = mimeTypes;
     }

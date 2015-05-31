@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,7 +36,7 @@ public class SmapStratum {
      * Represents a single LineSection in an SMAP, associated with
      * a particular stratum.
      */
-    private static class LineInfo {
+    public static class LineInfo {
         private int inputStartLine = -1;
         private int outputStartLine = -1;
         private int lineFileID = 0;
@@ -115,10 +115,10 @@ public class SmapStratum {
     //*********************************************************************
     // Private state
 
-    private final String stratumName;
-    private final List<String> fileNameList;
-    private final List<String> filePathList;
-    private final List<LineInfo> lineData;
+    private String stratumName;
+    private List<String> fileNameList;
+    private List<String> filePathList;
+    private List<LineInfo> lineData;
     private int lastFileID;
 
     //*********************************************************************
@@ -132,9 +132,9 @@ public class SmapStratum {
      */
     public SmapStratum(String stratumName) {
         this.stratumName = stratumName;
-        fileNameList = new ArrayList<>();
-        filePathList = new ArrayList<>();
-        lineData = new ArrayList<>();
+        fileNameList = new ArrayList<String>();
+        filePathList = new ArrayList<String>();
+        lineData = new ArrayList<LineInfo>();
         lastFileID = 0;
     }
 
@@ -177,7 +177,7 @@ public class SmapStratum {
             System.out.print(li.toString());
         }
 */
-        //Incorporate each LineInfo into the previous LineInfo's
+        //Incorporate each LineInfo into the previous LineInfo's 
         //outputLineIncrement, if possible
         int i = 0;
         while (i < lineData.size() - 1) {
@@ -235,7 +235,7 @@ public class SmapStratum {
      *        carefully, and only when they uniquely identify a file.
      * @param inputLineCount the number of lines in the input to map
      *        (SMAP <tt>LineFileCount</tt>)
-     * @param outputStartLine starting line in the output file
+     * @param outputStartLine starting line in the output file 
      *        (SMAP <tt>OutputStartLine</tt>)
      * @param outputLineIncrement number of output lines to map to each
      *        input line (SMAP <tt>OutputLineIncrement</tt>).  <i>Given the
@@ -255,7 +255,7 @@ public class SmapStratum {
             throw new IllegalArgumentException(
                 "inputFileName: " + inputFileName);
 
-        //Jasper incorrectly SMAPs certain Nodes, giving them an
+        //Jasper incorrectly SMAPs certain Nodes, giving them an 
         //outputStartLine of 0.  This can cause a fatal error in
         //optimizeLineSection, making it impossible for Jasper to
         //compile the JSP.  Until we can fix the underlying

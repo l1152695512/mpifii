@@ -43,7 +43,7 @@ public class TestMethodExpressionImpl {
     @Before
     public void setUp() {
         factory = ExpressionFactory.newInstance();
-        context = new ELContextImpl(factory);
+        context = new ELContextImpl();
 
         TesterBeanA beanA = new TesterBeanA();
         beanA.setName("A");
@@ -86,18 +86,30 @@ public class TestMethodExpressionImpl {
 
     @Test
     public void testIsParametersProvided() {
+        TesterBeanB beanB = new TesterBeanB();
+        beanB.setName("Tomcat");
+        ValueExpression var =
+            factory.createValueExpression(beanB, TesterBeanB.class);
+        context.getVariableMapper().setVariable("beanB", var);
+
         MethodExpression me1 = factory.createMethodExpression(
                 context, "${beanB.getName}", String.class, new Class<?>[] {});
         MethodExpression me2 = factory.createMethodExpression(
                 context, "${beanB.sayHello('JUnit')}", String.class,
                 new Class<?>[] { String.class });
 
-        assertFalse(me1.isParametersProvided());
-        assertTrue(me2.isParametersProvided());
+        assertFalse(me1.isParmetersProvided());
+        assertTrue(me2.isParmetersProvided());
     }
 
     @Test
     public void testInvoke() {
+        TesterBeanB beanB = new TesterBeanB();
+        beanB.setName("B");
+
+        context.getVariableMapper().setVariable("beanB",
+                factory.createValueExpression(beanB, TesterBeanB.class));
+
         MethodExpression me1 = factory.createMethodExpression(
                 context, "${beanB.getName}", String.class, new Class<?>[] {});
         MethodExpression me2 = factory.createMethodExpression(

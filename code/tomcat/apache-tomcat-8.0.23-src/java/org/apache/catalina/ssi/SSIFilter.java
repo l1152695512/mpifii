@@ -41,7 +41,7 @@ import org.apache.catalina.Globals;
 /**
  * Filter to process SSI requests within a webpage. Mapped to a content types
  * from within web.xml.
- *
+ * 
  * @author David Becker
  * @see org.apache.catalina.ssi.SSIServlet
  */
@@ -56,7 +56,7 @@ public class SSIFilter implements Filter {
     /** regex pattern to match when evaluating content types */
     protected Pattern contentTypeRegEx = null;
     /** default pattern for ssi filter content type matching */
-    protected final Pattern shtmlRegEx =
+    protected Pattern shtmlRegEx =
         Pattern.compile("text/x-server-parsed-html(;.*)?");
     /** Allow exec (normally blocked for security) */
     protected boolean allowExec = false;
@@ -65,14 +65,14 @@ public class SSIFilter implements Filter {
     //----------------- Public methods.
     /**
      * Initialize this servlet.
-     *
+     * 
      * @exception ServletException
      *                if an error occurs
      */
     @Override
     public void init(FilterConfig config) throws ServletException {
         this.config = config;
-
+        
         if (config.getInitParameter("debug") != null) {
             debug = Integer.parseInt(config.getInitParameter("debug"));
         }
@@ -83,7 +83,7 @@ public class SSIFilter implements Filter {
             contentTypeRegEx = shtmlRegEx;
         }
 
-        isVirtualWebappRelative =
+        isVirtualWebappRelative = 
             Boolean.parseBoolean(config.getInitParameter("isVirtualWebappRelative"));
 
         if (config.getInitParameter("expires") != null)
@@ -102,9 +102,9 @@ public class SSIFilter implements Filter {
         // cast once
         HttpServletRequest req = (HttpServletRequest)request;
         HttpServletResponse res = (HttpServletResponse)response;
-
+        
         // indicate that we're in SSI processing
-        req.setAttribute(Globals.SSI_FLAG_ATTR, "true");
+        req.setAttribute(Globals.SSI_FLAG_ATTR, "true");           
 
         // setup to capture output
         ByteArrayServletOutputStream basos = new ByteArrayServletOutputStream();
@@ -125,28 +125,28 @@ public class SSIFilter implements Filter {
         if (contentTypeRegEx.matcher(contentType).matches()) {
             String encoding = res.getCharacterEncoding();
 
-            // set up SSI processing
+            // set up SSI processing 
             SSIExternalResolver ssiExternalResolver =
                 new SSIServletExternalResolver(config.getServletContext(), req,
                         res, isVirtualWebappRelative, debug, encoding);
             SSIProcessor ssiProcessor = new SSIProcessor(ssiExternalResolver,
                     debug, allowExec);
-
+            
             // prepare readers/writers
             Reader reader =
                 new InputStreamReader(new ByteArrayInputStream(bytes), encoding);
             ByteArrayOutputStream ssiout = new ByteArrayOutputStream();
             PrintWriter writer =
                 new PrintWriter(new OutputStreamWriter(ssiout, encoding));
-
-            // do SSI processing
+            
+            // do SSI processing  
             long lastModified = ssiProcessor.process(reader,
                     responseIncludeWrapper.getLastModified(), writer);
-
+            
             // set output bytes
             writer.flush();
             bytes = ssiout.toByteArray();
-
+            
             // override headers
             if (expires != null) {
                 res.setDateHeader("expires", (new java.util.Date()).getTime()
@@ -156,7 +156,7 @@ public class SSIFilter implements Filter {
                 res.setDateHeader("last-modified", lastModified);
             }
             res.setContentLength(bytes.length);
-
+            
             Matcher shtmlMatcher =
                 shtmlRegEx.matcher(responseIncludeWrapper.getContentType());
             if (shtmlMatcher.matches()) {

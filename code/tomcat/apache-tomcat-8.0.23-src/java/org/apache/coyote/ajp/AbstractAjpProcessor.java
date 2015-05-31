@@ -20,28 +20,23 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.security.NoSuchProviderException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.Iterator;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpUpgradeHandler;
 
 import org.apache.coyote.AbstractProcessor;
 import org.apache.coyote.ActionCode;
 import org.apache.coyote.AsyncContextCallback;
-import org.apache.coyote.ByteBufferHolder;
 import org.apache.coyote.ErrorState;
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.OutputBuffer;
 import org.apache.coyote.Request;
 import org.apache.coyote.RequestInfo;
 import org.apache.coyote.Response;
+import org.apache.coyote.http11.upgrade.servlet31.HttpUpgradeHandler;
 import org.apache.tomcat.util.ExceptionUtils;
 import org.apache.tomcat.util.buf.ByteChunk;
 import org.apache.tomcat.util.buf.HexUtils;
@@ -50,10 +45,8 @@ import org.apache.tomcat.util.http.HttpMessages;
 import org.apache.tomcat.util.http.MimeHeaders;
 import org.apache.tomcat.util.net.AbstractEndpoint;
 import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
-import org.apache.tomcat.util.net.DispatchType;
 import org.apache.tomcat.util.net.SSLSupport;
 import org.apache.tomcat.util.net.SocketStatus;
-import org.apache.tomcat.util.net.SocketWrapper;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
@@ -125,7 +118,7 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
         pongMessage.appendByte(Constants.JK_AJP13_CPONG_REPLY);
         pongMessage.end();
         pongMessageArray = new byte[pongMessage.getLen()];
-        System.arraycopy(pongMessage.getBuffer(), 0, pongMessageArray,
+        System.arraycopy(pongMessage.getBuffer(), 0, pongMessageArray, 
                 0, pongMessage.getLen());
     }
 
@@ -143,7 +136,7 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
     /**
      * AJP packet size.
      */
-    private final int outputMaxChunkSize;
+    protected int packetSize;
 
     /**
      * Header message. Note that this header is merely the one used during the
@@ -151,49 +144,25 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
      * request header. It will stay unchanged during the processing of the whole
      * request.
      */
-    protected final AjpMessage requestHeaderMessage;
+    protected AjpMessage requestHeaderMessage = null;
 
 
     /**
      * Message used for response composition.
      */
-    protected final AjpMessage responseMessage;
-
-
-    /**
-     * Location of next write of the response message (used withnon-blocking
-     * writes when the message may not be written in a single write). Avalue of
-     * -1 indicates that no message has been written to the buffer.
-     */
-    private int responseMsgPos = -1;
+    protected AjpMessage responseMessage = null;
 
 
     /**
      * Body message.
      */
-    protected final AjpMessage bodyMessage;
+    protected AjpMessage bodyMessage = null;
 
 
     /**
      * Body message.
      */
-    protected final MessageBytes bodyBytes = MessageBytes.newInstance();
-
-
-    /**
-     * The max size of the buffered write buffer
-     */
-    private int bufferedWriteSize = 64*1024; //64k default write buffer
-
-
-    /**
-     * For "non-blocking" writes use an external set of buffers. Although the
-     * API only allows one non-blocking write at a time, due to buffering and
-     * the possible need to write HTTP headers, there may be more than one write
-     * to the OutputBuffer.
-     */
-    private final LinkedBlockingDeque<ByteBufferHolder> bufferedWrites =
-            new LinkedBlockingDeque<>();
+    protected MessageBytes bodyBytes = MessageBytes.newInstance();
 
 
     /**
@@ -205,13 +174,13 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
     /**
      * Temp message bytes used for processing.
      */
-    protected final MessageBytes tmpMB = MessageBytes.newInstance();
+    protected MessageBytes tmpMB = MessageBytes.newInstance();
 
 
     /**
      * Byte chunk for certs.
      */
-    protected final MessageBytes certificates = MessageBytes.newInstance();
+    protected MessageBytes certificates = MessageBytes.newInstance();
 
 
     /**
@@ -221,7 +190,7 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
 
 
     /**
-     * Request body empty flag.
+     * Body empty flag.
      */
     protected boolean empty = true;
 
@@ -230,13 +199,6 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
      * First read.
      */
     protected boolean first = true;
-
-
-    /**
-     * Indicates that a 'get body chunk' message has been sent but the body
-     * chunk has not yet been received.
-     */
-    private boolean waitingForBodyMessage = false;
 
 
     /**
@@ -269,10 +231,7 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
 
         super(endpoint);
 
-        // Calculate maximum chunk size as packetSize may have been changed from
-        // the default (Constants.MAX_PACKET_SIZE)
-        this.outputMaxChunkSize =
-                Constants.MAX_SEND_SIZE + packetSize - Constants.MAX_PACKET_SIZE;
+        this.packetSize = packetSize;
 
         request.setInputBuffer(new SocketInputBuffer());
 
@@ -289,7 +248,7 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
                 Constants.MAX_PACKET_SIZE);
         getBodyMessage.end();
         getBodyMessageArray = new byte[getBodyMessage.getLen()];
-        System.arraycopy(getBodyMessage.getBuffer(), 0, getBodyMessageArray,
+        System.arraycopy(getBodyMessage.getBuffer(), 0, getBodyMessageArray, 
                 0, getBodyMessage.getLen());
     }
 
@@ -299,8 +258,8 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
 
     /**
      * The number of milliseconds Tomcat will wait for a subsequent request
-     * before closing the connection. The default is -1 which is an infinite
-     * timeout.
+     * before closing the connection. The default is the same as for
+     * Apache HTTP Server (15 000 milliseconds).
      */
     protected int keepAliveTimeout = -1;
     public int getKeepAliveTimeout() { return keepAliveTimeout; }
@@ -343,7 +302,7 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
      * provider is used to perform the conversion. For example it is used with
      * the AJP connectors, the HTTP APR connector and with the
      * {@link org.apache.catalina.valves.SSLValve}. If not specified, the
-     * default provider will be used.
+     * default provider will be used. 
      */
     protected String clientCertProvider = null;
     public String getClientCertProvider() { return clientCertProvider; }
@@ -362,17 +321,6 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
     public final void action(ActionCode actionCode, Object param) {
 
         switch (actionCode) {
-        case CLOSE: {
-            // End the processing of the current request, and stop any further
-            // transactions with the client
-
-            try {
-                finish();
-            } catch (IOException e) {
-                setErrorState(ErrorState.CLOSE_NOW, e);
-            }
-            break;
-        }
         case COMMIT: {
             if (response.isCommitted())
                 return;
@@ -389,10 +337,6 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
             } catch (IOException e) {
                 setErrorState(ErrorState.CLOSE_NOW, e);
             }
-            break;
-        }
-        case ACK: {
-            // NO_OP for AJP
             break;
         }
         case CLIENT_FLUSH: {
@@ -423,8 +367,16 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
             setErrorState(ErrorState.CLOSE_CLEAN, null);
             break;
         }
-        case RESET: {
-            // NO-OP
+        case CLOSE: {
+            // Close
+            // End the processing of the current request, and stop any further
+            // transactions with the client
+
+            try {
+                finish();
+            } catch (IOException e) {
+                setErrorState(ErrorState.CLOSE_NOW, e);
+            }
             break;
         }
         case REQ_SSL_ATTRIBUTE: {
@@ -468,11 +420,6 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
             }
             break;
         }
-        case REQ_SSL_CERTIFICATE: {
-            // NO-OP. Can't force a new SSL handshake with the client when using
-            // AJP as the reverse proxy controls that connection.
-            break;
-        }
         case REQ_HOST_ATTRIBUTE: {
             // Get remote host name using a DNS resolution
             if (request.remoteHost().isNull()) {
@@ -485,33 +432,12 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
             }
             break;
         }
-        case REQ_HOST_ADDR_ATTRIBUTE: {
-            // NO-OP
-            // Automatically populated during prepareRequest()
-            break;
-        }
-        case REQ_LOCAL_NAME_ATTRIBUTE: {
-            // NO-OP
-            // Automatically populated during prepareRequest()
-            break;
-        }
         case REQ_LOCAL_ADDR_ATTRIBUTE: {
             // Automatically populated during prepareRequest() when using
             // modern AJP forwarder, otherwise copy from local name
             if (request.localAddr().isNull()) {
                 request.localAddr().setString(request.localName().toString());
             }
-            break;
-        }
-        case REQ_REMOTEPORT_ATTRIBUTE: {
-            // NO-OP
-            // Automatically populated during prepareRequest() when using
-            // modern AJP forwarder, otherwise not available
-            break;
-        }
-        case REQ_LOCALPORT_ATTRIBUTE: {
-            // NO-OP
-            // Automatically populated during prepareRequest()
             break;
         }
         case REQ_SET_BODY_REPLAY: {
@@ -532,27 +458,8 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
             getSocketWrapper().access();
             break;
         }
-        case ASYNC_COMPLETE: {
-            socketWrapper.clearDispatches();
-            if (asyncStateMachine.asyncComplete()) {
-                endpoint.processSocket(socketWrapper, SocketStatus.OPEN_READ, true);
-            }
-            break;
-        }
-        case ASYNC_DISPATCH: {
-            if (asyncStateMachine.asyncDispatch()) {
-                endpoint.processSocket(socketWrapper, SocketStatus.OPEN_READ, true);
-            }
-            break;
-        }
         case ASYNC_DISPATCHED: {
             asyncStateMachine.asyncDispatched();
-            break;
-        }
-        case ASYNC_SETTIMEOUT: {
-            if (param == null) return;
-            long timeout = ((Long)param).longValue();
-            socketWrapper.setTimeout(timeout);
             break;
         }
         case ASYNC_TIMEOUT: {
@@ -592,69 +499,13 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
             ((AtomicBoolean) param).set(asyncStateMachine.isAsyncError());
             break;
         }
-        case UPGRADE: {
+        case UPGRADE_TOMCAT: {
             // HTTP connections only. Unsupported for AJP.
-            throw new UnsupportedOperationException(
-                    sm.getString("ajpprocessor.httpupgrade.notsupported"));
-        }
-        case COMET_BEGIN: {
-            // HTTP connections only. Unsupported for AJP.
-            throw new UnsupportedOperationException(
-                    sm.getString("ajpprocessor.comet.notsupported"));
-        }
-        case COMET_END: {
-            // HTTP connections only. Unsupported for AJP.
-            throw new UnsupportedOperationException(
-                    sm.getString("ajpprocessor.comet.notsupported"));
-        }
-        case COMET_CLOSE: {
-            // HTTP connections only. Unsupported for AJP.
-            throw new UnsupportedOperationException(
-                    sm.getString("ajpprocessor.comet.notsupported"));
-        }
-        case COMET_SETTIMEOUT: {
-            // HTTP connections only. Unsupported for AJP.
-            throw new UnsupportedOperationException(
-                    sm.getString("ajpprocessor.comet.notsupported"));
-        }
-        case AVAILABLE: {
-            if (available()) {
-                request.setAvailable(1);
-            } else {
-                request.setAvailable(0);
-            }
+            // NOOP
             break;
         }
-        case NB_READ_INTEREST: {
-            if (!endOfStream) {
-                registerForEvent(true, false);
-            }
-            break;
-        }
-        case NB_WRITE_INTEREST: {
-            AtomicBoolean isReady = (AtomicBoolean)param;
-            boolean result = bufferedWrites.size() == 0 && responseMsgPos == -1;
-            isReady.set(result);
-            if (!result) {
-                registerForEvent(false, true);
-            }
-            break;
-        }
-        case REQUEST_BODY_FULLY_READ: {
-            AtomicBoolean result = (AtomicBoolean) param;
-            result.set(endOfStream);
-            break;
-        }
-        case DISPATCH_READ: {
-            socketWrapper.addDispatch(DispatchType.NON_BLOCKING_READ);
-            break;
-        }
-        case DISPATCH_WRITE: {
-            socketWrapper.addDispatch(DispatchType.NON_BLOCKING_WRITE);
-            break;
-        }
-        case DISPATCH_EXECUTE: {
-            getEndpoint().executeNonBlockingDispatches(socketWrapper);
+        default: {
+            actionInternal(actionCode, param);
             break;
         }
         case CLOSE_NOW: {
@@ -674,39 +525,6 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
     @Override
     public SocketState asyncDispatch(SocketStatus status) {
 
-        if (status == SocketStatus.OPEN_WRITE && response.getWriteListener() != null) {
-            try {
-                asyncStateMachine.asyncOperation();
-                try {
-                    if (hasDataToWrite()) {
-                        flushBufferedData();
-                        if (hasDataToWrite()) {
-                            // There is data to write but go via Response to
-                            // maintain a consistent view of non-blocking state
-                            response.checkRegisterForWrite();
-                            return SocketState.LONG;
-                        }
-                    }
-                } catch (IOException x) {
-                    if (getLog().isDebugEnabled()) {
-                        getLog().debug("Unable to write async data.",x);
-                    }
-                    status = SocketStatus.ASYNC_WRITE_ERROR;
-                    request.setAttribute(RequestDispatcher.ERROR_EXCEPTION, x);
-                }
-            } catch (IllegalStateException x) {
-                registerForEvent(false, true);
-            }
-        } else if (status == SocketStatus.OPEN_READ && request.getReadListener() != null) {
-            try {
-                if (available()) {
-                    asyncStateMachine.asyncOperation();
-                }
-            } catch (IllegalStateException x) {
-                registerForEvent(true, false);
-            }
-        }
-
         RequestInfo rp = request.getRequestProcessor();
         try {
             rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
@@ -720,6 +538,12 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
             ExceptionUtils.handleThrowable(t);
             setErrorState(ErrorState.CLOSE_NOW, t);
             getLog().error(sm.getString("http11processor.request.process"), t);
+        } finally {
+            if (getErrorState().isError()) {
+                // 500 - Internal Server Error
+                response.setStatus(500);
+                adapter.log(request, response, 0);
+            }
         }
 
         rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
@@ -735,162 +559,6 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
             request.updateCounters();
             if (getErrorState().isError()) {
                 return SocketState.CLOSED;
-            } else {
-                return SocketState.OPEN;
-            }
-        }
-    }
-
-
-    /**
-     * Process pipelined HTTP requests using the specified input and output
-     * streams.
-     *
-     * @throws IOException error during an I/O operation
-     */
-    @Override
-    public SocketState process(SocketWrapper<S> socket) throws IOException {
-
-        RequestInfo rp = request.getRequestProcessor();
-        rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
-
-        // Setting up the socket
-        this.socketWrapper = socket;
-
-        setupSocket(socket);
-
-        int soTimeout = endpoint.getSoTimeout();
-        boolean cping = false;
-
-        boolean keptAlive = false;
-
-        while (!getErrorState().isError() && !endpoint.isPaused()) {
-            // Parsing the request header
-            try {
-                // Get first message of the request
-                if (!readMessage(requestHeaderMessage, !keptAlive)) {
-                    break;
-                }
-                // Set back timeout if keep alive timeout is enabled
-                if (keepAliveTimeout > 0) {
-                    setTimeout(socketWrapper, soTimeout);
-                }
-                // Check message type, process right away and break if
-                // not regular request processing
-                int type = requestHeaderMessage.getByte();
-                if (type == Constants.JK_AJP13_CPING_REQUEST) {
-                    if (endpoint.isPaused()) {
-                        recycle(true);
-                        break;
-                    }
-                    cping = true;
-                    try {
-                        output(pongMessageArray, 0, pongMessageArray.length, true);
-                    } catch (IOException e) {
-                        setErrorState(ErrorState.CLOSE_NOW, e);
-                    }
-                    recycle(false);
-                    continue;
-                } else if(type != Constants.JK_AJP13_FORWARD_REQUEST) {
-                    // Unexpected packet type. Unread body packets should have
-                    // been swallowed in finish().
-                    if (getLog().isDebugEnabled()) {
-                        getLog().debug("Unexpected message: " + type);
-                    }
-                    setErrorState(ErrorState.CLOSE_NOW, null);
-                    break;
-                }
-                keptAlive = true;
-                request.setStartTime(System.currentTimeMillis());
-            } catch (IOException e) {
-                setErrorState(ErrorState.CLOSE_NOW, e);
-                break;
-            } catch (Throwable t) {
-                ExceptionUtils.handleThrowable(t);
-                getLog().debug(sm.getString("ajpprocessor.header.error"), t);
-                // 400 - Bad Request
-                response.setStatus(400);
-                setErrorState(ErrorState.CLOSE_CLEAN, t);
-                getAdapter().log(request, response, 0);
-            }
-
-            if (!getErrorState().isError()) {
-                // Setting up filters, and parse some request headers
-                rp.setStage(org.apache.coyote.Constants.STAGE_PREPARE);
-                try {
-                    prepareRequest();
-                } catch (Throwable t) {
-                    ExceptionUtils.handleThrowable(t);
-                    getLog().debug(sm.getString("ajpprocessor.request.prepare"), t);
-                    // 500 - Internal Server Error
-                    response.setStatus(500);
-                    setErrorState(ErrorState.CLOSE_CLEAN, t);
-                    getAdapter().log(request, response, 0);
-                }
-            }
-
-            if (!getErrorState().isError() && !cping && endpoint.isPaused()) {
-                // 503 - Service unavailable
-                response.setStatus(503);
-                setErrorState(ErrorState.CLOSE_CLEAN, null);
-                getAdapter().log(request, response, 0);
-            }
-            cping = false;
-
-            // Process the request in the adapter
-            if (!getErrorState().isError()) {
-                try {
-                    rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
-                    getAdapter().service(request, response);
-                } catch (InterruptedIOException e) {
-                    setErrorState(ErrorState.CLOSE_NOW, e);
-                } catch (Throwable t) {
-                    ExceptionUtils.handleThrowable(t);
-                    getLog().error(sm.getString("ajpprocessor.request.process"), t);
-                    // 500 - Internal Server Error
-                    response.setStatus(500);
-                    setErrorState(ErrorState.CLOSE_CLEAN, t);
-                    getAdapter().log(request, response, 0);
-                }
-            }
-
-            if (isAsync() && !getErrorState().isError()) {
-                break;
-            }
-
-            // Finish the response if not done yet
-            if (!finished && getErrorState().isIoAllowed()) {
-                try {
-                    finish();
-                } catch (Throwable t) {
-                    ExceptionUtils.handleThrowable(t);
-                    setErrorState(ErrorState.CLOSE_NOW, t);
-                }
-            }
-
-            // If there was an error, make sure the request is counted as
-            // and error, and update the statistics counter
-            if (getErrorState().isError()) {
-                response.setStatus(500);
-            }
-            request.updateCounters();
-
-            rp.setStage(org.apache.coyote.Constants.STAGE_KEEPALIVE);
-            // Set keep alive timeout if enabled
-            if (keepAliveTimeout > 0) {
-                setTimeout(socketWrapper, keepAliveTimeout);
-            }
-
-            recycle(false);
-        }
-
-        rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
-
-        if (getErrorState().isError() || endpoint.isPaused()) {
-            return SocketState.CLOSED;
-        } else {
-            if (isAsync()) {
-                return SocketState.LONG;
             } else {
                 return SocketState.OPEN;
             }
@@ -915,6 +583,26 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
 
 
     @Override
+    public SocketState upgradeDispatch() throws IOException {
+        // Should never reach this code but in case we do...
+        throw new IOException(
+                sm.getString("ajpprocessor.httpupgrade.notsupported"));
+    }
+
+
+    /**
+     * @deprecated  Will be removed in Tomcat 8.0.x.
+     */
+    @Deprecated
+    @Override
+    public org.apache.coyote.http11.upgrade.UpgradeInbound getUpgradeInbound() {
+        // Can't throw exception as this is used to test if connection has been
+        // upgraded using Tomcat's proprietary HTTP upgrade mechanism.
+        return null;
+    }
+
+
+    @Override
     public SocketState upgradeDispatch(SocketStatus status) throws IOException {
         // Should never reach this code but in case we do...
         throw new IOException(
@@ -933,7 +621,7 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
     /**
      * Recycle the processor, ready for the next request which may be on the
      * same connection or a different connection.
-     *
+     * 
      * @param socketClosing Indicates if the socket is about to be closed
      *                      allowing the processor to perform any additional
      *                      clean-up that may be required
@@ -947,7 +635,6 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
         // Recycle Request object
         first = true;
         endOfStream = false;
-        waitingForBodyMessage = false;
         empty = true;
         replay = false;
         finished = false;
@@ -962,6 +649,10 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
 
     // ------------------------------------------------------ Protected Methods
 
+    // Methods called by action()
+    protected abstract void actionInternal(ActionCode actionCode, Object param);
+
+    
     // Methods called by asyncDispatch
     /**
      * Provides a mechanism for those connector implementations (currently only
@@ -970,117 +661,14 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
      */
     protected abstract void resetTimeouts();
 
+    
     // Methods called by prepareResponse()
-    protected abstract int output(byte[] src, int offset, int length,
-            boolean block) throws IOException;
-
-    // Methods called by process()
-    protected abstract void setupSocket(SocketWrapper<S> socketWrapper)
+    protected abstract void output(byte[] src, int offset, int length)
             throws IOException;
 
-    protected abstract void setTimeout(SocketWrapper<S> socketWrapper,
-            int timeout) throws IOException;
-
-    // Methods used by readMessage
-    /**
-     * Read at least the specified amount of bytes, and place them
-     * in the input buffer. Note that if any data is available to read then this
-     * method will always block until at least the specified number of bytes
-     * have been read.
-     *
-     * @param buf   Buffer to read data into
-     * @param pos   Start position
-     * @param n     The minimum number of bytes to read
-     * @param block If there is no data available to read when this method is
-     *              called, should this call block until data becomes available?
-     * @return  <code>true</code> if the requested number of bytes were read
-     *          else <code>false</code>
-     * @throws IOException
-     */
-    protected abstract boolean read(byte[] buf, int pos, int n, boolean block)
-            throws IOException;
-
+    
     // Methods used by SocketInputBuffer
-    /**
-     * Read an AJP body message. Used to read both the 'special' packet in ajp13
-     * and to receive the data after we send a GET_BODY packet.
-     *
-     * @param block If there is no data available to read when this method is
-     *              called, should this call block until data becomes available?
-     *
-     * @return <code>true</code> if at least one body byte was read, otherwise
-     *         <code>false</code>
-     */
-    protected boolean receive(boolean block) throws IOException {
-
-        bodyMessage.reset();
-
-        if (!readMessage(bodyMessage, block)) {
-            return false;
-        }
-
-        waitingForBodyMessage = false;
-
-        // No data received.
-        if (bodyMessage.getLen() == 0) {
-            // just the header
-            return false;
-        }
-        int blen = bodyMessage.peekInt();
-        if (blen == 0) {
-            return false;
-        }
-
-        bodyMessage.getBodyBytes(bodyBytes);
-        empty = false;
-        return true;
-    }
-
-
-    /**
-     * Read an AJP message.
-     *
-     * @param message   The message to populate
-     * @param block If there is no data available to read when this method is
-     *              called, should this call block until data becomes available?
-
-     * @return true if the message has been read, false if no data was read
-     *
-     * @throws IOException any other failure, including incomplete reads
-     */
-    protected boolean readMessage(AjpMessage message, boolean block)
-        throws IOException {
-
-        byte[] buf = message.getBuffer();
-        int headerLength = message.getHeaderLength();
-
-        if (!read(buf, 0, headerLength, block)) {
-            return false;
-        }
-
-        int messageLength = message.processHeader(true);
-        if (messageLength < 0) {
-            // Invalid AJP header signature
-            throw new IOException(sm.getString("ajpmessage.invalidLength",
-                    Integer.valueOf(messageLength)));
-        }
-        else if (messageLength == 0) {
-            // Zero length message.
-            return true;
-        }
-        else {
-            if (messageLength > message.getBuffer().length) {
-                // Message too long for the buffer
-                // Need to trigger a 400 response
-                throw new IllegalArgumentException(sm.getString(
-                        "ajpprocessor.header.tooLong",
-                        Integer.valueOf(messageLength),
-                        Integer.valueOf(buf.length)));
-            }
-            read(buf, headerLength, messageLength, true);
-            return true;
-        }
-    }
+    protected abstract boolean receive() throws IOException;
 
 
     @Override
@@ -1097,21 +685,16 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
     }
 
 
-    @Override
-    public ByteBuffer getLeftoverInput() {
-        return null;
-    }
-
-
     /**
      * Get more request body data from the web server and store it in the
      * internal buffer.
      *
      * @return true if there is more data, false if not.
      */
-    protected boolean refillReadBuffer(boolean block) throws IOException {
-        // When using replay (e.g. after FORM auth) all the data to read has
-        // been buffered so there is no opportunity to refill the buffer.
+    protected boolean refillReadBuffer() throws IOException {
+        // If the server returns an empty packet, assume that that end of
+        // the stream has been reached (yuck -- fix protocol??).
+        // FORM support
         if (replay) {
             endOfStream = true; // we've read everything there is
         }
@@ -1119,30 +702,11 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
             return false;
         }
 
-        if (first) {
-            first = false;
-            long contentLength = request.getContentLengthLong();
-            // - When content length > 0, AJP sends the first body message
-            //   automatically.
-            // - When content length == 0, AJP does not send a body message.
-            // - When content length is unknown, AJP does not send the first
-            //   body message automatically.
-            if (contentLength > 0) {
-                waitingForBodyMessage = true;
-            } else if (contentLength == 0) {
-                endOfStream = true;
-                return false;
-            }
-        }
-
         // Request more data immediately
-        if (!waitingForBodyMessage) {
-            output(getBodyMessageArray, 0, getBodyMessageArray.length, true);
-            waitingForBodyMessage = true;
-        }
+        output(getBodyMessageArray, 0, getBodyMessageArray.length);
 
-        boolean moreData = receive(block);
-        if (!moreData && !waitingForBodyMessage) {
+        boolean moreData = receive();
+        if( !moreData ) {
             endOfStream = true;
         }
         return moreData;
@@ -1308,17 +872,20 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
                 break;
 
             case Constants.SC_A_SSL_CERT :
+                request.scheme().setString("https");
                 // SSL certificate extraction is lazy, moved to JkCoyoteHandler
                 requestHeaderMessage.getBytes(certificates);
                 break;
 
             case Constants.SC_A_SSL_CIPHER :
+                request.scheme().setString("https");
                 requestHeaderMessage.getBytes(tmpMB);
                 request.setAttribute(SSLSupport.CIPHER_SUITE_KEY,
                         tmpMB.toString());
                 break;
 
             case Constants.SC_A_SSL_SESSION :
+                request.scheme().setString("https");
                 requestHeaderMessage.getBytes(tmpMB);
                 request.setAttribute(SSLSupport.SESSION_ID_KEY,
                         tmpMB.toString());
@@ -1389,7 +956,7 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
         parseHost(valueMB);
 
         if (getErrorState().isError()) {
-            getAdapter().log(request, response, 0);
+            adapter.log(request, response, 0);
         }
     }
 
@@ -1475,8 +1042,6 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
 
         response.setCommitted(true);
 
-        tmpMB.recycle();
-        responseMsgPos = -1;
         responseMessage.reset();
         responseMessage.appendByte(Constants.JK_AJP13_SEND_HEADERS);
 
@@ -1489,7 +1054,7 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
             swallowResponse = true;
         }
 
-        // Responses to HEAD requests are not permitted to include a response
+        // Responses to HEAD requests are not permitted to incude a response
         // body.
         MessageBytes methodMB = request.method();
         if (methodMB.equals("HEAD")) {
@@ -1548,7 +1113,8 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
 
         // Write to buffer
         responseMessage.end();
-        output(responseMessage.getBuffer(), 0, responseMessage.getLen(), true);
+        output(responseMessage.getBuffer(), 0,
+                responseMessage.getLen());
     }
 
 
@@ -1556,16 +1122,13 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
      * Callback to write data from the buffer.
      */
     protected void flush(boolean explicit) throws IOException {
-        // Calling code should ensure that there is no data in the buffers for
-        // non-blocking writes.
-        // TODO Validate the assertion above
         if (explicit && !finished) {
             // Send the flush message
-            output(flushMessageArray, 0, flushMessageArray.length, true);
+            output(flushMessageArray, 0, flushMessageArray.length);
         }
     }
 
-
+    
     /**
      * Finish AJP response.
      */
@@ -1587,150 +1150,18 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
         finished = true;
 
         // Swallow the unread body packet if present
-        if (waitingForBodyMessage || first && request.getContentLengthLong() > 0) {
-            refillReadBuffer(true);
+        if (first && request.getContentLengthLong() > 0) {
+            receive();
         }
 
         // Add the end message
         if (getErrorState().isError()) {
-            output(endAndCloseMessageArray, 0, endAndCloseMessageArray.length, true);
+            output(endAndCloseMessageArray, 0, endAndCloseMessageArray.length);
         } else {
-            output(endMessageArray, 0, endMessageArray.length, true);
+            output(endMessageArray, 0, endMessageArray.length);
         }
     }
 
-
-    private boolean available() {
-        if (endOfStream) {
-            return false;
-        }
-        if (empty) {
-            try {
-                refillReadBuffer(false);
-            } catch (IOException timeout) {
-                // Not ideal. This will indicate that data is available
-                // which should trigger a read which in turn will trigger
-                // another IOException and that one can be thrown.
-                return true;
-            }
-        }
-        return !empty;
-    }
-
-
-    private void writeData(ByteChunk chunk) throws IOException {
-        // Prevent timeout
-        socketWrapper.access();
-
-        boolean blocking = (response.getWriteListener() == null);
-        if (!blocking) {
-            flushBufferedData();
-        }
-
-        int len = chunk.getLength();
-        int off = 0;
-
-        // Write this chunk
-        while (responseMsgPos == -1 && len > 0) {
-            int thisTime = len;
-            if (thisTime > outputMaxChunkSize) {
-                thisTime = outputMaxChunkSize;
-            }
-            responseMessage.reset();
-            responseMessage.appendByte(Constants.JK_AJP13_SEND_BODY_CHUNK);
-            responseMessage.appendBytes(chunk.getBytes(), chunk.getOffset() + off, thisTime);
-            responseMessage.end();
-            writeResponseMessage(blocking);
-
-            len -= thisTime;
-            off += thisTime;
-        }
-
-        bytesWritten += off;
-
-        if (len > 0) {
-            // Add this chunk to the buffer
-            addToBuffers(chunk.getBuffer(), off, len);
-        }
-    }
-
-
-    private void addToBuffers(byte[] buf, int offset, int length) {
-        ByteBufferHolder holder = bufferedWrites.peekLast();
-        if (holder == null || holder.isFlipped() || holder.getBuf().remaining() < length) {
-            ByteBuffer buffer = ByteBuffer.allocate(Math.max(bufferedWriteSize,length));
-            holder = new ByteBufferHolder(buffer, false);
-            bufferedWrites.add(holder);
-        }
-        holder.getBuf().put(buf, offset, length);
-    }
-
-
-    private boolean hasDataToWrite() {
-        return responseMsgPos != -1 || bufferedWrites.size() > 0;
-    }
-
-
-    private void flushBufferedData() throws IOException {
-
-        if (responseMsgPos > -1) {
-            // Must be using non-blocking IO
-            // Partially written response message. Try and complete it.
-            writeResponseMessage(false);
-        }
-
-        while (responseMsgPos == -1 && bufferedWrites.size() > 0) {
-            // Try and write any remaining buffer data
-            Iterator<ByteBufferHolder> holders = bufferedWrites.iterator();
-            ByteBufferHolder holder = holders.next();
-            holder.flip();
-            ByteBuffer buffer = holder.getBuf();
-            int initialBufferSize = buffer.remaining();
-            while (responseMsgPos == -1 && buffer.remaining() > 0) {
-                transferToResponseMsg(buffer);
-                writeResponseMessage(false);
-            }
-            bytesWritten += (initialBufferSize - buffer.remaining());
-            if (buffer.remaining() == 0) {
-                holders.remove();
-            }
-        }
-    }
-
-
-    private void transferToResponseMsg(ByteBuffer buffer) {
-
-        int thisTime = buffer.remaining();
-        if (thisTime > outputMaxChunkSize) {
-            thisTime = outputMaxChunkSize;
-        }
-
-        responseMessage.reset();
-        responseMessage.appendByte(Constants.JK_AJP13_SEND_BODY_CHUNK);
-        buffer.get(responseMessage.getBuffer(), responseMessage.pos, thisTime);
-        responseMessage.end();
-    }
-
-
-    private void writeResponseMessage(boolean block) throws IOException {
-        int len = responseMessage.getLen();
-        int written = 1;
-        if (responseMsgPos == -1) {
-            // New message. Advance the write position to the beginning
-            responseMsgPos = 0;
-        }
-
-        while (written > 0 && responseMsgPos < len) {
-            written = output(
-                    responseMessage.getBuffer(), responseMsgPos, len - responseMsgPos, block);
-            responseMsgPos += written;
-        }
-
-        // Message fully written, reset the position for a new message.
-        if (responseMsgPos == len) {
-            responseMsgPos = -1;
-        }
-    }
 
     // ------------------------------------- InputStreamInputBuffer Inner Class
 
@@ -1741,17 +1172,24 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
      */
     protected class SocketInputBuffer implements InputBuffer {
 
+
         /**
          * Read bytes into the specified chunk.
          */
         @Override
-        public int doRead(ByteChunk chunk, Request req) throws IOException {
+        public int doRead(ByteChunk chunk, Request req)
+        throws IOException {
 
             if (endOfStream) {
                 return -1;
             }
-            if (empty) {
-                if (!refillReadBuffer(true)) {
+            if (first && req.getContentLengthLong() > 0) {
+                // Handle special first-body-chunk
+                if (!receive()) {
+                    return 0;
+                }
+            } else if (empty) {
+                if (!refillReadBuffer()) {
                     return -1;
                 }
             }
@@ -1759,7 +1197,9 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
             chunk.setBytes(bc.getBuffer(), bc.getStart(), bc.getLength());
             empty = true;
             return chunk.getLength();
+
         }
+
     }
 
 
@@ -1775,7 +1215,8 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
          * Write chunk.
          */
         @Override
-        public int doWrite(ByteChunk chunk, Response res) throws IOException {
+        public int doWrite(ByteChunk chunk, Response res)
+            throws IOException {
 
             if (!response.isCommitted()) {
                 // Validate and write response headers
@@ -1787,7 +1228,27 @@ public abstract class AbstractAjpProcessor<S> extends AbstractProcessor<S> {
             }
 
             if (!swallowResponse) {
-                writeData(chunk);
+                int len = chunk.getLength();
+                // 4 - hardcoded, byte[] marshaling overhead
+                // Adjust allowed size if packetSize != default (Constants.MAX_PACKET_SIZE)
+                int chunkSize = Constants.MAX_SEND_SIZE + packetSize - Constants.MAX_PACKET_SIZE;
+                int off = 0;
+                while (len > 0) {
+                    int thisTime = len;
+                    if (thisTime > chunkSize) {
+                        thisTime = chunkSize;
+                    }
+                    len -= thisTime;
+                    responseMessage.reset();
+                    responseMessage.appendByte(Constants.JK_AJP13_SEND_BODY_CHUNK);
+                    responseMessage.appendBytes(chunk.getBytes(), chunk.getOffset() + off, thisTime);
+                    responseMessage.end();
+                    output(responseMessage.getBuffer(), 0, responseMessage.getLen());
+
+                    off += thisTime;
+                }
+
+                bytesWritten += chunk.getLength();
             }
             return chunk.getLength();
         }

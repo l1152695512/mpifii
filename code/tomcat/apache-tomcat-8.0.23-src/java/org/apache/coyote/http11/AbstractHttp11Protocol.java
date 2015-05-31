@@ -25,8 +25,16 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.coyote.AbstractProtocol;
+import org.apache.tomcat.util.res.StringManager;
 
 public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
+
+    /**
+     * The string manager for this package.
+     */
+    protected static final StringManager sm =
+        StringManager.getManager(Constants.Package);
+
 
     @Override
     protected String getProtocolName() {
@@ -43,7 +51,7 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
         this.socketBuffer = socketBuffer;
     }
 
-
+    
     /**
      * Maximum size of the post which will be saved when processing certain
      * requests, such as a POST.
@@ -51,7 +59,7 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
     private int maxSavePostSize = 4 * 1024;
     public int getMaxSavePostSize() { return maxSavePostSize; }
     public void setMaxSavePostSize(int valueI) { maxSavePostSize = valueI; }
-
+    
 
     /**
      * Maximum size of the HTTP message header.
@@ -60,10 +68,10 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
     public int getMaxHttpHeaderSize() { return maxHttpHeaderSize; }
     public void setMaxHttpHeaderSize(int valueI) { maxHttpHeaderSize = valueI; }
 
-
+    
     /**
      * Specifies a different (usually  longer) connection timeout during data
-     * upload.
+     * upload. 
      */
     private int connectionUploadTimeout = 300000;
     public int getConnectionUploadTimeout() { return connectionUploadTimeout; }
@@ -178,10 +186,10 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
      */
     private boolean secure;
     public boolean getSecure() { return secure; }
-    public void setSecure(boolean b) {
-        secure = b;
+    public void setSecure(boolean b) { 
+        secure = b;         
     }
-
+    
 
     /**
      * The size of the buffer used by the ServletOutputStream when performing
@@ -203,7 +211,7 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
     public void setAllowedTrailerHeaders(String commaSeparatedHeaders) {
         // Jump through some hoops so we don't end up with an empty set while
         // doing updates.
-        Set<String> toRemove = new HashSet<>();
+        Set<String> toRemove = new HashSet<String>();
         toRemove.addAll(allowedTrailerHeaders);
         if (commaSeparatedHeaders != null) {
             String[] headers = commaSeparatedHeaders.split(",");
@@ -221,7 +229,7 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
     public String getAllowedTrailerHeaders() {
         // Chances of a size change between these lines are small enough that a
         // sync is unnecessary.
-        List<String> copy = new ArrayList<>(allowedTrailerHeaders.size());
+        List<String> copy = new ArrayList<String>(allowedTrailerHeaders.size());
         copy.addAll(allowedTrailerHeaders);
         StringBuilder result = new StringBuilder();
         boolean first = true;
@@ -252,41 +260,21 @@ public abstract class AbstractHttp11Protocol<S> extends AbstractProtocol<S> {
 
     // ------------------------------------------------ HTTP specific properties
     // ------------------------------------------ passed through to the EndPoint
-
+    
     public boolean isSSLEnabled() { return endpoint.isSSLEnabled();}
     public void setSSLEnabled(boolean SSLEnabled) {
         endpoint.setSSLEnabled(SSLEnabled);
-    }
+    }    
 
 
     /**
-     * Maximum number of requests which can be performed over a keepalive
+     * Maximum number of requests which can be performed over a keepalive 
      * connection. The default is the same as for Apache HTTP Server.
      */
-    public int getMaxKeepAliveRequests() {
+    public int getMaxKeepAliveRequests() { 
         return endpoint.getMaxKeepAliveRequests();
     }
     public void setMaxKeepAliveRequests(int mkar) {
         endpoint.setMaxKeepAliveRequests(mkar);
-    }
-
-
-    // ------------------------------------------------------------- Common code
-
-    // Common configuration required for all new HTTP11 processors
-    protected void configureProcessor(AbstractHttp11Processor<S> processor) {
-        processor.setAdapter(getAdapter());
-        processor.setMaxKeepAliveRequests(getMaxKeepAliveRequests());
-        processor.setKeepAliveTimeout(getKeepAliveTimeout());
-        processor.setConnectionUploadTimeout(getConnectionUploadTimeout());
-        processor.setDisableUploadTimeout(getDisableUploadTimeout());
-        processor.setCompressionMinSize(getCompressionMinSize());
-        processor.setCompression(getCompression());
-        processor.setNoCompressionUserAgents(getNoCompressionUserAgents());
-        processor.setCompressableMimeTypes(getCompressableMimeTypes());
-        processor.setRestrictedUserAgents(getRestrictedUserAgents());
-        processor.setSocketBuffer(getSocketBuffer());
-        processor.setMaxSavePostSize(getMaxSavePostSize());
-        processor.setServer(getServer());
     }
 }

@@ -53,7 +53,7 @@ public class TestContextConfig extends TomcatBaseTest {
 
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir = new File("test/webapp");
+        File appDir = new File("test/webapp-3.0");
         StandardContext ctxt = (StandardContext) tomcat.addContext(null,
                 "/test", appDir.getAbsolutePath());
         ctxt.setDefaultWebXml(new File("conf/web.xml").getAbsolutePath());
@@ -71,7 +71,7 @@ public class TestContextConfig extends TomcatBaseTest {
     public void testBug51396() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir =  new File("test/webapp-fragments");
+        File appDir =  new File("test/webapp-3.0-fragments");
         // app dir is relative to server home
         tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
 
@@ -82,7 +82,13 @@ public class TestContextConfig extends TomcatBaseTest {
 
     @Test
     public void testBug53574() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir = new File("test/webapp-3.0");
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
+
         assertPageContains("/test/bug53574", "OK");
     }
 
@@ -90,7 +96,7 @@ public class TestContextConfig extends TomcatBaseTest {
     public void testBug54262() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir = new File("test/webapp-fragments-empty-absolute-ordering");
+        File appDir = new File("test/webapp-3.0-fragments-empty-absolute-ordering");
         tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
 
         tomcat.start();
@@ -105,7 +111,7 @@ public class TestContextConfig extends TomcatBaseTest {
     public void testBug54379() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir = new File("test/webapp-fragments");
+        File appDir = new File("test/webapp-3.0-fragments");
         Context context =
                 tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
 
@@ -124,7 +130,7 @@ public class TestContextConfig extends TomcatBaseTest {
     public void testBug54448and54450() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir = new File("test/webapp-fragments");
+        File appDir = new File("test/webapp-3.0-fragments");
         Context context = tomcat.addWebapp(null, "/test",
                 appDir.getAbsolutePath());
 
@@ -144,7 +150,7 @@ public class TestContextConfig extends TomcatBaseTest {
     public void testBug55210() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        File appDir = new File("test/webapp-fragments");
+        File appDir = new File("test/webapp-3.0-fragments");
         tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
 
         tomcat.start();

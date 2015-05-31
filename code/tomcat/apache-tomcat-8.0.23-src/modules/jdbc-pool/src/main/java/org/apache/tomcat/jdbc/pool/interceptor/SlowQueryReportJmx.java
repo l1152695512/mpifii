@@ -51,6 +51,7 @@ import org.apache.tomcat.jdbc.pool.PooledConnection;
 /**
  * Publishes data to JMX and provides notifications
  * when failures happen.
+ * @author fhanik
  *
  */
 public class SlowQueryReportJmx extends SlowQueryReport implements NotificationEmitter, SlowQueryReportJmxMBean{
@@ -59,13 +60,13 @@ public class SlowQueryReportJmx extends SlowQueryReport implements NotificationE
 
     public static final String objectNameAttribute = "objectName";
 
-    protected static volatile CompositeType SLOW_QUERY_TYPE;
+    protected static CompositeType SLOW_QUERY_TYPE;
 
     private static final Log log = LogFactory.getLog(SlowQueryReportJmx.class);
 
 
     protected static ConcurrentHashMap<String,SlowQueryReportJmxMBean> mbeans =
-        new ConcurrentHashMap<>();
+        new ConcurrentHashMap<String,SlowQueryReportJmxMBean>();
 
 
     //==============================JMX STUFF========================

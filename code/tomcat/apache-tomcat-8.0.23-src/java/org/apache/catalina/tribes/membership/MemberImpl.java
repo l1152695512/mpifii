@@ -30,6 +30,8 @@ import org.apache.catalina.tribes.transport.SenderState;
  * A <b>membership</b> implementation using simple multicast.
  * This is the representation of a multicast member.
  * Carries the host, and port of the this or other cluster nodes.
+ *
+ * @author Filip Hanik
  */
 public class MemberImpl implements Member, java.io.Externalizable {
 
@@ -38,6 +40,22 @@ public class MemberImpl implements Member, java.io.Externalizable {
      * default is false
      */
     public static final boolean DO_DNS_LOOKUPS = Boolean.parseBoolean(System.getProperty("org.apache.catalina.tribes.dns_lookups","false"));
+
+    /**
+     * @deprecated  Unused - will be removed in Tomcat 8.0.x
+     */
+    @Deprecated
+    public static final transient String TCP_LISTEN_PORT = "tcpListenPort";
+    /**
+     * @deprecated  Unused - will be removed in Tomcat 8.0.x
+     */
+    @Deprecated
+    public static final transient String TCP_LISTEN_HOST = "tcpListenHost";
+    /**
+     * @deprecated  Unused - will be removed in Tomcat 8.0.x
+     */
+    @Deprecated
+    public static final transient String MEMBER_NAME = "memberName";
 
     public static final transient byte[] TRIBES_MBR_BEGIN = new byte[] {84, 82, 73, 66, 69, 83, 45, 66, 1, 0};
     public static final transient byte[] TRIBES_MBR_END   = new byte[] {84, 82, 73, 66, 69, 83, 45, 69, 1, 0};
@@ -161,15 +179,17 @@ public class MemberImpl implements Member, java.io.Externalizable {
     public byte[] getData()  {
         return getData(true);
     }
-
-
-    @Override
+    /**
+     * Highly optimized version of serializing a member into a byte array
+     * Returns a cached byte[] reference, do not modify this data
+     * @param getalive boolean
+     * @return byte[]
+     */
     public byte[] getData(boolean getalive)  {
         return getData(getalive,false);
     }
 
 
-    @Override
     public int getDataLength() {
         return TRIBES_MBR_BEGIN.length+ //start pkg
                4+ //data length
@@ -189,8 +209,12 @@ public class MemberImpl implements Member, java.io.Externalizable {
                TRIBES_MBR_END.length; //end pkg
     }
 
-
-    @Override
+    /**
+     *
+     * @param getalive boolean - calculate memberAlive time
+     * @param reset boolean - reset the cached data package, and create a new one
+     * @return byte[]
+     */
     public byte[] getData(boolean getalive, boolean reset)  {
         if ( reset ) dataPkg = null;
         //look in cache first
@@ -289,11 +313,11 @@ public class MemberImpl implements Member, java.io.Externalizable {
      * @param data - the bytes received
      * @return a member object.
      */
-    public static Member getMember(byte[] data, MemberImpl member) {
+    public static MemberImpl getMember(byte[] data, MemberImpl member) {
         return getMember(data,0,data.length,member);
     }
 
-    public static Member getMember(byte[] data, int offset, int length, MemberImpl member) {
+    public static MemberImpl getMember(byte[] data, int offset, int length, MemberImpl member) {
         //package looks like
         //start package TRIBES_MBR_BEGIN.length
         //package length - 4 bytes
@@ -399,11 +423,11 @@ public class MemberImpl implements Member, java.io.Externalizable {
         return member;
     }
 
-    public static Member getMember(byte[] data) {
+    public static MemberImpl getMember(byte[] data) {
        return getMember(data,new MemberImpl());
     }
 
-    public static Member getMember(byte[] data, int offset, int length) {
+    public static MemberImpl getMember(byte[] data, int offset, int length) {
        return getMember(data,offset,length,new MemberImpl());
     }
 
@@ -498,7 +522,6 @@ public class MemberImpl implements Member, java.io.Externalizable {
         return udpPort;
     }
 
-    @Override
     public void setMemberAliveTime(long time) {
        memberAliveTime=time;
     }
@@ -593,7 +616,6 @@ public class MemberImpl implements Member, java.io.Externalizable {
         getData(true,true);
     }
 
-    @Override
     public void setPayload(byte[] payload) {
         byte[] oldpayload = this.payload;
         this.payload = payload!=null?payload:new byte[0];
@@ -604,7 +626,6 @@ public class MemberImpl implements Member, java.io.Externalizable {
 
     }
 
-    @Override
     public void setCommand(byte[] command) {
         this.command = command!=null?command:new byte[0];
         getData(true,true);

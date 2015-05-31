@@ -23,8 +23,8 @@ import java.util.Hashtable;
  * The (translation-time only) attribute/value information for a tag instance.
  *
  * <p>
- * TagData is only used as an argument to the isValid, validate, and
- * getVariableInfo methods of TagExtraInfo, which are invoked at
+ * TagData is only used as an argument to the isValid, validate, and 
+ * getVariableInfo methods of TagExtraInfo, which are invoked at 
  * translation time.
  */
 
@@ -56,9 +56,9 @@ public class TagData implements Cloneable {
      */
     public TagData(Object[] atts[]) {
         if (atts == null) {
-            attributes = new Hashtable<>();
+            attributes = new Hashtable<String, Object>();
         } else {
-            attributes = new Hashtable<>(atts.length);
+            attributes = new Hashtable<String, Object>(atts.length);
         }
 
         if (atts != null) {
@@ -72,7 +72,7 @@ public class TagData implements Cloneable {
      * Constructor for a TagData.
      *
      * If you already have the attributes in a hashtable, use this
-     * constructor.
+     * constructor. 
      *
      * @param attrs A hashtable to get the values from.
      */
@@ -95,13 +95,13 @@ public class TagData implements Cloneable {
      * The value of the attribute.
      * If a static value is specified for an attribute that accepts a
      * request-time attribute expression then that static value is returned,
-     * even if the value is provided in the body of a &lt;jsp:attribute&gt;
-     * action. The distinguished object REQUEST_TIME_VALUE is only returned if
+     * even if the value is provided in the body of a <jsp:attribute> action.
+     * The distinguished object REQUEST_TIME_VALUE is only returned if
      * the value is specified as a request-time attribute expression
      * or via the &lt;jsp:attribute&gt; action with a body that contains
-     * dynamic content (scriptlets, scripting expressions, EL expressions,
-     * standard actions, or custom actions).  Returns null if the attribute
-     * is not set.
+     * dynamic content (scriptlets, scripting expressions, EL expressions, 
+     * standard actions, or custom actions).  Returns null if the attribute 
+     * is not set. 
      *
      * @param attName the name of the attribute
      * @return the attribute's value

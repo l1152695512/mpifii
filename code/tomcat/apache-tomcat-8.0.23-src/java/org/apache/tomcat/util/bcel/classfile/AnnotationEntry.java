@@ -26,7 +26,7 @@ import org.apache.tomcat.util.bcel.Constants;
 
 /**
  * represents one annotation in the annotation table
- *
+ * 
  * @author  <A HREF="mailto:dbrosius@mebigfatguy.com">D. Brosius</A>
  * @since 6.0
  */
@@ -36,10 +36,10 @@ public class AnnotationEntry implements Constants {
     private final ConstantPool constant_pool;
 
     private final List<ElementValuePair> element_value_pairs;
-
+    
     /**
      * Creates an AnnotationEntry from a DataInputStream
-     *
+     * 
      * @param file
      * @param constant_pool
      * @throws IOException
@@ -51,12 +51,12 @@ public class AnnotationEntry implements Constants {
         type_index = file.readUnsignedShort();
         int num_element_value_pairs = file.readUnsignedShort();
 
-        element_value_pairs = new ArrayList<>(num_element_value_pairs);
+        element_value_pairs = new ArrayList<ElementValuePair>(num_element_value_pairs);
         for (int i = 0; i < num_element_value_pairs; i++) {
             element_value_pairs.add(new ElementValuePair(file, constant_pool));
         }
     }
-
+    
     /**
      * @return the annotation type name
      */

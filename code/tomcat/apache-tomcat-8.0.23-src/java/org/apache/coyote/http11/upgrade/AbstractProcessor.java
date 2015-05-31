@@ -17,16 +17,12 @@
 package org.apache.coyote.http11.upgrade;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.concurrent.Executor;
-
-import javax.servlet.ServletInputStream;
-import javax.servlet.ServletOutputStream;
-import javax.servlet.http.HttpUpgradeHandler;
-import javax.servlet.http.WebConnection;
 
 import org.apache.coyote.Processor;
 import org.apache.coyote.Request;
+import org.apache.coyote.http11.upgrade.servlet31.HttpUpgradeHandler;
+import org.apache.coyote.http11.upgrade.servlet31.WebConnection;
 import org.apache.juli.logging.Log;
 import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.SSLSupport;
@@ -43,11 +39,11 @@ public abstract class AbstractProcessor<S>
 
     private final HttpUpgradeHandler httpUpgradeHandler;
     private final AbstractServletInputStream upgradeServletInputStream;
-    private final AbstractServletOutputStream<S> upgradeServletOutputStream;
+    private final AbstractServletOutputStream upgradeServletOutputStream;
 
     protected AbstractProcessor (HttpUpgradeHandler httpUpgradeHandler,
             AbstractServletInputStream upgradeServletInputStream,
-            AbstractServletOutputStream<S> upgradeServletOutputStream) {
+            AbstractServletOutputStream upgradeServletOutputStream) {
         this.httpUpgradeHandler = httpUpgradeHandler;
         this.upgradeServletInputStream = upgradeServletInputStream;
         this.upgradeServletOutputStream = upgradeServletOutputStream;
@@ -66,12 +62,12 @@ public abstract class AbstractProcessor<S>
     // --------------------------------------------------- WebConnection methods
 
     @Override
-    public ServletInputStream getInputStream() throws IOException {
+    public AbstractServletInputStream getInputStream() throws IOException {
         return upgradeServletInputStream;
     }
 
     @Override
-    public ServletOutputStream getOutputStream() throws IOException {
+    public AbstractServletOutputStream getOutputStream() throws IOException {
         return upgradeServletOutputStream;
     }
 
@@ -93,9 +89,23 @@ public abstract class AbstractProcessor<S>
             throws IOException {
 
         if (status == SocketStatus.OPEN_READ) {
-            upgradeServletInputStream.onDataAvailable();
+            try {
+                upgradeServletInputStream.onDataAvailable();
+            } catch (IOException ioe) {
+                // The error handling within the ServletInputStream should have
+                // marked the stream for closure which will get picked up below,
+                // triggering the clean-up of this processor.
+                getLog().debug(sm.getString("abstractProcessor.onDataAvailableFail"), ioe);
+            }
         } else if (status == SocketStatus.OPEN_WRITE) {
-            upgradeServletOutputStream.onWritePossible();
+            try {
+                upgradeServletOutputStream.onWritePossible();
+            } catch (IOException ioe) {
+                // The error handling within the ServletOutputStream should have
+                // marked the stream for closure which will get picked up below,
+                // triggering the clean-up of this processor.
+                getLog().debug(sm.getString("abstractProcessor.onWritePossibleFail"), ioe);
+            }
         } else if (status == SocketStatus.STOP) {
             try {
                 upgradeServletInputStream.close();
@@ -124,6 +134,20 @@ public abstract class AbstractProcessor<S>
     @Override
     public final void recycle(boolean socketClosing) {
         // Currently a NO-OP as upgrade processors are not recycled.
+    }
+
+    
+    // ------------------ Processor methods for Inbound/Outbound based mechanism
+    
+    @Override
+    @Deprecated
+    public UpgradeInbound getUpgradeInbound() {
+        return null;
+    }
+
+    @Override
+    public SocketState upgradeDispatch() throws IOException {
+        return null;
     }
 
 
@@ -178,10 +202,5 @@ public abstract class AbstractProcessor<S>
     @Override
     public final void setSslSupport(SSLSupport sslSupport) {
         // NOOP
-    }
-
-    @Override
-    public ByteBuffer getLeftoverInput() {
-        return null;
     }
 }

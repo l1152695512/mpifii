@@ -28,6 +28,7 @@ import java.util.Map.Entry;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
+import javax.servlet.ServletRequestWrapper;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,8 +37,8 @@ import javax.websocket.Extension;
 import javax.websocket.HandshakeResponse;
 import javax.websocket.server.ServerEndpointConfig;
 
+import org.apache.catalina.connector.RequestFacade;
 import org.apache.tomcat.util.codec.binary.Base64;
-import org.apache.tomcat.util.res.StringManager;
 import org.apache.tomcat.util.security.ConcurrentMessageDigest;
 import org.apache.tomcat.websocket.Constants;
 import org.apache.tomcat.websocket.Transformation;
@@ -48,8 +49,6 @@ import org.apache.tomcat.websocket.pojo.PojoEndpointServer;
 
 public class UpgradeUtil {
 
-    private static final StringManager sm =
-            StringManager.getManager(UpgradeUtil.class.getPackage().getName());
     private static final byte[] WS_ACCEPT =
             "258EAFA5-E914-47DA-95CA-C5AB0DC85B11".getBytes(
                     StandardCharsets.ISO_8859_1);
@@ -65,11 +64,6 @@ public class UpgradeUtil {
      * Note: RFC 2616 does not limit HTTP upgrade to GET requests but the Java
      *       WebSocket spec 1.0, section 8.2 implies such a limitation and RFC
      *       6455 section 4.1 requires that a WebSocket Upgrade uses GET.
-     * @param request  The request to check if it is an HTTP upgrade request for
-     *                 a WebSocket connection
-     * @param response The response associated with the request
-     * @return <code>true</code> if the request includes a HTTP Upgrade request
-     *         for the WebSocket protocol, otherwise <code>false</code>
      */
     public static boolean isWebSocketUpgradeRequest(ServletRequest request,
             ServletResponse response) {
@@ -119,15 +113,15 @@ public class UpgradeUtil {
         }
         // Sub-protocols
         List<String> subProtocols = getTokensFromHeader(req,
-                Constants.WS_PROTOCOL_HEADER_NAME);
+                "Sec-WebSocket-Protocol");
         subProtocol = sec.getConfigurator().getNegotiatedSubprotocol(
                 sec.getSubprotocols(), subProtocols);
 
         // Extensions
         // Should normally only be one header but handle the case of multiple
         // headers
-        List<Extension> extensionsRequested = new ArrayList<>();
-        Enumeration<String> extHeaders = req.getHeaders(Constants.WS_EXTENSIONS_HEADER_NAME);
+        List<Extension> extensionsRequested = new ArrayList<Extension>();
+        Enumeration<String> extHeaders = req.getHeaders("Sec-WebSocket-Extensions");
         while (extHeaders.hasMoreElements()) {
             Util.parseExtensionHeader(extensionsRequested, extHeaders.nextElement());
         }
@@ -138,7 +132,7 @@ public class UpgradeUtil {
         if (sec.getExtensions().size() == 0) {
             installedExtensions = Constants.INSTALLED_EXTENSIONS;
         } else {
-            installedExtensions = new ArrayList<>();
+            installedExtensions = new ArrayList<Extension>();
             installedExtensions.addAll(sec.getExtensions());
             installedExtensions.addAll(Constants.INSTALLED_EXTENSIONS);
         }
@@ -155,7 +149,7 @@ public class UpgradeUtil {
         if (transformations.isEmpty()) {
             negotiatedExtensionsPhase2 = Collections.emptyList();
         } else {
-            negotiatedExtensionsPhase2 = new ArrayList<>(transformations.size());
+            negotiatedExtensionsPhase2 = new ArrayList<Extension>(transformations.size());
             for (Transformation t : transformations) {
                 negotiatedExtensionsPhase2.add(t.getExtensionResponse());
             }
@@ -181,7 +175,8 @@ public class UpgradeUtil {
 
         // Now we have the full pipeline, validate the use of the RSV bits.
         if (transformation != null && !transformation.validateRsvBits(0)) {
-            throw new ServletException(sm.getString("upgradeUtil.incompatibleRsv"));
+            // TODO i18n
+            throw new ServletException("Incompatible RSV bit usage");
         }
 
         // If we got this far, all is good. Accept the connection.
@@ -228,12 +223,21 @@ public class UpgradeUtil {
             throw new ServletException(e);
         }
 
-        WsHttpUpgradeHandler wsHandler =
-                req.upgrade(WsHttpUpgradeHandler.class);
-        wsHandler.preInit(ep, perSessionServerEndpointConfig, sc, wsRequest,
-                negotiatedExtensionsPhase2, subProtocol, transformation, pathParams,
-                req.isSecure());
-
+        // Small hack until the Servlet API provides a way to do this.
+        ServletRequest inner = req;
+        // Unwrap the request
+        while (inner instanceof ServletRequestWrapper) {
+            inner = ((ServletRequestWrapper) inner).getRequest();
+        }
+        if (inner instanceof RequestFacade) {
+            WsHttpUpgradeHandler wsHandler =
+                    ((RequestFacade) inner).upgrade(WsHttpUpgradeHandler.class);
+            wsHandler.preInit(ep, perSessionServerEndpointConfig, sc, wsRequest,
+                    negotiatedExtensionsPhase2, subProtocol, transformation, pathParams,
+                    req.isSecure());
+        } else {
+            throw new ServletException("Upgrade failed");
+        }
     }
 
 
@@ -243,17 +247,17 @@ public class UpgradeUtil {
         TransformationFactory factory = TransformationFactory.getInstance();
 
         LinkedHashMap<String,List<List<Extension.Parameter>>> extensionPreferences =
-                new LinkedHashMap<>();
+                new LinkedHashMap<String,List<List<Extension.Parameter>>>();
 
         // Result will likely be smaller than this
-        List<Transformation> result = new ArrayList<>(negotiatedExtensions.size());
+        List<Transformation> result = new ArrayList<Transformation>(negotiatedExtensions.size());
 
         for (Extension extension : negotiatedExtensions) {
             List<List<Extension.Parameter>> preferences =
                     extensionPreferences.get(extension.getName());
 
             if (preferences == null) {
-                preferences = new ArrayList<>();
+                preferences = new ArrayList<List<Extension.Parameter>>();
                 extensionPreferences.put(extension.getName(), preferences);
             }
 
@@ -262,14 +266,13 @@ public class UpgradeUtil {
 
         for (Map.Entry<String,List<List<Extension.Parameter>>> entry :
             extensionPreferences.entrySet()) {
-            Transformation transformation = factory.create(entry.getKey(), entry.getValue(), true);
+            Transformation transformation = factory.create(entry.getKey(), entry.getValue());
             if (transformation != null) {
                 result.add(transformation);
             }
         }
         return result;
     }
-
 
     private static void append(StringBuilder sb, Extension extension) {
         if (extension == null || extension.getName() == null || extension.getName().length() == 0) {
@@ -315,7 +318,7 @@ public class UpgradeUtil {
      */
     private static List<String> getTokensFromHeader(HttpServletRequest req,
             String headerName) {
-        List<String> result = new ArrayList<>();
+        List<String> result = new ArrayList<String>();
         Enumeration<String> headers = req.getHeaders(headerName);
         while (headers.hasMoreElements()) {
             String header = headers.nextElement();

@@ -19,11 +19,9 @@ package org.apache.tomcat.buildutil;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -52,19 +50,7 @@ public class Txt2Html
     private File todir;
 
     /** The file to be converted into HTML */
-    private final List<FileSet> filesets = new LinkedList<>();
-
-    /**
-     * The encoding of the source files (.java and .jsp).  Once they use
-     * UTF-8, this will need to be updated.
-     */
-    private static final String SOURCE_ENCODING = "ISO-8859-1";
-
-    /**
-     * Line terminator to be used for separating lines of the generated
-     * HTML page, to be independent from "line.separator" system property.
-     */
-    private static final String LINE_SEPARATOR = "\r\n";
+    private List<FileSet> filesets = new LinkedList<FileSet>();
 
     /**
      * Sets the directory to contain the resulting files
@@ -140,41 +126,39 @@ public class Txt2Html
         throws IOException
     {
         // Open files:
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(
-                new FileInputStream(from), SOURCE_ENCODING))) {
-            try (PrintWriter out = new PrintWriter(new OutputStreamWriter(
-                    new FileOutputStream(to), "UTF-8"))) {
+        BufferedReader in = new BufferedReader( new FileReader( from ) );
+        PrintWriter out = new PrintWriter( new FileWriter( to ) );
 
-                // Output header:
-                out.print("<!DOCTYPE html><html><head><meta charset=\"UTF-8\" />"
-                        + "<title>Source Code</title></head><body><pre>" );
+        // Output header:
+        out.println( "<html><body><pre>" );
 
-                // Convert, line-by-line:
-                String line;
-                while( (line = in.readLine()) != null ) {
-                    StringBuilder result = new StringBuilder();
-                    int len = line.length();
-                    for( int i = 0; i < len; i++ ) {
-                        char c = line.charAt( i );
-                        switch( c ) {
-                            case '&':
-                                result.append( "&amp;" );
-                                break;
-                            case '<':
-                                result.append( "&lt;" );
-                                break;
-                            default:
-                                result.append( c );
-                        }
-                    }
-                    out.print( result.toString() + LINE_SEPARATOR );
+        // Convert, line-by-line:
+        String line;
+        while( (line = in.readLine()) != null ) {
+            StringBuilder result = new StringBuilder();
+            int len = line.length();
+            for( int i = 0; i < len; i++ ) {
+                char c = line.charAt( i );
+                switch( c ) {
+                    case '&':
+                        result.append( "&amp;" );
+                        break;
+                    case '<':
+                        result.append( "&lt;" );
+                        break;
+                    default:
+                        result.append( c );
                 }
-
-                // Output footer:
-                out.print( "</pre></body></html>" );
-
             }
+            out.println( result.toString() );
         }
+
+        // Output footer:
+        out.println( "</pre></body></html>" );
+
+        // Close streams:
+        out.close();
+        in.close();
     }
 
 }

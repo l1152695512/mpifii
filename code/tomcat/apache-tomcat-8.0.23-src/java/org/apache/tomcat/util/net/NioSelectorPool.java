@@ -32,6 +32,7 @@ import org.apache.juli.logging.LogFactory;
 /**
  *
  * Thread safe non blocking selector pool
+ * @author Filip Hanik
  * @version 1.0
  * @since 6.0
  */
@@ -57,7 +58,7 @@ public class NioSelectorPool {
     protected AtomicInteger active = new AtomicInteger(0);
     protected AtomicInteger spare = new AtomicInteger(0);
     protected ConcurrentLinkedQueue<Selector> selectors =
-            new ConcurrentLinkedQueue<>();
+        new ConcurrentLinkedQueue<Selector>();
 
     protected Selector getSharedSelector() throws IOException {
         if (SHARED && SHARED_SELECTOR == null) {
@@ -76,7 +77,6 @@ public class NioSelectorPool {
         return  SHARED_SELECTOR;
     }
 
-    @SuppressWarnings("resource") // s is closed in put()
     public Selector get() throws IOException{
         if ( SHARED ) {
             return getSharedSelector();
@@ -152,21 +152,22 @@ public class NioSelectorPool {
     }
 
     /**
-     * Performs a write using the bytebuffer for data to be written and a
-     * selector to block (if blocking is requested). If the
-     * <code>selector</code> parameter is null, and blocking is requested then
-     * it will perform a busy write that could take up a lot of CPU cycles.
-     * @param buf           The buffer containing the data, we will write as long as <code>(buf.hasRemaining()==true)</code>
-     * @param socket        The socket to write data to
-     * @param selector      The selector to use for blocking, if null then a busy write will be initiated
-     * @param writeTimeout  The timeout for this write operation in milliseconds, -1 means no timeout
-     * @param block         <code>true</code> to perform a blocking write
-     *                      otherwise a non-blocking write will be performed
+     * Performs a blocking write using the bytebuffer for data to be written and a selector to block.
+     * If the <code>selector</code> parameter is null, then it will perform a busy write that could
+     * take up a lot of CPU cycles.
+     * @param buf ByteBuffer - the buffer containing the data, we will write as long as <code>(buf.hasRemaining()==true)</code>
+     * @param socket SocketChannel - the socket to write data to
+     * @param selector Selector - the selector to use for blocking, if null then a busy write will be initiated
+     * @param writeTimeout long - the timeout for this write operation in milliseconds, -1 means no timeout
      * @return int - returns the number of bytes written
      * @throws EOFException if write returns -1
      * @throws SocketTimeoutException if the write times out
      * @throws IOException if an IO Exception occurs in the underlying socket logic
      */
+    public int write(ByteBuffer buf, NioChannel socket, Selector selector, long writeTimeout) throws IOException {
+        return write(buf,socket,selector,writeTimeout,true);
+    }
+
     public int write(ByteBuffer buf, NioChannel socket, Selector selector,
                      long writeTimeout, boolean block) throws IOException {
         if ( SHARED && block ) {
@@ -195,13 +196,7 @@ public class NioSelectorPool {
                     //register OP_WRITE to the selector
                     if (key==null) key = socket.getIOChannel().register(selector, SelectionKey.OP_WRITE);
                     else key.interestOps(SelectionKey.OP_WRITE);
-                    if (writeTimeout==0) {
-                        timedout = buf.hasRemaining();
-                    } else if (writeTimeout<0) {
-                        keycount = selector.select();
-                    } else {
-                        keycount = selector.select(writeTimeout);
-                    }
+                    keycount = selector.select(writeTimeout);
                 }
                 if (writeTimeout > 0 && (selector == null || keycount == 0) ) timedout = (System.currentTimeMillis()-time)>=writeTimeout;
             }//while
@@ -269,13 +264,7 @@ public class NioSelectorPool {
                     //register OP_WRITE to the selector
                     if (key==null) key = socket.getIOChannel().register(selector, SelectionKey.OP_READ);
                     else key.interestOps(SelectionKey.OP_READ);
-                    if (readTimeout==0) {
-                        timedout = (read==0);
-                    } else if (readTimeout<0) {
-                        keycount = selector.select();
-                    } else {
-                        keycount = selector.select(readTimeout);
-                    }
+                    keycount = selector.select(readTimeout);
                 }
                 if (readTimeout > 0 && (selector == null || keycount == 0) ) timedout = (System.currentTimeMillis()-time)>=readTimeout;
             }//while

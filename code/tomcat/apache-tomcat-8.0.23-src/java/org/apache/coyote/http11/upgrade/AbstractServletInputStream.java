@@ -18,17 +18,16 @@ package org.apache.coyote.http11.upgrade;
 
 import java.io.IOException;
 
-import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 
-import org.apache.juli.logging.Log;
-import org.apache.juli.logging.LogFactory;
-import org.apache.tomcat.util.ExceptionUtils;
+import org.apache.coyote.http11.upgrade.servlet31.ReadListener;
 import org.apache.tomcat.util.res.StringManager;
 
+/**
+ * Implements the new Servlet 3.1 methods for {@link ServletInputStream}.
+ */
 public abstract class AbstractServletInputStream extends ServletInputStream {
 
-    private static final Log log = LogFactory.getLog(AbstractServletInputStream.class);
     protected static final StringManager sm =
             StringManager.getManager(Constants.Package);
 
@@ -38,7 +37,9 @@ public abstract class AbstractServletInputStream extends ServletInputStream {
     private volatile ReadListener listener = null;
     private volatile ClassLoader applicationLoader = null;
 
-    @Override
+    /**
+     * New Servlet 3.1 method.
+     */
     public final boolean isFinished() {
         if (listener == null) {
             throw new IllegalStateException(
@@ -50,7 +51,9 @@ public abstract class AbstractServletInputStream extends ServletInputStream {
     }
 
 
-    @Override
+    /**
+     * New Servlet 3.1 method.
+     */
     public final boolean isReady() {
         if (listener == null) {
             throw new IllegalStateException(
@@ -71,7 +74,9 @@ public abstract class AbstractServletInputStream extends ServletInputStream {
     }
 
 
-    @Override
+    /**
+     * New Servlet 3.1 method.
+     */
     public final void setReadListener(ReadListener listener) {
         if (listener == null) {
             throw new IllegalArgumentException(
@@ -186,7 +191,7 @@ public abstract class AbstractServletInputStream extends ServletInputStream {
     }
 
 
-    final void onDataAvailable() {
+    protected final void onDataAvailable() throws IOException {
         if (listener == null) {
             return;
         }
@@ -196,9 +201,6 @@ public abstract class AbstractServletInputStream extends ServletInputStream {
         try {
             thread.setContextClassLoader(applicationLoader);
             listener.onDataAvailable();
-        } catch (Throwable t) {
-            ExceptionUtils.handleThrowable(t);
-            onError(t);
         } finally {
             thread.setContextClassLoader(originalClassLoader);
         }
@@ -214,24 +216,14 @@ public abstract class AbstractServletInputStream extends ServletInputStream {
         try {
             thread.setContextClassLoader(applicationLoader);
             listener.onError(t);
-        } catch (Throwable t2) {
-            ExceptionUtils.handleThrowable(t2);
-            log.warn(sm.getString("upgrade.sis.onErrorFail"), t2);
         } finally {
             thread.setContextClassLoader(originalClassLoader);
-        }
-        try {
-            close();
-        } catch (IOException ioe) {
-            if (log.isDebugEnabled()) {
-                log.debug(sm.getString("upgrade.sis.errorCloseFail"), ioe);
-            }
         }
         ready = Boolean.FALSE;
     }
 
 
-    final boolean isCloseRequired() {
+    protected final boolean isCloseRequired() {
         return closeRequired;
     }
 

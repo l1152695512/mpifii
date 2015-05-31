@@ -23,12 +23,13 @@ import java.io.OutputStream;
 /**
  * Byte array output stream that exposes the byte array directly
  *
+ * @author not attributable
  * @version 1.0
  */
 public class DirectByteArrayOutputStream extends OutputStream {
-
-    private final XByteBuffer buffer;
-
+    
+    private XByteBuffer buffer;
+    
     public DirectByteArrayOutputStream(int size) {
         buffer = new XByteBuffer(size,false);
     }
@@ -46,15 +47,15 @@ public class DirectByteArrayOutputStream extends OutputStream {
     public void write(int b) throws IOException {
         buffer.append((byte)b);
     }
-
+    
     public int size() {
         return buffer.getLength();
     }
-
+    
     public byte[] getArrayDirect() {
         return buffer.getBytesDirect();
     }
-
+    
     public byte[] getArray() {
         return buffer.getBytes();
     }

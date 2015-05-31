@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,7 +27,7 @@ import javax.el.FunctionMapper;
 public class FunctionMapperFactory extends FunctionMapper {
 
     protected FunctionMapperImpl memento = null;
-    protected final FunctionMapper target;
+    protected FunctionMapper target;
 
     public FunctionMapperFactory(FunctionMapper mapper) {
         if (mapper == null) {
@@ -47,20 +47,10 @@ public class FunctionMapperFactory extends FunctionMapper {
         }
         Method m = this.target.resolveFunction(prefix, localName);
         if (m != null) {
-            this.memento.mapFunction(prefix, localName, m);
+            this.memento.addFunction(prefix, localName, m);
         }
         return m;
     }
-
-
-    @Override
-    public void mapFunction(String prefix, String localName, Method method) {
-        if (this.memento == null) {
-            this.memento = new FunctionMapperImpl();
-        }
-        memento.mapFunction(prefix, localName, method);
-    }
-
 
     public FunctionMapper create() {
         return this.memento;

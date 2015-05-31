@@ -49,7 +49,7 @@ import org.apache.tomcat.util.http.fileupload.util.Streams;
  *   header-part := 1*header CRLF<br>
  *   header := header-name ":" header-value<br>
  *   header-name := &lt;printable ascii characters except ":"&gt;<br>
- *   header-value := &lt;any ascii characters except CR &amp; LF&gt;<br>
+ *   header-value := &lt;any ascii characters except CR & LF&gt;<br>
  *   body-data := &lt;arbitrary data&gt;<br>
  * </code>
  *
@@ -218,12 +218,12 @@ public class MultipartStream {
      * The amount of data, in bytes, that must be kept in the buffer in order
      * to detect delimiters reliably.
      */
-    private final int keepRegion;
+    private int keepRegion;
 
     /**
      * The byte sequence that partitions the stream.
      */
-    private final byte[] boundary;
+    private byte[] boundary;
 
     /**
      * The length of the buffer used for processing the request.
@@ -277,18 +277,11 @@ public class MultipartStream {
      *                  progress listener, if any.
      *
      * @throws IllegalArgumentException If the buffer size is too small
-     *
-     * @since 1.3.1
      */
     public MultipartStream(InputStream input,
             byte[] boundary,
             int bufSize,
             ProgressNotifier pNotifier) {
-
-        if (boundary == null) {
-            throw new IllegalArgumentException("boundary may not be null");
-        }
-
         this.input = input;
         this.bufSize = bufSize;
         this.buffer = new byte[bufSize];
@@ -536,7 +529,8 @@ public class MultipartStream {
      */
     public int readBodyData(OutputStream output)
             throws MalformedStreamException, IOException {
-        return (int) Streams.copy(newInputStream(), output, false); // N.B. Streams.copy closes the input stream
+        final InputStream istream = newInputStream();
+        return (int) Streams.copy(istream, output, false);
     }
 
     /**
@@ -648,9 +642,11 @@ public class MultipartStream {
         int first;
         int match = 0;
         int maxpos = tail - boundaryLength;
-        for (first = head; first <= maxpos && match != boundaryLength; first++) {
+        for (first = head;
+        (first <= maxpos) && (match != boundaryLength);
+        first++) {
             first = findByte(boundary[0], first);
-            if (first == -1 || first > maxpos) {
+            if (first == -1 || (first > maxpos)) {
                 return -1;
             }
             for (match = 1; match < boundaryLength; match++) {

@@ -22,8 +22,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -54,7 +52,6 @@ import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.ManagerFactoryParameters;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSession;
@@ -64,17 +61,17 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509KeyManager;
 
+import org.apache.tomcat.util.compat.JreCompat;
 import org.apache.tomcat.util.net.AbstractEndpoint;
 import org.apache.tomcat.util.net.Constants;
 import org.apache.tomcat.util.net.SSLUtil;
 import org.apache.tomcat.util.net.ServerSocketFactory;
-import org.apache.tomcat.util.net.jsse.openssl.OpenSSLCipherConfigurationParser;
 import org.apache.tomcat.util.res.StringManager;
 
 /**
  * SSL server socket factory. It <b>requires</b> a valid RSA key and
- * JSSE.<br>
- * keytool -genkey -alias tomcat -keyalg RSA<br>
+ * JSSE.<br/>
+ * keytool -genkey -alias tomcat -keyalg RSA</br>
  * Use "changeit" as password (this is the default we use).
  *
  * @author Harish Prabandham
@@ -82,6 +79,7 @@ import org.apache.tomcat.util.res.StringManager;
  * @author Stefan Freyr Stefansson
  * @author EKR -- renamed to JSSESocketFactory
  * @author Jan Luehe
+ * @author Bill Barker
  */
 public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
 
@@ -134,7 +132,11 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
         try {
              context = SSLContext.getInstance(sslProtocol);
              context.init(null,  null,  null);
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+        } catch (NoSuchAlgorithmException e) {
+            // This is fatal for the connector so throw an exception to prevent
+            // it from starting
+            throw new IllegalArgumentException(e);
+        } catch (KeyManagementException e) {
             // This is fatal for the connector so throw an exception to prevent
             // it from starting
             throw new IllegalArgumentException(e);
@@ -172,27 +174,22 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
         try {
             defaultServerCipherSuites = socket.getEnabledCipherSuites();
             if (defaultServerCipherSuites.length == 0) {
-                log.warn(sm.getString("jsse.noDefaultCiphers",
-                        endpoint.getName()));
+                log.warn(sm.getString("jsse.noDefaultCiphers", endpoint.getName()));
             }
-
-            // Filter out all the SSL protocols (SSLv2 and SSLv3) from the
-            // defaults
+    
+            // Filter out all the SSL protocols (SSLv2 and SSLv3) from the defaults
             // since they are no longer considered secure
-            List<String> filteredProtocols = new ArrayList<>();
+            List<String> filteredProtocols = new ArrayList<String>();
             for (String protocol : socket.getEnabledProtocols()) {
                 if (protocol.toUpperCase(Locale.ENGLISH).contains("SSL")) {
-                    log.debug(sm.getString("jsse.excludeDefaultProtocol",
-                            protocol));
+                    log.debug(sm.getString("jsse.excludeDefaultProtocol", protocol));
                     continue;
                 }
                 filteredProtocols.add(protocol);
             }
-            defaultServerProtocols = filteredProtocols
-                    .toArray(new String[filteredProtocols.size()]);
+            defaultServerProtocols = filteredProtocols.toArray(new String[filteredProtocols.size()]);
             if (defaultServerProtocols.length == 0) {
-                log.warn(sm.getString("jsse.noDefaultProtocols",
-                        endpoint.getName()));
+                log.warn(sm.getString("jsse.noDefaultProtocols", endpoint.getName()));
             }
         } finally {
             try {
@@ -274,21 +271,17 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
             return defaultServerCipherSuites;
         }
 
-        List<String> requestedCiphers = new ArrayList<>();
-        if (requestedCiphersStr.indexOf(':') != -1) {
-            requestedCiphers = OpenSSLCipherConfigurationParser.parseExpression(requestedCiphersStr);
-        } else {
-            for (String rc : requestedCiphersStr.split(",")) {
-                final String cipher = rc.trim();
-                if (cipher.length() > 0) {
-                    requestedCiphers.add(cipher);
-                }
+        List<String> requestedCiphers = new ArrayList<String>();
+        for (String rc : requestedCiphersStr.split(",")) {
+            final String cipher = rc.trim();
+            if (cipher.length() > 0) {
+                requestedCiphers.add(cipher);
             }
         }
         if (requestedCiphers.isEmpty()) {
             return defaultServerCipherSuites;
         }
-        List<String> ciphers = new ArrayList<>(requestedCiphers);
+        List<String> ciphers = new ArrayList<String>(requestedCiphers);
         ciphers.retainAll(Arrays.asList(context.getSupportedSSLParameters()
                 .getCipherSuites()));
 
@@ -299,17 +292,13 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
         if (log.isDebugEnabled()) {
             log.debug(sm.getString("jsse.enableable_ciphers", ciphers));
             if (ciphers.size() != requestedCiphers.size()) {
-                List<String> skipped = new ArrayList<>(requestedCiphers);
+                List<String> skipped = new ArrayList<String>(requestedCiphers);
                 skipped.removeAll(ciphers);
                 log.debug(sm.getString("jsse.unsupported_ciphers", skipped));
             }
         }
 
         return ciphers.toArray(new String[ciphers.size()]);
-    }
-
-    public String[] getEnabledCiphers() {
-        return enabledCiphers;
     }
 
     /*
@@ -610,7 +599,7 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
         kms = kmf.getKeyManagers();
         if (keyAlias != null) {
             String alias = keyAlias;
-            if ("JKS".equals(keystoreType)) {
+            if (JSSESocketFactory.defaultKeystoreType.equals(keystoreType)) {
                 alias = alias.toLowerCase(Locale.ENGLISH);
             }
             for(int i=0; i<kms.length; i++) {
@@ -718,17 +707,25 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
                     System.getProperty(Constants.CATALINA_BASE_PROP), crlf);
         }
         Collection<? extends CRL> crls = null;
+        InputStream is = null;
         try {
             CertificateFactory cf = CertificateFactory.getInstance("X.509");
-            try (InputStream is = new FileInputStream(crlFile)) {
-                crls = cf.generateCRLs(is);
-            }
+            is = new FileInputStream(crlFile);
+            crls = cf.generateCRLs(is);
         } catch(IOException iex) {
             throw iex;
         } catch(CRLException crle) {
             throw crle;
         } catch(CertificateException ce) {
             throw ce;
+        } finally {
+            if(is != null) {
+                try{
+                    is.close();
+                } catch(Exception ex) {
+                    // Ignore
+                }
+            }
         }
         return crls;
     }
@@ -740,7 +737,7 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
             return defaultServerProtocols;
         }
 
-        List<String> protocols = new ArrayList<>(
+        List<String> protocols = new ArrayList<String>(
                 Arrays.asList(requestedProtocols));
         protocols.retainAll(Arrays.asList(context.getSupportedSSLParameters()
                 .getProtocols()));
@@ -752,7 +749,7 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
         if (log.isDebugEnabled()) {
             log.debug(sm.getString("jsse.enableable_protocols", protocols));
             if (protocols.size() != requestedProtocols.length) {
-                List<String> skipped = new ArrayList<>(
+                List<String> skipped = new ArrayList<String>(
                         Arrays.asList(requestedProtocols));
                 skipped.removeAll(protocols);
                 log.debug(sm.getString("jsse.unsupported_protocols", skipped));
@@ -788,36 +785,11 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
 
         // Only use this feature if the user explicitly requested its use.
         if(!"".equals(useServerCipherSuitesOrderStr)) {
-            SSLParameters sslParameters = socket.getSSLParameters();
             boolean useServerCipherSuitesOrder =
                     ("true".equalsIgnoreCase(useServerCipherSuitesOrderStr)
                             || "yes".equalsIgnoreCase(useServerCipherSuitesOrderStr));
-
-            try {
-                // This method is only available in Java 8+
-                // Check to see if the method exists, and then call it.
-                Method m = SSLParameters.class.getMethod("setUseCipherSuitesOrder",
-                                                         Boolean.TYPE);
-
-                m.invoke(sslParameters, Boolean.valueOf(useServerCipherSuitesOrder));
-            }
-            catch (NoSuchMethodException nsme) {
-                throw new UnsupportedOperationException(sm.getString("endpoint.jsse.cannotHonorServerCipherOrder"),
-                                                        nsme);
-            } catch (InvocationTargetException ite) {
-                // Should not happen
-                throw new UnsupportedOperationException(sm.getString("endpoint.jsse.cannotHonorServerCipherOrder"),
-                                                        ite);
-            } catch (IllegalArgumentException iae) {
-                // Should not happen
-                throw new UnsupportedOperationException(sm.getString("endpoint.jsse.cannotHonorServerCipherOrder"),
-                                                        iae);
-            } catch (IllegalAccessException e) {
-                // Should not happen
-                throw new UnsupportedOperationException(sm.getString("endpoint.jsse.cannotHonorServerCipherOrder"),
-                                                        e);
-            }
-            socket.setSSLParameters(sslParameters);
+            JreCompat jreCompat = JreCompat.getInstance();
+            jreCompat.setUseServerCipherSuitesOrder(socket, useServerCipherSuitesOrder);
         }
     }
 
@@ -831,7 +803,7 @@ public class JSSESocketFactory implements ServerSocketFactory, SSLUtil {
 
         socket.setEnabledCipherSuites(enabledCiphers);
         socket.setEnabledProtocols(enabledProtocols);
-
+        
         // we don't know if client auth is needed -
         // after parsing the request we may re-handshake
         configureClientAuth(socket);

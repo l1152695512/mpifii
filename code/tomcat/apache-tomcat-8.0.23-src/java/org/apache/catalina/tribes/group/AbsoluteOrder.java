@@ -31,21 +31,23 @@ import org.apache.catalina.tribes.Member;
  *    Ordering members can serve as a basis for electing a leader or coordinating efforts.<br>
  *    This is stinky simple, it works on the basis of the <code>Member</code> interface
  *    and orders members in the following format:
- * </p>
- * <ol>
+ * 
+ *  <ol>
  *     <li>IP comparison - byte by byte, lower byte higher rank</li>
  *     <li>IPv4 addresses rank higher than IPv6, ie the lesser number of bytes, the higher rank</li>
  *     <li>Port comparison - lower port, higher rank</li>
  *     <li>UniqueId comparison- byte by byte, lower byte higher rank</li>
- * </ol>
+ *  </ol>
+ *     
+ * </p>
  *
- *
+ * @author Filip Hanik
  * @version 1.0
  * @see org.apache.catalina.tribes.Member
  */
 public class AbsoluteOrder {
     public static final AbsoluteComparator comp = new AbsoluteComparator();
-
+    
     protected AbsoluteOrder() {
         super();
     }
@@ -55,15 +57,15 @@ public class AbsoluteOrder {
         if ( members == null || members.length <= 1 ) return;
         Arrays.sort(members,comp);
     }
-
+    
     public static void absoluteOrder(List<Member> members) {
         if ( members == null || members.size() <= 1 ) return;
         java.util.Collections.sort(members, comp);
     }
-
+    
     public static class AbsoluteComparator implements Comparator<Member>,
             Serializable {
-
+        
         private static final long serialVersionUID = 1L;
 
         @Override
@@ -73,19 +75,19 @@ public class AbsoluteOrder {
             if ( result == 0 ) result = compareIds(m1,m2);
             return result;
         }
-
+        
         public int compareIps(Member m1, Member m2) {
             return compareBytes(m1.getHost(),m2.getHost());
         }
-
+        
         public int comparePorts(Member m1, Member m2) {
             return compareInts(m1.getPort(),m2.getPort());
         }
-
+        
         public int compareIds(Member m1, Member m2) {
             return compareBytes(m1.getUniqueId(),m2.getUniqueId());
         }
-
+        
         protected int compareBytes(byte[] d1, byte[] d2) {
             int result = 0;
             if ( d1.length == d2.length ) {
@@ -99,11 +101,11 @@ public class AbsoluteOrder {
             }
             return result;
         }
-
+        
         protected int compareBytes(byte b1, byte b2) {
             return compareInts(b1,b2);
         }
-
+        
         protected int compareInts(int b1, int b2) {
             int result = 0;
             if ( b1 == b2 ) {
@@ -116,5 +118,5 @@ public class AbsoluteOrder {
             return result;
         }
     }
-
+    
 }

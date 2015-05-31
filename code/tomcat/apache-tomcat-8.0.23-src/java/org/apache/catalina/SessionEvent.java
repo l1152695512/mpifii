@@ -35,19 +35,19 @@ public final class SessionEvent extends EventObject {
     /**
      * The event data associated with this event.
      */
-    private final Object data;
+    private Object data = null;
 
 
     /**
      * The Session on which this event occurred.
      */
-    private final Session session;
+    private Session session = null;
 
 
     /**
      * The event type this instance represents.
      */
-    private final String type;
+    private String type = null;
 
 
     /**

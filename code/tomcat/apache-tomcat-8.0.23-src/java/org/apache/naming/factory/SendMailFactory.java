@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -44,39 +44,39 @@ import javax.naming.spi.ObjectFactory;
  * <p>
  * <pre>
  * &lt;Resource name="mail/send" auth="CONTAINER"
- *           type="javax.mail.internet.MimePartDataSource"/&gt;
- * &lt;ResourceParams name="mail/send"&gt;
- *   &lt;parameter&gt;&lt;name&gt;factory&lt;/name&gt;
- *     &lt;value&gt;org.apache.naming.factory.SendMailFactory&lt;/value&gt;
- *   &lt;/parameter&gt;
- *   &lt;parameter&gt;&lt;name&gt;mail.smtp.host&lt;/name&gt;
- *     &lt;value&gt;your.smtp.host&lt;/value&gt;
- *   &lt;/parameter&gt;
- *   &lt;parameter&gt;&lt;name&gt;mail.smtp.user&lt;/name&gt;
- *     &lt;value&gt;someuser&lt;/value&gt;
- *   &lt;/parameter&gt;
- *   &lt;parameter&gt;&lt;name&gt;mail.from&lt;/name&gt;
- *     &lt;value&gt;someuser@some.host&lt;/value&gt;
- *   &lt;/parameter&gt;
- *   &lt;parameter&gt;&lt;name&gt;mail.smtp.sendpartial&lt;/name&gt;
- *     &lt;value&gt;true&lt;/value&gt;
- *   &lt;/parameter&gt;
- *  &lt;parameter&gt;&lt;name&gt;mail.smtp.dsn.notify&lt;/name&gt;
- *     &lt;value&gt;FAILURE&lt;/value&gt;
- *   &lt;/parameter&gt;
- *   &lt;parameter&gt;&lt;name&gt;mail.smtp.dsn.ret&lt;/name&gt;
- *     &lt;value&gt;FULL&lt;/value&gt;
- *   &lt;/parameter&gt;
- * &lt;/ResourceParams&gt;
+ *           type="javax.mail.internet.MimePartDataSource"/>
+ * &lt;ResourceParams name="mail/send">
+ *   &lt;parameter>&lt;name>factory&lt;/name>
+ *     &lt;value>org.apache.naming.factory.SendMailFactory&lt;/value>
+ *   &lt;/parameter>
+ *   &lt;parameter>&lt;name>mail.smtp.host&lt;/name>
+ *     &lt;value>your.smtp.host&lt;/value>
+ *   &lt;/parameter>
+ *   &lt;parameter>&lt;name>mail.smtp.user&lt;/name>
+ *     &lt;value>someuser&lt;/value>
+ *   &lt;/parameter>
+ *   &lt;parameter>&lt;name>mail.from&lt;/name>
+ *     &lt;value>someuser@some.host&lt;/value>
+ *   &lt;/parameter>
+ *   &lt;parameter>&lt;name>mail.smtp.sendpartial&lt;/name>
+ *     &lt;value>true&lt;/value>
+ *   &lt;/parameter>
+ *  &lt;parameter>&lt;name>mail.smtp.dsn.notify&lt;/name>
+ *     &lt;value>FAILURE&lt;/value>
+ *   &lt;/parameter>
+ *   &lt;parameter>&lt;name>mail.smtp.dsn.ret&lt;/name>
+ *     &lt;value>FULL&lt;/value>
+ *   &lt;/parameter>
+ * &lt;/ResourceParams>
  * </pre>
  *
  * @author Glenn Nielsen Rich Catlett
  */
 
-public class SendMailFactory implements ObjectFactory
+public class SendMailFactory implements ObjectFactory 
 {
     // The class name for the javamail MimeMessageDataSource
-    protected final String DataSourceClassName =
+    protected final String DataSourceClassName = 
         "javax.mail.internet.MimePartDataSource";
 
     @Override

@@ -46,9 +46,9 @@ public class JspApplicationContextImpl implements JspApplicationContext {
     private final ExpressionFactory expressionFactory =
             ExpressionFactory.newInstance();
 
-    private final List<ELContextListener> contextListeners = new ArrayList<>();
+    private final List<ELContextListener> contextListeners = new ArrayList<ELContextListener>();
 
-    private final List<ELResolver> resolvers = new ArrayList<>();
+    private final List<ELResolver> resolvers = new ArrayList<ELResolver>();
 
     private boolean instantiated = false;
 
@@ -112,8 +112,7 @@ public class JspApplicationContextImpl implements JspApplicationContext {
     private ELResolver createELResolver() {
         this.instantiated = true;
         if (this.resolver == null) {
-            CompositeELResolver r = new JasperELResolver(this.resolvers,
-                    expressionFactory.getStreamELResolver());
+            CompositeELResolver r = new JasperELResolver(this.resolvers);
             this.resolver = r;
         }
         return this.resolver;

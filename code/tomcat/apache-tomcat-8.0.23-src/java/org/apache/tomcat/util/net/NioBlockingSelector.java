@@ -26,6 +26,8 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -33,8 +35,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.util.ExceptionUtils;
-import org.apache.tomcat.util.collections.SynchronizedQueue;
-import org.apache.tomcat.util.collections.SynchronizedStack;
 import org.apache.tomcat.util.net.NioEndpoint.KeyAttachment;
 
 public class NioBlockingSelector {
@@ -43,8 +43,8 @@ public class NioBlockingSelector {
 
     private static int threadCounter = 0;
 
-    private final SynchronizedStack<KeyReference> keyReferenceStack =
-            new SynchronizedStack<>();
+    private Queue<KeyReference> keyReferenceQueue =
+            new ConcurrentLinkedQueue<KeyReference>();
 
     protected Selector sharedSelector;
 
@@ -86,7 +86,7 @@ public class NioBlockingSelector {
             throws IOException {
         SelectionKey key = socket.getIOChannel().keyFor(socket.getPoller().getSelector());
         if ( key == null ) throw new IOException("Key no longer registered");
-        KeyReference reference = keyReferenceStack.pop();
+        KeyReference reference = keyReferenceQueue.poll();
         if (reference == null) {
             reference = new KeyReference();
         }
@@ -115,8 +115,8 @@ public class NioBlockingSelector {
                     } else {
                         att.awaitWriteLatch(writeTimeout,TimeUnit.MILLISECONDS);
                     }
-                } catch (InterruptedException ignore) {
-                    // Ignore
+                }catch (InterruptedException ignore) {
+                    Thread.interrupted();
                 }
                 if ( att.getWriteLatch()!=null && att.getWriteLatch().getCount()> 0) {
                     //we got interrupted, but we haven't received notification from the poller.
@@ -138,7 +138,7 @@ public class NioBlockingSelector {
                 poller.cancelKey(reference.key);
             }
             reference.key = null;
-            keyReferenceStack.push(reference);
+            keyReferenceQueue.add(reference);
         }
         return written;
     }
@@ -158,7 +158,7 @@ public class NioBlockingSelector {
     public int read(ByteBuffer buf, NioChannel socket, long readTimeout) throws IOException {
         SelectionKey key = socket.getIOChannel().keyFor(socket.getPoller().getSelector());
         if ( key == null ) throw new IOException("Key no longer registered");
-        KeyReference reference = keyReferenceStack.pop();
+        KeyReference reference = keyReferenceQueue.poll();
         if (reference == null) {
             reference = new KeyReference();
         }
@@ -184,8 +184,8 @@ public class NioBlockingSelector {
                     } else {
                         att.awaitReadLatch(readTimeout, TimeUnit.MILLISECONDS);
                     }
-                } catch (InterruptedException ignore) {
-                    // Ignore
+                }catch (InterruptedException ignore) {
+                    Thread.interrupted();
                 }
                 if ( att.getReadLatch()!=null && att.getReadLatch().getCount()> 0) {
                     //we got interrupted, but we haven't received notification from the poller.
@@ -206,7 +206,7 @@ public class NioBlockingSelector {
                 poller.cancelKey(reference.key);
             }
             reference.key = null;
-            keyReferenceStack.push(reference);
+            keyReferenceQueue.add(reference);
         }
         return read;
     }
@@ -215,10 +215,9 @@ public class NioBlockingSelector {
     protected static class BlockPoller extends Thread {
         protected volatile boolean run = true;
         protected Selector selector = null;
-        protected final SynchronizedQueue<Runnable> events =
-                new SynchronizedQueue<>();
+        protected ConcurrentLinkedQueue<Runnable> events = new ConcurrentLinkedQueue<Runnable>();
         public void disable() { run = false; selector.wakeup();}
-        protected final AtomicInteger wakeupCounter = new AtomicInteger(0);
+        protected AtomicInteger wakeupCounter = new AtomicInteger(0);
         public void cancelKey(final SelectionKey key) {
             Runnable r = new Runnable() {
                 @Override
@@ -244,15 +243,14 @@ public class NioBlockingSelector {
         }
 
         public void add(final KeyAttachment key, final int ops, final KeyReference ref) {
-            if ( key == null ) return;
-            NioChannel nch = key.getSocket();
-            if ( nch == null ) return;
-            final SocketChannel ch = nch.getIOChannel();
-            if ( ch == null ) return;
-
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
+                    if ( key == null ) return;
+                    NioChannel nch = key.getChannel();
+                    if ( nch == null ) return;
+                    SocketChannel ch = nch.getIOChannel();
+                    if ( ch == null ) return;
                     SelectionKey sk = ch.keyFor(selector);
                     try {
                         if (sk == null) {
@@ -275,15 +273,14 @@ public class NioBlockingSelector {
         }
 
         public void remove(final KeyAttachment key, final int ops) {
-            if ( key == null ) return;
-            NioChannel nch = key.getSocket();
-            if ( nch == null ) return;
-            final SocketChannel ch = nch.getIOChannel();
-            if ( ch == null ) return;
-
             Runnable r = new Runnable() {
                 @Override
                 public void run() {
+                    if ( key == null ) return;
+                    NioChannel nch = key.getChannel();
+                    if ( nch == null ) return;
+                    SocketChannel ch = nch.getIOChannel();
+                    if ( ch == null ) return;
                     SelectionKey sk = ch.keyFor(selector);
                     try {
                         if (sk == null) {
@@ -408,12 +405,15 @@ public class NioBlockingSelector {
         SelectionKey key = null;
 
         @Override
-        public void finalize() {
+        public void finalize() throws Throwable {
             if (key!=null && key.isValid()) {
                 log.warn("Possible key leak, cancelling key in the finalizer.");
                 try {key.cancel();}catch (Exception ignore){}
             }
             key = null;
+            
+            super.finalize();
         }
     }
+
 }

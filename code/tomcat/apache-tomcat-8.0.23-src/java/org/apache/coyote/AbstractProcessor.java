@@ -19,8 +19,6 @@ package org.apache.coyote;
 import java.io.IOException;
 import java.util.concurrent.Executor;
 
-import javax.servlet.http.HttpUpgradeHandler;
-
 import org.apache.juli.logging.Log;
 import org.apache.tomcat.util.net.AbstractEndpoint;
 import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
@@ -37,10 +35,10 @@ public abstract class AbstractProcessor<S> implements ActionHook, Processor<S> {
     protected static final StringManager sm = StringManager.getManager(Constants.Package);
 
     protected Adapter adapter;
-    protected final AsyncStateMachine asyncStateMachine;
-    protected final AbstractEndpoint<S> endpoint;
-    protected final Request request;
-    protected final Response response;
+    protected AsyncStateMachine<S> asyncStateMachine;
+    protected AbstractEndpoint<S> endpoint;
+    protected Request request;
+    protected Response response;
     protected SocketWrapper<S> socketWrapper = null;
 
     /**
@@ -54,15 +52,12 @@ public abstract class AbstractProcessor<S> implements ActionHook, Processor<S> {
      * initialise the request, response, etc.
      */
     protected AbstractProcessor() {
-        asyncStateMachine = null;
-        endpoint = null;
-        request = null;
-        response = null;
+        // NOOP
     }
 
     public AbstractProcessor(AbstractEndpoint<S> endpoint) {
         this.endpoint = endpoint;
-        asyncStateMachine = new AsyncStateMachine(this);
+        asyncStateMachine = new AsyncStateMachine<S>(this);
         request = new Request();
         response = new Response();
         response.setHook(this);
@@ -87,7 +82,7 @@ public abstract class AbstractProcessor<S> implements ActionHook, Processor<S> {
                 response.setStatus(500);
             }
             getLog().info(sm.getString("abstractProcessor.nonContainerThreadError"), t);
-            getEndpoint().processSocket(socketWrapper, SocketStatus.CLOSE_NOW, true);
+            getEndpoint().processSocketAsync(socketWrapper, SocketStatus.CLOSE_NOW);
         }
     }
 
@@ -161,8 +156,8 @@ public abstract class AbstractProcessor<S> implements ActionHook, Processor<S> {
     public Executor getExecutor() {
         return endpoint.getExecutor();
     }
-
-
+    
+    
     @Override
     public boolean isAsync() {
         return (asyncStateMachine != null && asyncStateMachine.isAsync());
@@ -210,19 +205,14 @@ public abstract class AbstractProcessor<S> implements ActionHook, Processor<S> {
      * upgrade.
      */
     @Override
-    public abstract SocketState upgradeDispatch(SocketStatus status) throws IOException;
-
-    @Override
-    public abstract HttpUpgradeHandler getHttpUpgradeHandler();
-
+    public abstract SocketState upgradeDispatch() throws IOException;
 
     /**
-     * Register the socket for the specified events.
-     *
-     * @param read  Register the socket for read events
-     * @param write Register the socket for write events
+     * @deprecated  Will be removed in Tomcat 8.0.x.
      */
-    protected abstract void registerForEvent(boolean read, boolean write);
+    @Deprecated
+    @Override
+    public abstract org.apache.coyote.http11.upgrade.UpgradeInbound getUpgradeInbound();
 
     protected abstract Log getLog();
 }

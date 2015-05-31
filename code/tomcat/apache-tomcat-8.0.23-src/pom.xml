@@ -6,12 +6,12 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.tomcat</groupId>
-    <artifactId>Tomcat7.0</artifactId>
-    <name>Tomcat7.0</name>
+    <artifactId>Tomcat</artifactId>
+    <name>Tomcat</name>
     <version>7.0</version>
 
     <build>
-        <finalName>Tomcat7.0</finalName>
+        <finalName>Tomcat</finalName>
         <sourceDirectory>java</sourceDirectory>
         <testSourceDirectory>test</testSourceDirectory>
         <resources>

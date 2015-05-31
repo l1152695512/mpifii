@@ -18,12 +18,6 @@ package org.apache.tomcat.util.buf;
 
 import java.io.CharConversionException;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-
-import org.apache.juli.logging.Log;
-import org.apache.juli.logging.LogFactory;
-import org.apache.tomcat.util.res.StringManager;
 
 /**
  *  All URL decoding happens here. This way we can reuse, review, optimize
@@ -34,11 +28,6 @@ import org.apache.tomcat.util.res.StringManager;
  *  @author Costin Manolache
  */
 public final class UDecoder {
-
-    private static final StringManager sm =
-            StringManager.getManager(Constants.Package);
-
-    private static final Log log = LogFactory.getLog(UDecoder.class);
 
     public static final boolean ALLOW_ENCODED_SLASH =
         Boolean.valueOf(System.getProperty("org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH", "false")).booleanValue();
@@ -69,6 +58,17 @@ public final class UDecoder {
 
     public UDecoder()
     {
+    }
+
+    /** URLDecode, will modify the source.  Includes converting
+     *  '+' to ' '.
+     * @deprecated Unused. Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public void convert( ByteChunk mb )
+        throws IOException
+    {
+        convert(mb, true);
     }
 
     /** URLDecode, will modify the source.
@@ -130,6 +130,17 @@ public final class UDecoder {
     // XXX What do we do about charset ????
 
     /** In-buffer processing - the buffer will be modified
+     *  Includes converting  '+' to ' '.
+     * @deprecated Unused. Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public void convert( CharChunk mb )
+        throws IOException
+    {
+        convert(mb, true);
+    }
+
+    /** In-buffer processing - the buffer will be modified
      */
     public void convert( CharChunk mb, boolean query )
         throws IOException
@@ -184,6 +195,17 @@ public final class UDecoder {
     }
 
     /** URLDecode, will modify the source
+     *  Includes converting  '+' to ' '.
+     * @deprecated Unused. Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public void convert(MessageBytes mb)
+        throws IOException
+    {
+        convert(mb, true);
+    }
+
+    /** URLDecode, will modify the source
      */
     public void convert(MessageBytes mb, boolean query)
         throws IOException
@@ -214,6 +236,15 @@ public final class UDecoder {
 
     // XXX Old code, needs to be replaced !!!!
     //
+    /**
+     * @deprecated Unused. Will be removed in Tomcat 8.0.x onwards.
+     */
+    @Deprecated
+    public final String convert(String str)
+    {
+        return convert(str, true);
+    }
+
     public final String convert(String str, boolean query)
     {
         if (str == null) {
@@ -277,135 +308,12 @@ public final class UDecoder {
     }
 
 
-    /**
-     * Decode and return the specified URL-encoded String.
-     * When the byte array is converted to a string, the system default
-     * character encoding is used...  This may be different than some other
-     * servers. It is assumed the string is not a query string.
-     *
-     * @param str The url-encoded string
-     *
-     * @exception IllegalArgumentException if a '%' character is not followed
-     * by a valid 2-digit hexadecimal number
-     */
-    public static String URLDecode(String str) {
-        return URLDecode(str, null);
-    }
-
-
-    /**
-     * Decode and return the specified URL-encoded String. It is assumed the
-     * string is not a query string.
-     *
-     * @param str The url-encoded string
-     * @param enc The encoding to use; if null, the default encoding is used. If
-     * an unsupported encoding is specified null will be returned
-     * @exception IllegalArgumentException if a '%' character is not followed
-     * by a valid 2-digit hexadecimal number
-     */
-    public static String URLDecode(String str, String enc) {
-        return URLDecode(str, enc, false);
-    }
-
-
-    /**
-     * Decode and return the specified URL-encoded String.
-     *
-     * @param str The url-encoded string
-     * @param enc The encoding to use; if null, the default encoding is used. If
-     * an unsupported encoding is specified null will be returned
-     * @param isQuery Is this a query string being processed
-     * @exception IllegalArgumentException if a '%' character is not followed
-     * by a valid 2-digit hexadecimal number
-     */
-    public static String URLDecode(String str, String enc, boolean isQuery) {
-        if (str == null)
-            return (null);
-
-        // use the specified encoding to extract bytes out of the
-        // given string so that the encoding is not lost. If an
-        // encoding is not specified, use ISO-8859-1
-        byte[] bytes = null;
-        try {
-            if (enc == null) {
-                bytes = str.getBytes(StandardCharsets.ISO_8859_1);
-            } else {
-                bytes = str.getBytes(B2CConverter.getCharset(enc));
-            }
-        } catch (UnsupportedEncodingException uee) {
-            if (log.isDebugEnabled()) {
-                log.debug(sm.getString("uDecoder.urlDecode.uee", enc), uee);
-            }
-        }
-
-        return URLDecode(bytes, enc, isQuery);
-
-    }
-
-
-    /**
-     * Decode and return the specified URL-encoded byte array.
-     *
-     * @param bytes The url-encoded byte array
-     * @param enc The encoding to use; if null, the default encoding is used. If
-     * an unsupported encoding is specified null will be returned
-     * @param isQuery Is this a query string being processed
-     * @exception IllegalArgumentException if a '%' character is not followed
-     * by a valid 2-digit hexadecimal number
-     */
-    public static String URLDecode(byte[] bytes, String enc, boolean isQuery) {
-
-        if (bytes == null)
-            return null;
-
-        int len = bytes.length;
-        int ix = 0;
-        int ox = 0;
-        while (ix < len) {
-            byte b = bytes[ix++];     // Get byte to test
-            if (b == '+' && isQuery) {
-                b = (byte)' ';
-            } else if (b == '%') {
-                if (ix + 2 > len) {
-                    throw new IllegalArgumentException(
-                            sm.getString("requestUtil.urlDecode.missingDigit"));
-                }
-                b = (byte) ((convertHexDigit(bytes[ix++]) << 4)
-                            + convertHexDigit(bytes[ix++]));
-            }
-            bytes[ox++] = b;
-        }
-        if (enc != null) {
-            try {
-                return new String(bytes, 0, ox, B2CConverter.getCharset(enc));
-            } catch (UnsupportedEncodingException uee) {
-                if (log.isDebugEnabled()) {
-                    log.debug(sm.getString("uDecoder.urlDecode.uee", enc), uee);
-                }
-                return null;
-            }
-        }
-        return new String(bytes, 0, ox);
-
-    }
-
-
-    private static byte convertHexDigit( byte b ) {
-        if ((b >= '0') && (b <= '9')) return (byte)(b - '0');
-        if ((b >= 'a') && (b <= 'f')) return (byte)(b - 'a' + 10);
-        if ((b >= 'A') && (b <= 'F')) return (byte)(b - 'A' + 10);
-        throw new IllegalArgumentException(
-                sm.getString("uDecoder.convertHexDigit.notHex",
-                        Character.valueOf((char)b)));
-    }
-
 
     private static boolean isHexDigit( int c ) {
         return ( ( c>='0' && c<='9' ) ||
                  ( c>='a' && c<='f' ) ||
                  ( c>='A' && c<='F' ));
     }
-
 
     private static int x2c( byte b1, byte b2 ) {
         int digit= (b1>='A') ? ( (b1 & 0xDF)-'A') + 10 :
@@ -416,7 +324,6 @@ public final class UDecoder {
         return digit;
     }
 
-
     private static int x2c( char b1, char b2 ) {
         int digit= (b1>='A') ? ( (b1 & 0xDF)-'A') + 10 :
             (b1 -'0');
@@ -425,4 +332,5 @@ public final class UDecoder {
             (b2 -'0');
         return digit;
     }
+
 }

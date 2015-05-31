@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -93,16 +93,6 @@ directory listings are disabled and debugging is turned off.
         <b>WARNING:</b> Listings of directories containing many entries are
         expensive. Multiple requests for large directory listings can consume
         significant proportions of server resources.
-  </property>
-  <property name="gzip">
-        If a gzipped version of a file exists (a file with <code>.gz</code>
-        appended to the file name located alongside the original file), Tomcat
-        will serve the gzipped file if the user agent supports gzip and this
-        option is enabled. [false]
-        <br />
-        The file with the <code>.gz</code> extension will be accessible if
-        requested directly so if the original resource is protected with a
-        security constraint, the gzipped version must be similarly protected.
   </property>
   <property name="readmeFile">
         If a directory listing is presented, a readme file may also
@@ -254,7 +244,7 @@ Format:
         </table>
       <xsl:apply-templates select="readme"/>
       <hr style="height: 1px;" />
-      <h3>Apache Tomcat/<version-major-minor/></h3>
+      <h3>Apache Tomcat/8.0</h3>
     </body>
    </html>
   </xsl:template>

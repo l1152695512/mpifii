@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,7 +78,7 @@ public class MemoryUserDatabase implements UserDatabase {
      * The set of {@link Group}s defined in this database, keyed by
      * group name.
      */
-    protected final HashMap<String,Group> groups = new HashMap<>();
+    protected final HashMap<String,Group> groups = new HashMap<String,Group>();
 
 
     /**
@@ -117,7 +117,7 @@ public class MemoryUserDatabase implements UserDatabase {
      * The set of {@link Role}s defined in this database, keyed by
      * role name.
      */
-    protected final HashMap<String,Role> roles = new HashMap<>();
+    protected final HashMap<String,Role> roles = new HashMap<String,Role>();
 
 
     /**
@@ -131,7 +131,7 @@ public class MemoryUserDatabase implements UserDatabase {
      * The set of {@link User}s defined in this database, keyed by
      * user name.
      */
-    protected final HashMap<String,User> users = new HashMap<>();
+    protected final HashMap<String,User> users = new HashMap<String,User>();
 
 
     // ------------------------------------------------------------- Properties
@@ -426,11 +426,23 @@ public class MemoryUserDatabase implements UserDatabase {
                      new MemoryUserCreationFactory(this), true);
 
                 // Parse the XML input file to load this database
-                try (FileInputStream fis =  new FileInputStream(file)) {
+                FileInputStream fis = null;
+                try {
+                    fis =  new FileInputStream(file);
                     digester.parse(fis);
+                } finally {
+                    if (fis != null) {
+                        try {
+                            fis.close();
+                        } catch (IOException ioe) {
+                            // Ignore
+                        }
+                    }
                 }
+
             }
         }
+
     }
 
 
@@ -450,6 +462,7 @@ public class MemoryUserDatabase implements UserDatabase {
             }
             groups.remove(group.getGroupname());
         }
+
     }
 
 
@@ -494,8 +507,9 @@ public class MemoryUserDatabase implements UserDatabase {
 
 
     /**
-     * Check for permissions to save this user database to persistent storage
-     * location.
+     * Check for permissions to save this user database
+     * to persistent storage location
+     *
      */
     public boolean isWriteable() {
 
@@ -506,6 +520,7 @@ public class MemoryUserDatabase implements UserDatabase {
         }
         File dir = file.getParentFile();
         return dir.exists() && dir.isDirectory() && dir.canWrite();
+
     }
 
 
@@ -544,10 +559,7 @@ public class MemoryUserDatabase implements UserDatabase {
 
             // Print the file prolog
             writer.println("<?xml version='1.0' encoding='utf-8'?>");
-            writer.println("<tomcat-users xmlns=\"http://tomcat.apache.org/xml\"");
-            writer.println("              xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
-            writer.println("              xsi:schemaLocation=\"http://tomcat.apache.org/xml tomcat-users.xsd\"");
-            writer.println("              version=\"1.0\">");
+            writer.println("<tomcat-users>");
 
             // Print entries for each defined role, group, and user
             Iterator<?> values = null;
@@ -638,7 +650,23 @@ public class MemoryUserDatabase implements UserDatabase {
         sb.append(this.users.size());
         sb.append("]");
         return (sb.toString());
+
     }
+
+
+    // -------------------------------------------------------- Package Methods
+
+
+    /**
+     * Return the <code>StringManager</code> for use in looking up messages.
+     */
+    StringManager getStringManager() {
+
+        return (sm);
+
+    }
+
+
 }
 
 
@@ -684,7 +712,7 @@ class MemoryGroupCreationFactory extends AbstractObjectCreationFactory {
         return (group);
     }
 
-    private final MemoryUserDatabase database;
+    private MemoryUserDatabase database = null;
 }
 
 
@@ -708,7 +736,7 @@ class MemoryRoleCreationFactory extends AbstractObjectCreationFactory {
         return (role);
     }
 
-    private final MemoryUserDatabase database;
+    private MemoryUserDatabase database = null;
 }
 
 
@@ -778,5 +806,5 @@ class MemoryUserCreationFactory extends AbstractObjectCreationFactory {
         return (user);
     }
 
-    private final MemoryUserDatabase database;
+    private MemoryUserDatabase database = null;
 }

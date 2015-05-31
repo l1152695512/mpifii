@@ -37,8 +37,8 @@ import org.apache.tomcat.util.net.SocketWrapper;
  * will not fit Jk protocols like JNI.
  */
 public class AjpNioProtocol extends AbstractAjpProtocol<NioChannel> {
-
-
+    
+    
     private static final Log log = LogFactory.getLog(AjpNioProtocol.class);
 
     @Override
@@ -65,14 +65,14 @@ public class AjpNioProtocol extends AbstractAjpProtocol<NioChannel> {
         ((NioEndpoint) endpoint).setUseSendfile(false);
     }
 
-
+    
     // ----------------------------------------------------- Instance Variables
 
 
     /**
      * Connection handler for AJP.
      */
-    private final AjpConnectionHandler cHandler;
+    private AjpConnectionHandler cHandler;
 
 
     // ----------------------------------------------------- JMX related methods
@@ -90,7 +90,7 @@ public class AjpNioProtocol extends AbstractAjpProtocol<NioChannel> {
             extends AbstractAjpConnectionHandler<NioChannel, AjpNioProcessor>
             implements Handler {
 
-        protected final AjpNioProtocol proto;
+        protected AjpNioProtocol proto;
 
         public AjpConnectionHandler(AjpNioProtocol proto) {
             this.proto = proto;
@@ -118,8 +118,8 @@ public class AjpNioProtocol extends AbstractAjpProtocol<NioChannel> {
          */
         @Override
         public void release(SocketChannel socket) {
-            if (log.isDebugEnabled())
-                log.debug(sm.getString("ajpnioprotocol.releaseStart", socket));
+            if (log.isDebugEnabled()) 
+                log.debug("Iterating through our connections to release a socket channel:"+socket);
             boolean released = false;
             Iterator<java.util.Map.Entry<NioChannel, Processor<NioChannel>>> it = connections.entrySet().iterator();
             while (it.hasNext()) {
@@ -133,11 +133,10 @@ public class AjpNioProtocol extends AbstractAjpProtocol<NioChannel> {
                     break;
                 }
             }
-            if (log.isDebugEnabled())
-                log.debug(sm.getString("ajpnioprotocol.releaseEnd",
-                        socket, Boolean.valueOf(released)));
+            if (log.isDebugEnabled()) 
+                log.debug("Done iterating through our connections to release a socket channel:"+socket +" released:"+released);
         }
-
+        
         /**
          * Expected to be used by the Poller to release resources on socket
          * close, errors etc.
@@ -148,7 +147,7 @@ public class AjpNioProtocol extends AbstractAjpProtocol<NioChannel> {
                     connections.remove(socket.getSocket());
             if (processor != null) {
                 processor.recycle(true);
-                recycledProcessors.push(processor);
+                recycledProcessors.offer(processor);
             }
         }
 
@@ -161,7 +160,7 @@ public class AjpNioProtocol extends AbstractAjpProtocol<NioChannel> {
                 Processor<NioChannel> processor, boolean isSocketClosing,
                 boolean addToPoller) {
             processor.recycle(isSocketClosing);
-            recycledProcessors.push(processor);
+            recycledProcessors.offer(processor);
             if (addToPoller) {
                 socket.getSocket().getPoller().add(socket.getSocket());
             }
@@ -171,7 +170,12 @@ public class AjpNioProtocol extends AbstractAjpProtocol<NioChannel> {
         @Override
         protected AjpNioProcessor createProcessor() {
             AjpNioProcessor processor = new AjpNioProcessor(proto.packetSize, (NioEndpoint)proto.endpoint);
-            proto.configureProcessor(processor);
+            processor.setAdapter(proto.adapter);
+            processor.setTomcatAuthentication(proto.tomcatAuthentication);
+            processor.setTomcatAuthorization(proto.getTomcatAuthorization());
+            processor.setRequiredSecret(proto.requiredSecret);
+            processor.setKeepAliveTimeout(proto.getKeepAliveTimeout());
+            processor.setClientCertProvider(proto.getClientCertProvider());
             register(processor);
             return processor;
         }

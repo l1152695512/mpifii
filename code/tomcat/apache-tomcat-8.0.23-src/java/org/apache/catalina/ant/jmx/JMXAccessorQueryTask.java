@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import org.apache.tools.ant.BuildException;
 
 
 /**
- * Query for Mbeans.
+ * Query for Mbeans. 
  * <ul>
  * <li>open no existing JSR 160 rmi jmx connection</li>
  * <li>Get all Mbeans attributes</li>
@@ -39,20 +39,20 @@ import org.apache.tools.ant.BuildException;
  * <li>Show query result as Ant console log</li>
  * <li>Bind query result as Ant properties</li>
  * </ul>
- * <br>
+ * <br/>
  * Query a list of Mbeans.
  * <pre>
  *   &lt;jmxQuery
  *           host="127.0.0.1"
  *           port="9014"
- *           name="Catalina:type=Manager,*
+ *           name="Catalina:type=Manager,* 
  *           resultproperty="manager" /&gt;
  * </pre>
- * with attribute <em>attributebinding="true"</em> you can get
- * all attributes also from result objects.<br>
- * The property manager.lenght show the size of the result
- * and with manager.[0..length].name the
- * resulted ObjectNames are saved.
+ * with attribute <em>attributebinding="true"</em> you can get 
+ * all attributes also from result objects.<br/>
+ * The property manager.lenght show the size of the result 
+ * and with manager.[0..length].name the 
+ * resulted ObjectNames are saved. 
  * These tasks require Ant 1.6 or later interface.
  *
  * @author Peter Rossbach
@@ -64,8 +64,27 @@ public class JMXAccessorQueryTask extends JMXAccessorTask {
 
     private boolean attributebinding = false;
 
-    // ------------------------------------------------------------- Properties
+    // ----------------------------------------------------- Instance Info
 
+    /**
+     * Descriptive information describing this implementation.
+     */
+    private static final String info = "org.apache.catalina.ant.JMXAccessorQueryTask/1.0";
+
+    /**
+     * Return descriptive information about this implementation and the
+     * corresponding version number, in the format
+     * <code>&lt;description&gt;/&lt;version&gt;</code>.
+     */
+    @Override
+    public String getInfo() {
+
+        return (info);
+
+    }
+
+    // ------------------------------------------------------------- Properties
+    
     /**
      * @return Returns the attributebinding.
      */
@@ -78,15 +97,15 @@ public class JMXAccessorQueryTask extends JMXAccessorTask {
     public void setAttributebinding(boolean attributeBinding) {
         this.attributebinding = attributeBinding;
     }
-
+  
     // ------------------------------------------------------ protected Methods
 
-
+    
     /**
      * Execute the specified command, based on the configured properties. The
      * input stream will be closed upon completion of this task, whether it was
      * executed successfully or not.
-     *
+     * 
      * @exception Exception
      *                if an error occurs
      */
@@ -101,7 +120,7 @@ public class JMXAccessorQueryTask extends JMXAccessorTask {
 
     }
 
-
+       
     /**
      * Call Mbean server for some mbeans with same domain, attributes.
      *  with <em>attributebinding=true</em> you can save all attributes from all found objects
@@ -137,7 +156,7 @@ public class JMXAccessorQueryTask extends JMXAccessorTask {
                     setProperty(pname + "Name", oname.toString());
                     if (isAttributebinding()) {
                         bindAttributes(jmxServerConnection, resultproperty, pname, oname);
-
+                
                     }
                 }
         }
@@ -151,7 +170,7 @@ public class JMXAccessorQueryTask extends JMXAccessorTask {
      * @param oname
      */
     protected void bindAttributes(MBeanServerConnection jmxServerConnection, String resultproperty, String pname, ObjectName oname) {
-        if (jmxServerConnection != null  && resultproperty != null
+        if (jmxServerConnection != null  && resultproperty != null 
             && pname != null && oname != null ) {
             try {
                 MBeanInfo minfo = jmxServerConnection.getMBeanInfo(oname);

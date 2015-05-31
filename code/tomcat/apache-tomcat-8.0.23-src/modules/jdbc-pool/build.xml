@@ -126,13 +126,11 @@
     <javadoc
         destdir="${tomcat.api}"
         bottom="Copyright &amp;#169; 2000-${year} Apache Software Foundation. All Rights Reserved."
-        encoding="UTF-8"
-        docencoding="UTF-8"
-        charset="UTF-8"
+        encoding="ISO-8859-1"
         additionalparam="-breakiterator -notimestamp"
         verbose="false">
       <classpath refid="tomcat.jdbc.classpath"/>
-      <link href="http://docs.oracle.com/javase/7/docs/api/"/>
+      <link href="http://docs.oracle.com/javase/6/docs/api/"/>
       <sourcepath location="${basedir}/src/main/java"/>
     </javadoc>
     <!-- connection pool API  file-->
@@ -150,6 +148,7 @@
            deprecation="${compile.deprecation}"
            source="${compile.source}"
            target="${compile.target}"
+           optimize="${compile.optimize}"
            encoding="ISO-8859-1"
            includeantruntime="false">
       <classpath refid="tomcat.jdbc.classpath"/>
@@ -186,6 +185,7 @@
            deprecation="${compile.deprecation}"
            source="${compile.source}"
            target="${compile.target}"
+           optimize="${compile.optimize}"
            encoding="ISO-8859-1"
            includeantruntime="false">
       <classpath refid="tomcat.jdbc.classpath"/>

@@ -315,7 +315,7 @@ public abstract class WsFrameBase {
             int code = CloseCodes.NORMAL_CLOSURE.getCode();
             if (controlBufferBinary.remaining() == 1) {
                 controlBufferBinary.clear();
-                // Payload must be zero or 2+ bytes long
+                // Payload must be zero or greater than 2
                 throw new WsIOException(new CloseReason(
                         CloseCodes.PROTOCOL_ERROR,
                         sm.getString("wsFrame.oneByteCloseCode")));
@@ -646,10 +646,10 @@ public abstract class WsFrameBase {
         if (Util.isControl(opCode)) {
             return false;
         } else if (textMessage) {
-            return textMsgHandler instanceof MessageHandler.Partial;
+            return textMsgHandler instanceof MessageHandler.Partial<?>;
         } else {
             // Must be binary
-            return binaryMsgHandler instanceof MessageHandler.Partial;
+            return binaryMsgHandler instanceof MessageHandler.Partial<?>;
         }
     }
 

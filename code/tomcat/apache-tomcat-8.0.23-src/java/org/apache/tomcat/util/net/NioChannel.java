@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 package org.apache.tomcat.util.net;
 
 import java.io.IOException;
@@ -33,9 +35,10 @@ import org.apache.tomcat.util.res.StringManager;
  * This way, logic for a SSL socket channel remains the same as for
  * a non SSL, making sure we don't need to code for any exception cases.
  *
+ * @author Filip Hanik
  * @version 1.0
  */
-public class NioChannel implements ByteChannel {
+public class NioChannel implements ByteChannel{
 
     protected static final StringManager sm =
             StringManager.getManager("org.apache.tomcat.util.net.res");
@@ -50,16 +53,11 @@ public class NioChannel implements ByteChannel {
 
     protected boolean sendFile = false;
 
-    public NioChannel(SocketChannel channel, ApplicationBufferHandler bufHandler) {
+    public NioChannel(SocketChannel channel, ApplicationBufferHandler bufHandler) throws IOException {
         this.sc = channel;
         this.bufHandler = bufHandler;
     }
 
-    /**
-     * Reset the channel
-     *
-     * @throws IOException If a problem was encountered resetting the channel
-     */
     public void reset() throws IOException {
         bufHandler.getReadBuffer().clear();
         bufHandler.getWriteBuffer().clear();
@@ -94,6 +92,7 @@ public class NioChannel implements ByteChannel {
      * Closes this channel.
      *
      * @throws IOException If an I/O error occurs
+     * TODO Implement this java.nio.channels.Channel method
      */
     @Override
     public void close() throws IOException {
@@ -108,6 +107,7 @@ public class NioChannel implements ByteChannel {
      * Tells whether or not this channel is open.
      *
      * @return <tt>true</tt> if, and only if, this channel is open
+     * TODO Implement this java.nio.channels.Channel method
      */
     @Override
     public boolean isOpen() {
@@ -120,6 +120,7 @@ public class NioChannel implements ByteChannel {
      * @param src The buffer from which bytes are to be retrieved
      * @return The number of bytes written, possibly zero
      * @throws IOException If some other I/O error occurs
+     * TODO Implement this java.nio.channels.WritableByteChannel method
      */
     @Override
     public int write(ByteBuffer src) throws IOException {
@@ -131,9 +132,9 @@ public class NioChannel implements ByteChannel {
      * Reads a sequence of bytes from this channel into the given buffer.
      *
      * @param dst The buffer into which bytes are to be transferred
-     * @return The number of bytes read, possibly zero, or <tt>-1</tt> if the
-     *         channel has reached end-of-stream
+     * @return The number of bytes read, possibly zero, or <tt>-1</tt> if the channel has reached end-of-stream
      * @throws IOException If some other I/O error occurs
+     * TODO Implement this java.nio.channels.ReadableByteChannel method
      */
     @Override
     public int read(ByteBuffer dst) throws IOException {
@@ -147,7 +148,12 @@ public class NioChannel implements ByteChannel {
         Object att = key!=null?key.attachment():null;
         return att;
     }
-
+    /**
+     * getBufHandler
+     *
+     * @return ApplicationBufferHandler
+     * TODO Implement this org.apache.tomcat.util.net.SecureNioChannel method
+     */
     public ApplicationBufferHandler getBufHandler() {
         return bufHandler;
     }
@@ -155,28 +161,35 @@ public class NioChannel implements ByteChannel {
     public Poller getPoller() {
         return poller;
     }
-
+    /**
+     * getIOChannel
+     *
+     * @return SocketChannel
+     * TODO Implement this org.apache.tomcat.util.net.SecureNioChannel method
+     */
     public SocketChannel getIOChannel() {
         return sc;
     }
 
+    /**
+     * isClosing
+     *
+     * @return boolean
+     * TODO Implement this org.apache.tomcat.util.net.SecureNioChannel method
+     */
     public boolean isClosing() {
         return false;
     }
 
+    /**
+     * isInitHandshakeComplete
+     *
+     * @return boolean
+     */
     public boolean isHandshakeComplete() {
         return true;
     }
 
-    /**
-     * Performs SSL handshake hence is a no-op for the non-secure
-     * implementation.
-     *
-     * @param read  Unused in non-secure implementation
-     * @param write Unused in non-secure implementation
-     * @return Always returns zero
-     * @throws IOException
-     */
     public int handshake(boolean read, boolean write) throws IOException {
         return 0;
     }

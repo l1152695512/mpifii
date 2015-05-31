@@ -38,7 +38,7 @@ public class TestByteChunk {
         assertTrue(Arrays.equals(bytes, expected));
     }
 
-    /*
+    /**
      * Test for {@code findByte} vs. {@code indexOf} methods difference.
      *
      * <p>
@@ -135,5 +135,18 @@ public class TestByteChunk {
         assertEquals(1, ByteChunk.findBytes(bytes, 0, len, new byte[] { 'o',
                 'e' }));
         assertEquals(-1, ByteChunk.findBytes(bytes, 2, 5, new byte[] { 'w' }));
+    }
+
+    @Test
+    @Deprecated
+    public void testFindNotBytes() throws UnsupportedEncodingException {
+        byte[] bytes = "Hello\u00a0world".getBytes("ISO-8859-1");
+        final int len = bytes.length;
+
+        assertEquals(4, ByteChunk.findNotBytes(bytes, 0, len, new byte[] { 'l',
+                'e', 'H' }));
+        assertEquals(-1, ByteChunk.findNotBytes(bytes, 0, len, bytes));
+        assertEquals(-1, ByteChunk.findNotBytes(bytes, 2, 3, new byte[] { 'l',
+                'e', 'H' }));
     }
 }

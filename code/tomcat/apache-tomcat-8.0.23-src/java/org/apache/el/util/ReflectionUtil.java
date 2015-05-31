@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,12 +28,11 @@ import javax.el.ELException;
 import javax.el.MethodNotFoundException;
 
 import org.apache.el.lang.ELSupport;
-import org.apache.el.lang.EvaluationContext;
 
 
 /**
  * Utilities for Managing Serialization and Reflection
- *
+ * 
  * @author Jacob Hookom [jacob@hookom.net]
  */
 public class ReflectionUtil {
@@ -77,12 +76,9 @@ public class ReflectionUtil {
     }
 
     /**
-     * Converts an array of Class names to Class types.
-     * @param s  The array of class names
-     * @return An array of Class instance where the element at index i in the
-     *         result is an instance of the class with the name at index i in
-     *         the input
-     * @throws ClassNotFoundException If a class of a given name cannot be found
+     * Converts an array of Class names to Class types
+     * @param s
+     * @throws ClassNotFoundException
      */
     public static Class<?>[] toTypeArray(String[] s) throws ClassNotFoundException {
         if (s == null)
@@ -95,10 +91,8 @@ public class ReflectionUtil {
     }
 
     /**
-     * Converts an array of Class types to Class names.
-     * @param c The array of class instances
-     * @return An array of Class names where the element at index i in the
-     *         result is the name of the class instance at index i in the input
+     * Converts an array of Class types to Class names
+     * @param c
      */
     public static String[] toTypeNameArray(Class<?>[] c) {
         if (c == null)
@@ -112,21 +106,19 @@ public class ReflectionUtil {
 
     /**
      * Returns a method based on the criteria.
-     * @param ctx the context in which the expression is being evaluated
      * @param base the object that owns the method
      * @param property the name of the method
      * @param paramTypes the parameter types to use
      * @param paramValues the parameter values
      * @return the method specified
-     * @throws MethodNotFoundException If a method can not be found that matches
-     *         the given criteria
+     * @throws MethodNotFoundException
      */
     /*
      * This class duplicates code in javax.el.Util. When making changes keep
      * the code in sync.
      */
     @SuppressWarnings("null")
-    public static Method getMethod(EvaluationContext ctx, Object base, Object property,
+    public static Method getMethod(Object base, Object property,
             Class<?>[] paramTypes, Object[] paramValues)
             throws MethodNotFoundException {
         if (base == null || property == null) {
@@ -137,7 +129,7 @@ public class ReflectionUtil {
 
         String methodName = (property instanceof String) ? (String) property
                 : property.toString();
-
+        
         int paramCount;
         if (paramTypes == null) {
             paramCount = 0;
@@ -146,14 +138,14 @@ public class ReflectionUtil {
         }
 
         Method[] methods = base.getClass().getMethods();
-        Map<Method,MatchResult> candidates = new HashMap<>();
-
+        Map<Method,MatchResult> candidates = new HashMap<Method,MatchResult>();
+        
         for (Method m : methods) {
             if (!m.getName().equals(methodName)) {
                 // Method name doesn't match
                 continue;
             }
-
+            
             Class<?>[] mParamTypes = m.getParameterTypes();
             int mParamCount;
             if (mParamTypes == null) {
@@ -161,14 +153,14 @@ public class ReflectionUtil {
             } else {
                 mParamCount = mParamTypes.length;
             }
-
+            
             // Check the number of parameters
             if (!(paramCount == mParamCount ||
                     (m.isVarArgs() && paramCount >= mParamCount))) {
                 // Method has wrong number of parameters
                 continue;
             }
-
+            
             // Check the parameters match
             int exactMatch = 0;
             int assignableMatch = 0;
@@ -188,7 +180,7 @@ public class ReflectionUtil {
                                 noMatch = true;
                                 break;
                             } else {
-                                if (isCoercibleFrom(ctx, paramValues[j], varType)) {
+                                if (isCoercibleFrom(paramValues[j], varType)) {
                                     coercibleMatch++;
                                 } else {
                                     noMatch = true;
@@ -207,7 +199,7 @@ public class ReflectionUtil {
                         noMatch = true;
                         break;
                     } else {
-                        if (isCoercibleFrom(ctx, paramValues[i], mParamTypes[i])) {
+                        if (isCoercibleFrom(paramValues[i], mParamTypes[i])) {
                             coercibleMatch++;
                         } else {
                             noMatch = true;
@@ -219,13 +211,13 @@ public class ReflectionUtil {
             if (noMatch) {
                 continue;
             }
-
+            
             // If a method is found where every parameter matches exactly,
             // return it
             if (exactMatch == paramCount) {
                 return getMethod(base.getClass(), m);
             }
-
+            
             candidates.put(m, new MatchResult(
                     exactMatch, assignableMatch, coercibleMatch, m.isBridge()));
         }
@@ -253,7 +245,7 @@ public class ReflectionUtil {
             } else {
                 match = null;
             }
-
+            
             if (match == null) {
                 // If multiple methods have the same matching number of parameters
                 // the match is ambiguous so throw an exception
@@ -262,14 +254,14 @@ public class ReflectionUtil {
                         paramString(paramTypes)));
                 }
         }
-
+        
         // Handle case where no match at all was found
         if (match == null) {
             throw new MethodNotFoundException(MessageFactory.get(
                         "error.method.notfound", base, property,
                         paramString(paramTypes)));
         }
-
+        
         return getMethod(base.getClass(), match);
     }
 
@@ -281,10 +273,10 @@ public class ReflectionUtil {
             Class<?>[] paramTypes) {
         // Identify which parameter isn't an exact match
         Method m = candidates.iterator().next();
-
+        
         int nonMatchIndex = 0;
         Class<?> nonMatchClass = null;
-
+        
         for (int i = 0; i < paramTypes.length; i++) {
             if (m.getParameterTypes()[i] != paramTypes[i]) {
                 nonMatchIndex = i;
@@ -292,7 +284,7 @@ public class ReflectionUtil {
                 break;
             }
         }
-
+        
         if (nonMatchClass == null) {
             // Null will always be ambiguous
             return null;
@@ -306,7 +298,7 @@ public class ReflectionUtil {
                return null;
            }
         }
-
+        
         // Can't be null
         Class<?> superClass = nonMatchClass.getSuperclass();
         while (superClass != null) {
@@ -318,7 +310,7 @@ public class ReflectionUtil {
             }
             superClass = superClass.getSuperclass();
         }
-
+        
         // Treat instances of Number as a special case
         Method match = null;
         if (Number.class.isAssignableFrom(nonMatchClass)) {
@@ -383,11 +375,11 @@ public class ReflectionUtil {
      * This class duplicates code in javax.el.Util. When making changes keep
      * the code in sync.
      */
-    private static boolean isCoercibleFrom(EvaluationContext ctx, Object src, Class<?> target) {
+    private static boolean isCoercibleFrom(Object src, Class<?> target) {
         // TODO: This isn't pretty but it works. Significant refactoring would
         //       be required to avoid the exception.
         try {
-            ELSupport.coerceToType(ctx, src, target);
+            ELSupport.coerceToType(src, target);
         } catch (ELException e) {
             return false;
         }
@@ -486,21 +478,35 @@ public class ReflectionUtil {
 
         @Override
         public int compareTo(MatchResult o) {
-            int cmp = Integer.compare(this.getExact(), o.getExact());
-            if (cmp == 0) {
-                cmp = Integer.compare(this.getAssignable(), o.getAssignable());
-                if (cmp == 0) {
-                    cmp = Integer.compare(this.getCoercible(), o.getCoercible());
-                    if (cmp == 0) {
+            if (this.getExact() < o.getExact()) {
+                return -1;
+            } else if (this.getExact() > o.getExact()) {
+                return 1;
+            } else {
+                if (this.getAssignable() < o.getAssignable()) {
+                    return -1;
+                } else if (this.getAssignable() > o.getAssignable()) {
+                    return 1;
+                } else {
+                    if (this.getCoercible() < o.getCoercible()) {
+                        return -1;
+                    } else if (this.getCoercible() > o.getCoercible()) {
+                        return 1;
+                    } else {
                         // The nature of bridge methods is such that it actually
                         // doesn't matter which one we pick as long as we pick
                         // one. That said, pick the 'right' one (the non-bridge
                         // one) anyway.
-                        cmp = Boolean.compare(o.isBridge(), this.isBridge());
+                        if (o.isBridge() && !this.isBridge()) {
+                            return 1;
+                        } else if (!o.isBridge() && this.isBridge()) {
+                            return -1;
+                        } else {
+                            return 0;
+                        }
                     }
                 }
             }
-            return cmp;
         }
     }
 

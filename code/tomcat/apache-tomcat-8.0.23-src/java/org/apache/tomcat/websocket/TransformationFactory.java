@@ -36,10 +36,9 @@ public class TransformationFactory {
         return factory;
     }
 
-    public Transformation create(String name, List<List<Extension.Parameter>> preferences,
-            boolean isServer) {
+    public Transformation create(String name, List<List<Extension.Parameter>> preferences) {
         if (PerMessageDeflate.NAME.equals(name)) {
-            return PerMessageDeflate.negotiate(preferences, isServer);
+            return PerMessageDeflate.negotiate(preferences);
         }
         if (Constants.ALLOW_UNSUPPORTED_EXTENSIONS) {
             return null;

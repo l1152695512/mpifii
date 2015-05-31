@@ -24,7 +24,6 @@ import javax.servlet.ServletException;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import org.apache.catalina.Context;
@@ -95,10 +94,12 @@ public class TestRequestFilterValve {
 
         connector.setPort(PORT);
         request.setConnector(connector);
-        request.getMappingData().context = context;
+        request.setContext(context);
         request.setCoyoteRequest(new org.apache.coyote.Request());
 
-        Assert.assertNotNull("Invalid test with null type", type);
+        if (type == null) {
+            fail("Invalid test with null type");
+        }
         if (property != null) {
             if (type.equals("Addr")) {
                 valve = new RemoteAddrValve();
@@ -108,9 +109,10 @@ public class TestRequestFilterValve {
                 valve = new RemoteHostValve();
                 request.setRemoteHost(property);
                 msg.append(" host='" + property + "'");
+            } else {
+                fail("Invalid test type" + type);
             }
         }
-        Assert.assertNotNull("Invalid test type" + type, valve);
         valve.setNext(new TerminatingValve());
 
         if (allow != null) {

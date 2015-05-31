@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -57,17 +57,17 @@ public class SymbolTable {
     //
 
     /** Default table size. */
-    private static final int TABLE_SIZE = 101;
+    protected static final int TABLE_SIZE = 101;
 
     //
     // Data
     //
 
     /** Buckets. */
-    private final Entry[] fBuckets;
+    protected Entry[] fBuckets = null;
 
     // actual table size
-    private final int fTableSize;
+    protected int fTableSize;
 
     //
     // Constructors
@@ -87,6 +87,37 @@ public class SymbolTable {
     //
     // Public methods
     //
+
+    /**
+     * Adds the specified symbol to the symbol table and returns a
+     * reference to the unique symbol. If the symbol already exists,
+     * the previous symbol reference is returned instead, in order
+     * guarantee that symbol references remain unique.
+     *
+     * @param symbol The new symbol.
+     */
+    public String addSymbol(String symbol) {
+
+        // search for identical symbol
+        int bucket = hash(symbol) % fTableSize;
+        int length = symbol.length();
+        OUTER: for (Entry entry = fBuckets[bucket]; entry != null; entry = entry.next) {
+            if (length == entry.characters.length) {
+                for (int i = 0; i < length; i++) {
+                    if (symbol.charAt(i) != entry.characters[i]) {
+                        continue OUTER;
+                    }
+                }
+                return entry.symbol;
+            }
+        }
+
+        // create new entry
+        Entry entry = new Entry(symbol, fBuckets[bucket]);
+        fBuckets[bucket] = entry;
+        return entry.symbol;
+
+    } // addSymbol(String):String
 
     /**
      * Adds the specified symbol to the symbol table and returns a
@@ -121,6 +152,25 @@ public class SymbolTable {
     } // addSymbol(char[],int,int):String
 
     /**
+     * Returns a hashcode value for the specified symbol. The value
+     * returned by this method must be identical to the value returned
+     * by the <code>hash(char[],int,int)</code> method when called
+     * with the character array that comprises the symbol string.
+     *
+     * @param symbol The symbol to hash.
+     */
+    public int hash(String symbol) {
+
+        int code = 0;
+        int length = symbol.length();
+        for (int i = 0; i < length; i++) {
+            code = code * 37 + symbol.charAt(i);
+        }
+        return code & 0x7FFFFFF;
+
+    } // hash(String):int
+
+    /**
      * Returns a hashcode value for the specified symbol information.
      * The value returned by this method must be identical to the value
      * returned by the <code>hash(String)</code> method when called
@@ -141,6 +191,59 @@ public class SymbolTable {
 
     } // hash(char[],int,int):int
 
+    /**
+     * Returns true if the symbol table already contains the specified
+     * symbol.
+     *
+     * @param symbol The symbol to look for.
+     */
+    public boolean containsSymbol(String symbol) {
+
+        // search for identical symbol
+        int bucket = hash(symbol) % fTableSize;
+        int length = symbol.length();
+        OUTER: for (Entry entry = fBuckets[bucket]; entry != null; entry = entry.next) {
+            if (length == entry.characters.length) {
+                for (int i = 0; i < length; i++) {
+                    if (symbol.charAt(i) != entry.characters[i]) {
+                        continue OUTER;
+                    }
+                }
+                return true;
+            }
+        }
+
+        return false;
+
+    } // containsSymbol(String):boolean
+
+    /**
+     * Returns true if the symbol table already contains the specified
+     * symbol.
+     *
+     * @param buffer The buffer containing the symbol to look for.
+     * @param offset The offset into the buffer.
+     * @param length The length of the symbol in the buffer.
+     */
+    public boolean containsSymbol(char[] buffer, int offset, int length) {
+
+        // search for identical symbol
+        int bucket = hash(buffer, offset, length) % fTableSize;
+        OUTER: for (Entry entry = fBuckets[bucket]; entry != null; entry = entry.next) {
+            if (length == entry.characters.length) {
+                for (int i = 0; i < length; i++) {
+                    if (buffer[offset + i] != entry.characters[i]) {
+                        continue OUTER;
+                    }
+                }
+                return true;
+            }
+        }
+
+        return false;
+
+    } // containsSymbol(char[],int,int):boolean
+
     //
     // Classes
     //
@@ -149,27 +252,38 @@ public class SymbolTable {
      * This class is a symbol table entry. Each entry acts as a node
      * in a linked list.
      */
-    private static final class Entry {
+    protected static final class Entry {
 
         //
         // Data
         //
 
         /** Symbol. */
-        private final String symbol;
+        public String symbol;
 
         /**
          * Symbol characters. This information is duplicated here for
          * comparison performance.
          */
-        private final char[] characters;
+        public char[] characters;
 
         /** The next entry. */
-        private final Entry next;
+        public Entry next;
 
         //
         // Constructors
         //
+
+        /**
+         * Constructs a new entry from the specified symbol and next entry
+         * reference.
+         */
+        public Entry(String symbol, Entry next) {
+            this.symbol = symbol.intern();
+            characters = new char[symbol.length()];
+            symbol.getChars(0, characters.length, characters, 0);
+            this.next = next;
+        }
 
         /**
          * Constructs a new entry from the specified symbol information and

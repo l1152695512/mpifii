@@ -44,8 +44,15 @@ public class SemaphoreValve extends ValveBase {
         super(true);
     }
 
-
     // ----------------------------------------------------- Instance Variables
+
+
+    /**
+     * The descriptive information related to this implementation.
+     */
+    private static final String info =
+        "org.apache.catalina.valves.SemaphoreValve/1.0";
+
 
     /**
      * Semaphore.
@@ -121,6 +128,16 @@ public class SemaphoreValve extends ValveBase {
 
 
     // --------------------------------------------------------- Public Methods
+
+
+    /**
+     * Return descriptive information about this Valve implementation.
+     */
+    @Override
+    public String getInfo() {
+        return (info);
+    }
+
 
     /**
      * Do concurrency control on the request using the semaphore.

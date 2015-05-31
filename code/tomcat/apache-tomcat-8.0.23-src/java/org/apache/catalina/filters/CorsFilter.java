@@ -52,7 +52,6 @@ import org.apache.tomcat.util.res.StringManager;
  * <p>
  * By default, it also sets following request attributes, that help to
  * determine the nature of the request downstream.
- * </p>
  * <ul>
  * <li><b>cors.isCorsRequest:</b> Flag to determine if the request is a CORS
  * request. Set to <code>true</code> if a CORS request; <code>false</code>
@@ -72,6 +71,7 @@ import org.apache.tomcat.util.res.StringManager;
  * <li><b>cors.request.headers:</b> Request headers sent as
  * 'Access-Control-Request-Headers' header, for pre-flight request.</li>
  * </ul>
+ * </p>
  *
  * @see <a href="http://www.w3.org/TR/cors/">CORS specification</a>
  *
@@ -79,7 +79,9 @@ import org.apache.tomcat.util.res.StringManager;
 public final class CorsFilter implements Filter {
 
     private static final Log log = LogFactory.getLog(CorsFilter.class);
-    private static final StringManager sm = StringManager.getManager(Constants.Package);
+
+    private static final StringManager sm =
+            StringManager.getManager(Constants.Package);
 
 
     /**
@@ -132,10 +134,10 @@ public final class CorsFilter implements Filter {
 
 
     public CorsFilter() {
-        this.allowedOrigins = new HashSet<>();
-        this.allowedHttpMethods = new HashSet<>();
-        this.allowedHttpHeaders = new HashSet<>();
-        this.exposedHeaders = new HashSet<>();
+        this.allowedOrigins = new HashSet<String>();
+        this.allowedHttpMethods = new HashSet<String>();
+        this.allowedHttpHeaders = new HashSet<String>();
+        this.exposedHeaders = new HashSet<String>();
     }
 
 
@@ -346,7 +348,7 @@ public final class CorsFilter implements Filter {
         // Section 6.2.4
         String accessControlRequestHeadersHeader = request.getHeader(
                 CorsFilter.REQUEST_HEADER_ACCESS_CONTROL_REQUEST_HEADERS);
-        List<String> accessControlRequestHeaders = new LinkedList<>();
+        List<String> accessControlRequestHeaders = new LinkedList<String>();
         if (accessControlRequestHeadersHeader != null &&
                 !accessControlRequestHeadersHeader.trim().isEmpty()) {
             String[] headers = accessControlRequestHeadersHeader.trim().split(
@@ -774,7 +776,7 @@ public final class CorsFilter implements Filter {
         if (allowedHttpHeaders != null) {
             Set<String> setAllowedHttpHeaders =
                     parseStringToSet(allowedHttpHeaders);
-            Set<String> lowerCaseHeaders = new HashSet<>();
+            Set<String> lowerCaseHeaders = new HashSet<String>();
             for (String header : setAllowedHttpHeaders) {
                 String lowerCase = header.toLowerCase(Locale.ENGLISH);
                 lowerCaseHeaders.add(lowerCase);
@@ -830,7 +832,7 @@ public final class CorsFilter implements Filter {
             splits = new String[] {};
         }
 
-        Set<String> set = new HashSet<>();
+        Set<String> set = new HashSet<String>();
         if (splits.length > 0) {
             for (String split : splits) {
                 set.add(split.trim());
@@ -1079,8 +1081,8 @@ public final class CorsFilter implements Filter {
      */
     @Deprecated
     public static final Collection<String> HTTP_METHODS =
-            new HashSet<>(Arrays.asList("OPTIONS", "GET", "HEAD", "POST", "PUT",
-                    "DELETE", "TRACE", "CONNECT"));
+            new HashSet<String>(Arrays.asList("OPTIONS", "GET", "HEAD", "POST",
+                    "PUT", "DELETE", "TRACE", "CONNECT"));
 
     /**
      * {@link Collection} of non-simple HTTP methods. Case sensitive.
@@ -1090,30 +1092,25 @@ public final class CorsFilter implements Filter {
      */
     @Deprecated
     public static final Collection<String> COMPLEX_HTTP_METHODS =
-            new HashSet<>(Arrays.asList("PUT", "DELETE", "TRACE", "CONNECT"));
+            new HashSet<String>(Arrays.asList("PUT", "DELETE", "TRACE",
+                    "CONNECT"));
     /**
      * {@link Collection} of Simple HTTP methods. Case sensitive.
      *
      * @see  <a href="http://www.w3.org/TR/cors/#terminology"
      *       >http://www.w3.org/TR/cors/#terminology</a>
-     *
-     * @deprecated Unused. Will be removed in Tomcat 9.0.x onwards.
      */
-    @Deprecated
     public static final Collection<String> SIMPLE_HTTP_METHODS =
-            new HashSet<>(Arrays.asList("GET", "POST", "HEAD"));
+            new HashSet<String>(Arrays.asList("GET", "POST", "HEAD"));
 
     /**
      * {@link Collection} of Simple HTTP request headers. Case in-sensitive.
      *
      * @see  <a href="http://www.w3.org/TR/cors/#terminology"
      *       >http://www.w3.org/TR/cors/#terminology</a>
-     *
-     * @deprecated Unused. Will be removed in Tomcat 9.0.x onwards.
      */
-    @Deprecated
     public static final Collection<String> SIMPLE_HTTP_REQUEST_HEADERS =
-            new HashSet<>(Arrays.asList("Accept", "Accept-Language",
+            new HashSet<String>(Arrays.asList("Accept", "Accept-Language",
                     "Content-Language"));
 
     /**
@@ -1121,13 +1118,11 @@ public final class CorsFilter implements Filter {
      *
      * @see  <a href="http://www.w3.org/TR/cors/#terminology"
      *       >http://www.w3.org/TR/cors/#terminology</a>
-     *
-     * @deprecated Unused. Will be removed in Tomcat 9.0.x onwards.
      */
-    @Deprecated
     public static final Collection<String> SIMPLE_HTTP_RESPONSE_HEADERS =
-            new HashSet<>(Arrays.asList("Cache-Control", "Content-Language",
-                    "Content-Type", "Expires", "Last-Modified", "Pragma"));
+            new HashSet<String>(Arrays.asList("Cache-Control",
+                    "Content-Language", "Content-Type", "Expires",
+                    "Last-Modified", "Pragma"));
 
     /**
      * {@link Collection} of media type values for the Content-Type header that
@@ -1138,7 +1133,8 @@ public final class CorsFilter implements Filter {
      *       >http://www.w3.org/TR/cors/#terminology</a>
      */
     public static final Collection<String> SIMPLE_HTTP_REQUEST_CONTENT_TYPE_VALUES =
-            new HashSet<>(Arrays.asList("application/x-www-form-urlencoded",
+            new HashSet<String>(Arrays.asList(
+                    "application/x-www-form-urlencoded",
                     "multipart/form-data", "text/plain"));
 
     // ------------------------------------------------ Configuration Defaults

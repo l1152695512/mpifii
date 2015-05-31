@@ -5,15 +5,15 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ */ 
 
 
 package org.apache.tomcat.util.digester;
@@ -47,6 +47,18 @@ public class ObjectCreateRule extends Rule {
 
 
     /**
+     * Construct an object create rule with the specified class.
+     *
+     * @param clazz Java class name of the object to be created
+     */
+    public ObjectCreateRule(Class<?> clazz) {
+
+        this(clazz.getName(), (String) null);
+
+    }
+
+
+    /**
      * Construct an object create rule with the specified class name and an
      * optional attribute name containing an override.
      *
@@ -63,7 +75,23 @@ public class ObjectCreateRule extends Rule {
     }
 
 
+    /**
+     * Construct an object create rule with the specified class and an
+     * optional attribute name containing an override.
+     *
+     * @param attributeName Attribute name which, if present, contains an
+     * @param clazz Java class name of the object to be created
+     *  override of the class name to create
+     */
+    public ObjectCreateRule(String attributeName,
+                            Class<?> clazz) {
+
+        this(clazz.getName(), attributeName);
+
+    }
+
     // ----------------------------------------------------- Instance Variables
+
 
     /**
      * The attribute containing an override class name if it is present.
@@ -83,10 +111,10 @@ public class ObjectCreateRule extends Rule {
     /**
      * Process the beginning of this element.
      *
-     * @param namespace the namespace URI of the matching element, or an
+     * @param namespace the namespace URI of the matching element, or an 
      *   empty string if the parser is not namespace aware or the element has
      *   no namespace
-     * @param name the local name if the parser is namespace aware, or just
+     * @param name the local name if the parser is namespace aware, or just 
      *   the element name otherwise
      * @param attributes The attribute list for this element
      */
@@ -121,11 +149,11 @@ public class ObjectCreateRule extends Rule {
 
     /**
      * Process the end of this element.
-     *
-     * @param namespace the namespace URI of the matching element, or an
+     * 
+     * @param namespace the namespace URI of the matching element, or an 
      *   empty string if the parser is not namespace aware or the element has
      *   no namespace
-     * @param name the local name if the parser is namespace aware, or just
+     * @param name the local name if the parser is namespace aware, or just 
      *   the element name otherwise
      */
     @Override

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -43,9 +43,9 @@
 
 <p>There are several example applications that demonstrate how the WebSocket API
    can be used. You will need to look at both the client side <a
-   href="http://svn.apache.org/viewvc/tomcat/trunk/webapps/examples/websocket/">
+   href="http://svn.apache.org/viewvc/tomcat/tc7.0.x/trunk/webapps/examples/websocket/">
    HTML</a> and the server side <a
-   href="http://svn.apache.org/viewvc/tomcat/trunk/webapps/examples/WEB-INF/classes/websocket/">
+   href="http://svn.apache.org/viewvc/tomcat/tc7.0.x/trunk/webapps/examples/WEB-INF/classes/websocket/">
    code</a>.</p>
 </section>
 
@@ -68,6 +68,8 @@ implement its own timeout mechanism to handle these cases.</p>
 </section>
 
 <section name="Tomcat WebSocket specific configuration">
+<p>The JSR-356 Java WebSocket 1.1 implementation is only available when Tomcat
+   is running on Java 7 or later.</p>
 
 <p>Tomcat provides a number of Tomcat specific configuration options for
    WebSocket. It is anticipated that these will be absorbed into the WebSocket
@@ -151,6 +153,32 @@ implement its own timeout mechanism to handle these cases.</p>
       <code>org.apache.tomcat.websocket.SSL_TRUSTSTORE_PWD</code> properties
       will be ignored.</p>
 </section>
+
+<section name="Deprecated proprietary API">
+
+<p>Prior to the development of JRS-356, Tomcat provided a proprietary WebSocket
+   API. This API has been deprecated in Tomcat 7 and will be removed in Tomcat
+   8. There is unlikely to be any further development of this proprietary API
+   apart from bug fixes.</p>
+
+<p>For information on this API, please see the Javadoc for the
+   <a href="api/index.html?org/apache/catalina/websocket/package-summary.html">
+   <code>org.apache.catalina.websocket</code></a> package. The Javadoc
+   pages are not included with Tomcat binary distributions. To view them
+   locally you would have to download and install "Full documentation"
+   distribution, or build it from sources. You can
+   also read this on the Apache Tomcat web site. Start with the
+   <a href="api/index.html?org/apache/catalina/websocket/WebSocketServlet.html">
+   <code>WebSocketServlet</code></a> class.</p>
+
+<p>There are also several example applications that demonstrate how the
+   WebSocket API can be used. You'll need to look at both the client side <a
+   href="http://svn.apache.org/viewvc/tomcat/tc7.0.x/trunk/webapps/examples/websocket-deprecated/">
+   HTML</a> and the server side <a
+   href="http://svn.apache.org/viewvc/tomcat/tc7.0.x/trunk/webapps/examples/WEB-INF/classes/websocket/tc7/">
+   code</a>.</p>
+</section>
+
 
 </body>
 </document>

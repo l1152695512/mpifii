@@ -17,7 +17,6 @@
 package org.apache.tomcat.jdbc.pool;
 
 
-import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
@@ -32,6 +31,7 @@ import org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;
 /**
  * Represents a pooled connection
  * and holds a reference to the {@link java.sql.Connection} object
+ * @author Filip Hanik
  * @version 1.0
  */
 public class PooledConnection {
@@ -102,7 +102,7 @@ public class PooledConnection {
      */
     protected ConnectionPool parent;
 
-    private HashMap<Object, Object> attributes = new HashMap<>();
+    private HashMap<Object, Object> attributes = new HashMap<Object, Object>();
 
     private volatile long connectionVersion=0;
 
@@ -134,26 +134,8 @@ public class PooledConnection {
         return connectionVersion;
     }
 
-    /**
-     * @deprecated use {@link #shouldForceReconnect(String, String)}
-     * method kept since it was public, to avoid changing interface. name was pooo
-     */
-    @Deprecated
     public boolean checkUser(String username, String password) {
-        return !shouldForceReconnect(username, password);
-    }
-
-    /**
-     * Returns true if we must force reconnect based on credentials passed in.
-     * Returns false if {@link PoolConfiguration#isAlternateUsernameAllowed()} method returns false.
-     * Returns false if the username/password has not changed since this connection was connected
-     * @param username the username you wish to connect with, pass in null to accept the default username from {@link PoolConfiguration#getUsername()}
-     * @param password the password you wish to connect with, pass in null to accept the default username from {@link org.apache.tomcat.jdbc.pool.PoolConfiguration#getPassword()}
-     * @return true is the pool must reconnect
-     */
-    public boolean shouldForceReconnect(String username, String password) {
-
-        if (!getPoolProperties().isAlternateUsernameAllowed()) return false;
+        if (!getPoolProperties().isAlternateUsernameAllowed()) return true;
 
         if (username==null) username = poolProperties.getUsername();
         if (password==null) password = poolProperties.getPassword();
@@ -161,15 +143,15 @@ public class PooledConnection {
         String storedUsr = (String)getAttributes().get(PROP_USER);
         String storedPwd = (String)getAttributes().get(PROP_PASSWORD);
 
-        boolean noChangeInCredentials = (username==null && storedUsr==null);
-        noChangeInCredentials = (noChangeInCredentials || (username!=null && username.equals(storedUsr)));
+        boolean result = (username==null && storedUsr==null);
+        result = (result || (username!=null && username.equals(storedUsr)));
 
-        noChangeInCredentials = noChangeInCredentials && ((password==null && storedPwd==null) || (password!=null && password.equals(storedPwd)));
+        result = result && ((password==null && storedPwd==null) || (password!=null && password.equals(storedPwd)));
 
         if (username==null)  getAttributes().remove(PROP_USER); else getAttributes().put(PROP_USER, username);
         if (password==null)  getAttributes().remove(PROP_PASSWORD); else getAttributes().put(PROP_PASSWORD, password);
 
-        return !noChangeInCredentials;
+        return result;
     }
 
     /**
@@ -261,17 +243,9 @@ public class PooledConnection {
                 if (log.isDebugEnabled()) {
                     log.debug("Instantiating driver using class: "+poolProperties.getDriverClassName()+" [url="+poolProperties.getUrl()+"]");
                 }
-                if (poolProperties.getDriverClassName()==null) {
-                    //rely on DriverManager
-                    log.warn("Not loading a JDBC driver as driverClassName property is null.");
-                } else {
-                    driver = (java.sql.Driver)
-                        ClassLoaderUtil.loadClass(
-                            poolProperties.getDriverClassName(),
-                            PooledConnection.class.getClassLoader(),
-                            Thread.currentThread().getContextClassLoader()
-                        ).newInstance();
-                }
+                driver = (java.sql.Driver) Class.forName(poolProperties.getDriverClassName(),
+                                                         true, PooledConnection.class.getClassLoader()
+                                                         ).newInstance();
             }
         } catch (java.lang.Exception cn) {
             if (log.isDebugEnabled()) {
@@ -301,11 +275,7 @@ public class PooledConnection {
         if (pwd != null) properties.setProperty(PROP_PASSWORD, pwd);
 
         try {
-            if (driver==null) {
-                connection = DriverManager.getConnection(driverURL, properties);
-            } else {
-                connection = driver.connect(driverURL, properties);
-            }
+            connection = driver.connect(driverURL, properties);
         } catch (Exception x) {
             if (log.isDebugEnabled()) {
                 log.debug("Unable to connect to database.", x);
@@ -335,19 +305,6 @@ public class PooledConnection {
         return connection!=null;
     }
 
-    /**
-     * Returns true if the connection has been connected more than
-     * {@link PoolConfiguration#getMaxAge()} milliseconds. false otherwise.
-     * @return Returns true if the connection has been connected more than
-     * {@link PoolConfiguration#getMaxAge()} milliseconds. false otherwise.
-     */
-    public boolean isMaxAgeExpired() {
-        if (getPoolProperties().getMaxAge()>0 ) {
-            return (System.currentTimeMillis() - getLastConnected()) > getPoolProperties().getMaxAge();
-        } else {
-            return false;
-        }
-    }
     /**
      * Issues a call to {@link #disconnect(boolean)} with the argument false followed by a call to
      * {@link #connect()}
@@ -526,7 +483,7 @@ public class PooledConnection {
     }
 
     /**
-     * This method is called if (Now - timeCheckedIn &gt; getReleaseTime())
+     * This method is called if (Now - timeCheckedIn > getReleaseTime())
      * This method disconnects the connection, logs an error in debug mode if it happens
      * then sets the {@link #released} flag to false. Any attempts to connect this cached object again
      * will fail per {@link #connect()}

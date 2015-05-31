@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,7 +28,7 @@ public class ListELResolver extends ELResolver {
     private final boolean readOnly;
 
     private static final Class<?> UNMODIFIABLE =
-        Collections.unmodifiableList(new ArrayList<>()).getClass();
+        Collections.unmodifiableList(new ArrayList<Object>()).getClass();
 
     public ListELResolver() {
         this.readOnly = false;
@@ -39,13 +39,34 @@ public class ListELResolver extends ELResolver {
     }
 
     @Override
-    public Class<?> getType(ELContext context, Object base, Object property) {
+    public Object getValue(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base instanceof List<?>) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
+            List<?> list = (List<?>) base;
+            int idx = coerce(property);
+            if (idx < 0 || idx >= list.size()) {
+                return null;
+            }
+            return list.get(idx);
+        }
+
+        return null;
+    }
+
+    @Override
+    public Class<?> getType(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
+        if (context == null) {
+            throw new NullPointerException();
+        }
+
+        if (base instanceof List<?>) {
+            context.setPropertyResolved(true);
             List<?> list = (List<?>) base;
             int idx = coerce(property);
             if (idx < 0 || idx >= list.size()) {
@@ -59,39 +80,23 @@ public class ListELResolver extends ELResolver {
     }
 
     @Override
-    public Object getValue(ELContext context, Object base, Object property) {
-        if (context == null) {
-            throw new NullPointerException();
-        }
-
-        if (base instanceof List<?>) {
-            context.setPropertyResolved(base, property);
-            List<?> list = (List<?>) base;
-            int idx = coerce(property);
-            if (idx < 0 || idx >= list.size()) {
-                return null;
-            }
-            return list.get(idx);
-        }
-
-        return null;
-    }
-
-    @Override
     public void setValue(ELContext context, Object base, Object property,
-            Object value) {
+            Object value) throws NullPointerException,
+            PropertyNotFoundException, PropertyNotWritableException,
+            ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base instanceof List<?>) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
             @SuppressWarnings("unchecked") // Must be OK to cast to Object
             List<Object> list = (List<Object>) base;
 
             if (this.readOnly) {
                 throw new PropertyNotWritableException(Util.message(context,
-                        "resolverNotWriteable", base.getClass().getName()));
+                        "resolverNotWriteable", new Object[] { base.getClass()
+                                .getName() }));
             }
 
             int idx = coerce(property);
@@ -106,13 +111,14 @@ public class ListELResolver extends ELResolver {
     }
 
     @Override
-    public boolean isReadOnly(ELContext context, Object base, Object property) {
+    public boolean isReadOnly(ELContext context, Object base, Object property)
+            throws NullPointerException, PropertyNotFoundException, ELException {
         if (context == null) {
             throw new NullPointerException();
         }
 
         if (base instanceof List<?>) {
-            context.setPropertyResolved(base, property);
+            context.setPropertyResolved(true);
             List<?> list = (List<?>) base;
             try {
                 int idx = coerce(property);

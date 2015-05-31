@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.apache.catalina.tribes.transport;
 
 import org.apache.catalina.tribes.ChannelException;
@@ -21,18 +22,41 @@ import org.apache.catalina.tribes.ChannelMessage;
 import org.apache.catalina.tribes.ChannelSender;
 import org.apache.catalina.tribes.Member;
 import org.apache.catalina.tribes.transport.nio.PooledParallelSender;
+import org.apache.catalina.tribes.util.StringManager;
 
 /**
  * Transmit message to other cluster members
  * Actual senders are created based on the replicationMode
- * type
+ * type 
+ * 
+ * @author Filip Hanik
  */
 public class ReplicationTransmitter implements ChannelSender {
+
+    /**
+     * The descriptive information about this implementation.
+     */
+    private static final String info = "ReplicationTransmitter/3.0";
+
+    /**
+     * The string manager for this package.
+     */
+    protected static final StringManager sm = StringManager.getManager(Constants.Package);
+
 
     public ReplicationTransmitter() {
     }
 
     private MultiPointSender transport = new PooledParallelSender();
+
+    /**
+     * Return descriptive information about this implementation and the
+     * corresponding version number, in the format
+     * <code>&lt;description&gt;/&lt;version&gt;</code>.
+     */
+    public String getInfo() {
+        return (info);
+    }
 
     public MultiPointSender getTransport() {
         return transport;
@@ -41,9 +65,9 @@ public class ReplicationTransmitter implements ChannelSender {
     public void setTransport(MultiPointSender transport) {
         this.transport = transport;
     }
-
+    
     // ------------------------------------------------------------- public
-
+    
     /**
      * Send data to one member
      * @see org.apache.catalina.tribes.ChannelSender#sendMessage(org.apache.catalina.tribes.ChannelMessage, org.apache.catalina.tribes.Member[])
@@ -53,11 +77,11 @@ public class ReplicationTransmitter implements ChannelSender {
         MultiPointSender sender = getTransport();
         sender.sendMessage(destination,message);
     }
-
-
+    
+    
     /**
      * start the sender and register transmitter mbean
-     *
+     * 
      * @see org.apache.catalina.tribes.ChannelSender#start()
      */
     @Override
@@ -67,7 +91,7 @@ public class ReplicationTransmitter implements ChannelSender {
 
     /**
      * stop the sender and deregister mbeans (transmitter, senders)
-     *
+     * 
      * @see org.apache.catalina.tribes.ChannelSender#stop()
      */
     @Override
@@ -77,7 +101,7 @@ public class ReplicationTransmitter implements ChannelSender {
 
     /**
      * Call transmitter to check for sender socket status
-     *
+     * 
      * @see org.apache.catalina.ha.tcp.SimpleTcpCluster#backgroundProcess()
      */
     @Override
@@ -88,7 +112,7 @@ public class ReplicationTransmitter implements ChannelSender {
     /**
      * add new cluster member and create sender ( s. replicationMode) transfer
      * current properties to sender
-     *
+     * 
      * @see org.apache.catalina.tribes.ChannelSender#add(org.apache.catalina.tribes.Member)
      */
     @Override
@@ -98,11 +122,15 @@ public class ReplicationTransmitter implements ChannelSender {
 
     /**
      * remove sender from transmitter. ( deregister mbean and disconnect sender )
-     *
+     * 
      * @see org.apache.catalina.tribes.ChannelSender#remove(org.apache.catalina.tribes.Member)
      */
     @Override
     public synchronized void remove(Member member) {
         getTransport().remove(member);
     }
+
+    // ------------------------------------------------------------- protected
+
+
 }

@@ -106,18 +106,13 @@ public class WsWebSocketContainer
     private static final Random random = new Random();
     private static final byte[] crlf = new byte[] {13, 10};
 
-    private static final byte[] GET_BYTES = "GET ".getBytes(StandardCharsets.ISO_8859_1);
-    private static final byte[] ROOT_URI_BYTES = "/".getBytes(StandardCharsets.ISO_8859_1);
-    private static final byte[] HTTP_VERSION_BYTES =
-            " HTTP/1.1\r\n".getBytes(StandardCharsets.ISO_8859_1);
-
     private volatile AsynchronousChannelGroup asynchronousChannelGroup = null;
     private final Object asynchronousChannelGroupLock = new Object();
 
     private final Log log = LogFactory.getLog(WsWebSocketContainer.class);
     private final Map<Class<?>, Set<WsSession>> endpointSessionMap =
-            new HashMap<>();
-    private final Map<WsSession,WsSession> sessions = new ConcurrentHashMap<>();
+            new HashMap<Class<?>, Set<WsSession>>();
+    private final Map<WsSession,WsSession> sessions = new ConcurrentHashMap<WsSession, WsSession>();
     private final Object endPointSessionMapLock = new Object();
 
     private long defaultAsyncTimeout = -1;
@@ -150,7 +145,10 @@ public class WsWebSocketContainer
                 configuratorClazz)) {
             try {
                 configurator = configuratorClazz.newInstance();
-            } catch (InstantiationException | IllegalAccessException e) {
+            } catch (InstantiationException e) {
+                throw new DeploymentException(sm.getString(
+                        "wsWebSocketContainer.defaultConfiguratorFail"), e);
+            } catch (IllegalAccessException e) {
                 throw new DeploymentException(sm.getString(
                         "wsWebSocketContainer.defaultConfiguratorFail"), e);
             }
@@ -177,7 +175,11 @@ public class WsWebSocketContainer
         Object pojo;
         try {
             pojo = annotatedEndpointClass.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (InstantiationException e) {
+            throw new DeploymentException(sm.getString(
+                    "wsWebSocketContainer.endpointCreateFail",
+                    annotatedEndpointClass.getName()), e);
+        } catch (IllegalAccessException e) {
             throw new DeploymentException(sm.getString(
                     "wsWebSocketContainer.endpointCreateFail",
                     annotatedEndpointClass.getName()), e);
@@ -195,7 +197,11 @@ public class WsWebSocketContainer
         Endpoint endpoint;
         try {
             endpoint = clazz.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (InstantiationException e) {
+            throw new DeploymentException(sm.getString(
+                    "wsWebSocketContainer.endpointCreateFail", clazz.getName()),
+                    e);
+        } catch (IllegalAccessException e) {
             throw new DeploymentException(sm.getString(
                     "wsWebSocketContainer.endpointCreateFail", clazz.getName()),
                     e);
@@ -251,7 +257,7 @@ public class WsWebSocketContainer
         // Origin header
         if (Constants.DEFAULT_ORIGIN_HEADER_VALUE != null &&
                 !reqHeaders.containsKey(Constants.ORIGIN_HEADER_NAME)) {
-            List<String> originValues = new ArrayList<>(1);
+            List<String> originValues = new ArrayList<String>(1);
             originValues.add(Constants.DEFAULT_ORIGIN_HEADER_VALUE);
             reqHeaders.put(Constants.ORIGIN_HEADER_NAME, originValues);
         }
@@ -288,8 +294,6 @@ public class WsWebSocketContainer
         ByteBuffer response;
         String subProtocol;
         boolean success = false;
-        List<Extension> extensionsAgreed = new ArrayList<>();
-        Transformation transformation = null;
 
         try {
             fConnect.get(timeout, TimeUnit.MILLISECONDS);
@@ -317,48 +321,30 @@ public class WsWebSocketContainer
                     afterResponse(handshakeResponse);
 
             // Sub-protocol
-            List<String> protocolHeaders = handshakeResponse.getHeaders().get(
+            List<String> values = handshakeResponse.getHeaders().get(
                     Constants.WS_PROTOCOL_HEADER_NAME);
-            if (protocolHeaders == null || protocolHeaders.size() == 0) {
+            if (values == null || values.size() == 0) {
                 subProtocol = null;
-            } else if (protocolHeaders.size() == 1) {
-                subProtocol = protocolHeaders.get(0);
+            } else if (values.size() == 1) {
+                subProtocol = values.get(0);
             } else {
                 throw new DeploymentException(
                         sm.getString("Sec-WebSocket-Protocol"));
             }
-
-            // Extensions
-            // Should normally only be one header but handle the case of
-            // multiple headers
-            List<String> extHeaders = handshakeResponse.getHeaders().get(
-                    Constants.WS_EXTENSIONS_HEADER_NAME);
-            if (extHeaders != null) {
-                for (String extHeader : extHeaders) {
-                    Util.parseExtensionHeader(extensionsAgreed, extHeader);
-                }
-            }
-
-            // Build the transformations
-            TransformationFactory factory = TransformationFactory.getInstance();
-            for (Extension extension : extensionsAgreed) {
-                List<List<Extension.Parameter>> wrapper = new ArrayList<>(1);
-                wrapper.add(extension.getParameters());
-                Transformation t = factory.create(extension.getName(), wrapper, false);
-                if (t == null) {
-                    throw new DeploymentException(sm.getString(
-                            "wsWebSocketContainer.invalidExtensionParameters"));
-                }
-                if (transformation == null) {
-                    transformation = t;
-                } else {
-                    transformation.setNext(t);
-                }
-            }
-
             success = true;
-        } catch (ExecutionException | InterruptedException | SSLException |
-                EOFException | TimeoutException e) {
+        } catch (ExecutionException e) {
+            throw new DeploymentException(
+                    sm.getString("wsWebSocketContainer.httpRequestFailed"), e);
+        } catch (InterruptedException e) {
+            throw new DeploymentException(
+                    sm.getString("wsWebSocketContainer.httpRequestFailed"), e);
+        } catch (SSLException e) {
+            throw new DeploymentException(
+                    sm.getString("wsWebSocketContainer.httpRequestFailed"), e);
+        } catch (EOFException e) {
+            throw new DeploymentException(
+                    sm.getString("wsWebSocketContainer.httpRequestFailed"), e);
+        } catch (TimeoutException e) {
             throw new DeploymentException(
                     sm.getString("wsWebSocketContainer.httpRequestFailed"), e);
         } finally {
@@ -371,12 +357,12 @@ public class WsWebSocketContainer
         WsRemoteEndpointImplClient wsRemoteEndpointClient = new WsRemoteEndpointImplClient(channel);
 
         WsSession wsSession = new WsSession(endpoint, wsRemoteEndpointClient,
-                this, null, null, null, null, null, extensionsAgreed,
+                this, null, null, null, null, null, Collections.<Extension>emptyList(),
                 subProtocol, Collections.<String,String>emptyMap(), secure,
                 clientEndpointConfiguration);
 
         WsFrameClient wsFrameClient = new WsFrameClient(response, channel,
-                wsSession, transformation);
+                wsSession);
         // WsFrame adds the necessary final transformations. Copy the
         // completed transformation chain to the remote end point.
         wsRemoteEndpointClient.setTransformation(wsFrameClient.getTransformation());
@@ -414,7 +400,7 @@ public class WsWebSocketContainer
             }
             Set<WsSession> wsSessions = endpointSessionMap.get(endpointClazz);
             if (wsSessions == null) {
-                wsSessions = new HashSet<>();
+                wsSessions = new HashSet<WsSession>();
                 endpointSessionMap.put(endpointClazz, wsSessions);
             }
             wsSessions.add(wsSession);
@@ -444,7 +430,7 @@ public class WsWebSocketContainer
 
 
     Set<Session> getOpenSessions(Class<?> endpoint) {
-        HashSet<Session> result = new HashSet<>();
+        HashSet<Session> result = new HashSet<Session>();
         synchronized (endPointSessionMapLock) {
             Set<WsSession> sessions = endpointSessionMap.get(endpoint);
             if (sessions != null) {
@@ -457,10 +443,10 @@ public class WsWebSocketContainer
     private Map<String,List<String>> createRequestHeaders(String host,
             int port, List<String> subProtocols, List<Extension> extensions) {
 
-        Map<String,List<String>> headers = new HashMap<>();
+        Map<String,List<String>> headers = new HashMap<String, List<String>>();
 
         // Host header
-        List<String> hostValues = new ArrayList<>(1);
+        List<String> hostValues = new ArrayList<String>(1);
         if (port == -1) {
             hostValues.add(host);
         } else {
@@ -470,22 +456,22 @@ public class WsWebSocketContainer
         headers.put(Constants.HOST_HEADER_NAME, hostValues);
 
         // Upgrade header
-        List<String> upgradeValues = new ArrayList<>(1);
+        List<String> upgradeValues = new ArrayList<String>(1);
         upgradeValues.add(Constants.UPGRADE_HEADER_VALUE);
         headers.put(Constants.UPGRADE_HEADER_NAME, upgradeValues);
 
         // Connection header
-        List<String> connectionValues = new ArrayList<>(1);
+        List<String> connectionValues = new ArrayList<String>(1);
         connectionValues.add(Constants.CONNECTION_HEADER_VALUE);
         headers.put(Constants.CONNECTION_HEADER_NAME, connectionValues);
 
         // WebSocket version header
-        List<String> wsVersionValues = new ArrayList<>(1);
+        List<String> wsVersionValues = new ArrayList<String>(1);
         wsVersionValues.add(Constants.WS_VERSION_HEADER_VALUE);
         headers.put(Constants.WS_VERSION_HEADER_NAME, wsVersionValues);
 
         // WebSocket key
-        List<String> wsKeyValues = new ArrayList<>(1);
+        List<String> wsKeyValues = new ArrayList<String>(1);
         wsKeyValues.add(generateWsKeyValue());
         headers.put(Constants.WS_KEY_HEADER_NAME, wsKeyValues);
 
@@ -505,7 +491,7 @@ public class WsWebSocketContainer
 
 
     private List<String> generateExtensionHeaders(List<Extension> extensions) {
-        List<String> result = new ArrayList<>(extensions.size());
+        List<String> result = new ArrayList<String>(extensions.size());
         for (Extension extension : extensions) {
             StringBuilder header = new StringBuilder();
             header.append(extension.getName());
@@ -518,7 +504,6 @@ public class WsWebSocketContainer
                     header.append(value);
                 }
             }
-            result.add(header.toString());
         }
         return result;
     }
@@ -536,16 +521,17 @@ public class WsWebSocketContainer
         ByteBuffer result = ByteBuffer.allocate(4 * 1024);
 
         // Request line
-        result.put(GET_BYTES);
+        result.put("GET ".getBytes(StandardCharsets.ISO_8859_1));
         byte[] path = (null == uri.getPath() || "".equals(uri.getPath()))
-                ? ROOT_URI_BYTES : uri.getRawPath().getBytes(StandardCharsets.ISO_8859_1);
+                ? "/".getBytes(StandardCharsets.ISO_8859_1)
+                : uri.getRawPath().getBytes(StandardCharsets.ISO_8859_1);
         result.put(path);
         String query = uri.getRawQuery();
         if (query != null) {
             result.put((byte) '?');
             result.put(query.getBytes(StandardCharsets.ISO_8859_1));
         }
-        result.put(HTTP_VERSION_BYTES);
+        result.put(" HTTP/1.1\r\n".getBytes(StandardCharsets.ISO_8859_1));
 
         // Headers
         Iterator<Entry<String,List<String>>> iter =
@@ -591,13 +577,13 @@ public class WsWebSocketContainer
      * @throws DeploymentException
      * @throws TimeoutException
      */
-    @SuppressWarnings("null")
+    @SuppressWarnings("null") // line is not null in line.endsWith() call
     private HandshakeResponse processResponse(ByteBuffer response,
             AsyncChannelWrapper channel, long timeout) throws InterruptedException,
             ExecutionException, DeploymentException, EOFException,
             TimeoutException {
 
-        Map<String,List<String>> headers = new CaseInsensitiveKeyMap<>();
+        Map<String,List<String>> headers = new CaseInsensitiveKeyMap<List<String>>();
 
         boolean readStatus = false;
         boolean readHeaders = false;
@@ -657,17 +643,17 @@ public class WsWebSocketContainer
         }
         // Header names are case insensitive so always use lower case
         String headerName = line.substring(0, index).trim().toLowerCase(Locale.ENGLISH);
-        // Multi-value headers are stored as a single header and the client is
-        // expected to handle splitting into individual values
+        // TODO handle known multi-value headers
         String headerValue = line.substring(index + 1).trim();
 
         List<String> values = headers.get(headerName);
         if (values == null) {
-            values = new ArrayList<>(1);
+            values = new ArrayList<String>(1);
             headers.put(headerName, values);
         }
         values.add(headerValue);
     }
+
 
     private String readLine(ByteBuffer response) {
         // All ISO-8859-1
@@ -707,11 +693,21 @@ public class WsWebSocketContainer
                     if (sslTrustStorePwdValue == null) {
                         sslTrustStorePwdValue = SSL_TRUSTSTORE_PWD_DEFAULT;
                     }
-
+                    
                     File keyStoreFile = new File(sslTrustStoreValue);
                     KeyStore ks = KeyStore.getInstance("JKS");
-                    try (InputStream is = new FileInputStream(keyStoreFile)) {
+                    InputStream is = null;
+                    try {
+                        is = new FileInputStream(keyStoreFile);
                         ks.load(is, sslTrustStorePwdValue.toCharArray());
+                    } finally {
+                        if (is != null) {
+                            try {
+                                is.close();
+                            } catch (IOException ioe) {
+                               // Ignore
+                            }
+                        }
                     }
 
                     TrustManagerFactory tmf = TrustManagerFactory.getInstance(
@@ -864,6 +860,7 @@ public class WsWebSocketContainer
     public void backgroundProcess() {
         // This method gets called once a second.
         backgroundProcessCount ++;
+
         if (backgroundProcessCount >= processPeriod) {
             backgroundProcessCount = 0;
 

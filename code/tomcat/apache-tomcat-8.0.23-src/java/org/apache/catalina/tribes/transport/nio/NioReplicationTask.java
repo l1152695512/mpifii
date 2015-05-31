@@ -47,6 +47,8 @@ import org.apache.catalina.tribes.util.Logs;
  * serviceChannel() method stores the key reference in the thread object then
  * calls notify() to wake it up. When the channel has been drained, the worker
  * thread returns itself to its parent pool.
+ *
+ * @author Filip Hanik
  */
 public class NioReplicationTask extends AbstractRxTask {
 
@@ -55,9 +57,9 @@ public class NioReplicationTask extends AbstractRxTask {
     private ByteBuffer buffer = null;
     private SelectionKey key;
     private int rxBufSize;
-    private final NioReceiver receiver;
-
-    public NioReplicationTask (ListenCallback callback, NioReceiver receiver) {
+    private NioReceiver receiver;
+    public NioReplicationTask (ListenCallback callback, NioReceiver receiver)
+    {
         super(callback);
         this.receiver = receiver;
     }
@@ -110,6 +112,8 @@ public class NioReplicationTask extends AbstractRxTask {
                 log.error("Exception caught in TcpReplicationThread.drainChannel.",e);
             }
             cancelKey(key);
+        } finally {
+
         }
         key = null;
         // done, ready for more, return to pool

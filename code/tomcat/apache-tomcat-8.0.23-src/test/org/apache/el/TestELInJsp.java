@@ -16,14 +16,15 @@
  */
 package org.apache.el;
 
-import java.math.BigDecimal;
-import java.util.Collections;
+import java.io.File;
 
-import javax.servlet.DispatcherType;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import org.apache.catalina.core.StandardContext;
+import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.ByteChunk;
 
@@ -36,9 +37,16 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug36923() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug36923.jsp");
+        File appDir = new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
+
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug36923.jsp");
 
         String result = res.toString();
         assertEcho(result, "00-${hello world}");
@@ -46,9 +54,16 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug42565() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug42565.jsp");
+        File appDir = new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
+
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug42565.jsp");
 
         String result = res.toString();
         assertEcho(result, "00-false");
@@ -71,9 +86,17 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug44994() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug44994.jsp");
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
+
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug44994.jsp");
 
         String result = res.toString();
         assertEcho(result, "00-none");
@@ -83,7 +106,14 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug45427() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         ByteChunk res = getUrl("http://localhost:" + getPort() +
                 "/test/bug45nnn/bug45427.jsp");
@@ -112,7 +142,14 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug45451() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         ByteChunk res = getUrl("http://localhost:" + getPort() +
                 "/test/bug45nnn/bug45451a.jsp");
@@ -214,7 +251,14 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug45511() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         ByteChunk res = getUrl("http://localhost:" + getPort() +
                 "/test/bug45nnn/bug45511.jsp");
@@ -226,18 +270,34 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug46596() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug46596.jsp");
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
+
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug46596.jsp");
         String result = res.toString();
         assertEcho(result, "{OK}");
     }
 
     @Test
     public void testBug47413() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug47413.jsp");
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
+
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug47413.jsp");
 
         String result = res.toString();
         assertEcho(result, "00-hello world");
@@ -256,7 +316,14 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug48112() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         ByteChunk res = getUrl("http://localhost:" + getPort() +
                 "/test/bug48nnn/bug48112.jsp");
@@ -266,9 +333,16 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug49555() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/bug49nnn/bug49555.jsp");
+        File appDir = new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
+
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/bug49nnn/bug49555.jsp");
 
         String result = res.toString();
         assertEcho(result, "00-" + TesterFunctions.Inner$Class.RETVAL);
@@ -276,7 +350,13 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug51544() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir = new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         ByteChunk res = getUrl("http://localhost:" + getPort() +
                 "/test/bug5nnnn/bug51544.jsp");
@@ -287,11 +367,18 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testELMisc() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/el-misc.jsp");
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
+
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/el-misc.jsp");
         String result = res.toString();
-
         assertEcho(result, "00-\\\\\\\"${'hello world'}");
         assertEcho(result, "01-\\\\\\\"\\${'hello world'}");
         assertEcho(result, "02-\\\"${'hello world'}");
@@ -310,18 +397,21 @@ public class TestELInJsp extends TomcatBaseTest {
         assertEcho(result, "15-foo\\bar\\baz");
         assertEcho(result, "16-foo\\bar\\baz");
         assertEcho(result, "17-foo\\bar\\baz");
-        assertEcho(result, "18-3");
-        assertEcho(result, "19-4");
-        assertEcho(result, "20-4");
-        assertEcho(result, "21-[{value=11}, {value=12}, {value=13}, {value=14}]");
-        assertEcho(result, "22-[{value=11}, {value=12}, {value=13}, {value=14}]");
     }
 
     @Test
     public void testScriptingExpression() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/script-expr.jsp");
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
+
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/script-expr.jsp");
         String result = res.toString();
         assertEcho(result, "00-hello world");
         assertEcho(result, "01-hello \"world");
@@ -339,9 +429,17 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testELMethod() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
 
-        ByteChunk res = getUrl("http://localhost:" + getPort() + "/test/el-method.jsp");
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
+
+        ByteChunk res = getUrl("http://localhost:" + getPort() +
+                "/test/el-method.jsp");
         String result = res.toString();
         assertEcho(result, "00-Hello JUnit from Tomcat");
         assertEcho(result, "01-Hello JUnit from Tomcat");
@@ -353,7 +451,18 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug56029() throws Exception {
-        getTomcatInstanceTestWebapp(true, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir = new File("test/webapp-3.0");
+        // app dir is relative to server home
+        StandardContext ctxt = (StandardContext) tomcat.addWebapp(
+                null, "/test", appDir.getAbsolutePath());
+
+        // This test needs the JSTL libraries
+        File lib = new File("webapps/examples/WEB-INF/lib");
+        ctxt.setAliases("/WEB-INF/lib=" + lib.getCanonicalPath());
+
+        tomcat.start();
 
         ByteChunk res = getUrl("http://localhost:" + getPort() +
                 "/test/bug5nnnn/bug56029.jspx");
@@ -366,7 +475,18 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug56147() throws Exception {
-        getTomcatInstanceTestWebapp(true, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir = new File("test/webapp-3.0");
+        // app dir is relative to server home
+        StandardContext ctx = (StandardContext) tomcat.addWebapp(
+                null, "/test", appDir.getAbsolutePath());
+
+        // This test needs the JSTL libraries
+        File lib = new File("webapps/examples/WEB-INF/lib");
+        ctx.setAliases("/WEB-INF/lib=" + lib.getCanonicalPath());
+
+        tomcat.start();
 
         ByteChunk res = getUrl("http://localhost:" + getPort() +
                 "/test/bug5nnnn/bug56147.jsp");
@@ -378,7 +498,13 @@ public class TestELInJsp extends TomcatBaseTest {
 
     @Test
     public void testBug56612() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir = new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         ByteChunk res = getUrl("http://localhost:" + getPort() +
                 "/test/bug5nnnn/bug56612.jsp");
@@ -388,66 +514,8 @@ public class TestELInJsp extends TomcatBaseTest {
     }
 
 
-    /*
-     * java.lang should be imported by default
-     */
-    @Test
-    public void testBug57141() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
-
-        ByteChunk res = getUrl("http://localhost:" + getPort() +
-                "/test/bug5nnnn/bug57141.jsp");
-
-        String result = res.toString();
-        assertEcho(result, "00-true");
-        assertEcho(result, "01-false");
-        assertEcho(result, "02-2147483647");
-    }
-
-
-    /*
-     * BZ https://bz.apache.org/bugzilla/show_bug.cgi?id=57142
-     * javax.servlet, javax.servlet.http and javax.servlet.jsp should be
-     * imported by default.
-     */
-    @Test
-    public void testBug57142() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
-
-        ByteChunk res = getUrl("http://localhost:" + getPort() +
-                "/test/bug5nnnn/bug57142.jsp");
-
-        String result = res.toString();
-        // javax.servlet
-        assertEcho(result, "00-" + DispatcherType.ASYNC);
-        // No obvious status fields for javax.servlet.http
-        // Could hack something with HttpUtils...
-        // No obvious status fields for javax.servlet.jsp
-        // Wild card (package) import
-        assertEcho(result, "01-" + BigDecimal.ROUND_UP);
-        // Class import
-        assertEcho(result, "02-" + Collections.EMPTY_LIST.size());
-    }
-
-
-    /*
-     * BZ https://bz.apache.org/bugzilla/show_bug.cgi?id=57441
-     * Can't validate function names defined in lambdas (or via imports)
-     */
-    @Test
-    public void testBug57441() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
-
-        ByteChunk res = getUrl("http://localhost:" + getPort() +
-                "/test/bug5nnnn/bug57441.jsp");
-
-        String result = res.toString();
-        assertEcho(result, "00-11");
-    }
-
-
     // Assertion for text contained with <p></p>, e.g. printed by tags:echo
     private static void assertEcho(String result, String expected) {
-        Assert.assertTrue(result, result.indexOf("<p>" + expected + "</p>") > 0);
+        assertTrue(result, result.indexOf("<p>" + expected + "</p>") > 0);
     }
 }

@@ -16,13 +16,13 @@
  */
 package org.apache.coyote.http11;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.net.Socket;
 import java.nio.CharBuffer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -46,14 +46,14 @@ import org.junit.Test;
 
 import org.apache.catalina.Context;
 import org.apache.catalina.Wrapper;
+import org.apache.catalina.deploy.SecurityCollection;
+import org.apache.catalina.deploy.SecurityConstraint;
 import org.apache.catalina.startup.SimpleHttpClient;
 import org.apache.catalina.startup.TesterServlet;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.B2CConverter;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.descriptor.web.SecurityCollection;
-import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 
 public class TestAbstractHttp11Processor extends TomcatBaseTest {
 
@@ -61,17 +61,13 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
     public void testResponseWithErrorChunked() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // This setting means the connection will be closed at the end of the
-        // request
-        tomcat.getConnector().setAttribute("maxKeepAliveRequests", "1");
-
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctxt = tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         // Add protected servlet
-        Tomcat.addServlet(ctx, "ChunkedResponseWithErrorServlet",
+        Tomcat.addServlet(ctxt, "ChunkedResponseWithErrorServlet",
                 new ResponseWithErrorServlet(true));
-        ctx.addServletMapping("/*", "ChunkedResponseWithErrorServlet");
+        ctxt.addServletMapping("/*", "ChunkedResponseWithErrorServlet");
 
         tomcat.start();
 
@@ -89,14 +85,6 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
         // Expected response is a 200 response followed by an incomplete chunked
         // body.
         assertTrue(client.isResponse200());
-        // Should use chunked encoding
-        String transferEncoding = null;
-        for (String header : client.getResponseHeaders()) {
-             if (header.startsWith("Transfer-Encoding:")) {
-                transferEncoding = header.substring(18).trim();
-            }
-        }
-        Assert.assertEquals("chunked", transferEncoding);
         // There should not be an end chunk
         assertFalse(client.getResponseBody().endsWith("0"));
         // The last portion of text should be there
@@ -141,7 +129,13 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
 
     @Test
     public void testWithUnknownExpectation() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        // Use the normal Tomcat ROOT context
+        File root = new File("test/webapp-3.0");
+        tomcat.addWebapp("", root.getAbsolutePath());
+
+        tomcat.start();
 
         String request =
             "POST /echo-params.jsp HTTP/1.1" + SimpleHttpClient.CRLF +
@@ -149,7 +143,7 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
             "Expect: unknoen" + SimpleHttpClient.CRLF +
             SimpleHttpClient.CRLF;
 
-        Client client = new Client(getPort());
+        Client client = new Client(tomcat.getConnector().getLocalPort());
         client.setRequest(new String[] {request});
 
         client.connect();
@@ -160,7 +154,13 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
 
     @Test
     public void testWithTEVoid() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        // Use the normal Tomcat ROOT context
+        File root = new File("test/webapp-3.0");
+        tomcat.addWebapp("", root.getAbsolutePath());
+
+        tomcat.start();
 
         String request =
             "POST /echo-params.jsp HTTP/1.1" + SimpleHttpClient.CRLF +
@@ -169,10 +169,10 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
             "Content-Length: 9" + SimpleHttpClient.CRLF +
             "Content-Type: application/x-www-form-urlencoded" +
                     SimpleHttpClient.CRLF +
-                    SimpleHttpClient.CRLF +
+            SimpleHttpClient.CRLF +
             "test=data";
 
-        Client client = new Client(getPort());
+        Client client = new Client(tomcat.getConnector().getLocalPort());
         client.setRequest(new String[] {request});
 
         client.connect();
@@ -180,10 +180,15 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
         assertTrue(client.isResponse501());
     }
 
-
     @Test
     public void testWithTEBuffered() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        // Use the normal Tomcat ROOT context
+        File root = new File("test/webapp-3.0");
+        tomcat.addWebapp("", root.getAbsolutePath());
+
+        tomcat.start();
 
         String request =
             "POST /echo-params.jsp HTTP/1.1" + SimpleHttpClient.CRLF +
@@ -192,10 +197,10 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
             "Content-Length: 9" + SimpleHttpClient.CRLF +
             "Content-Type: application/x-www-form-urlencoded" +
                     SimpleHttpClient.CRLF +
-                    SimpleHttpClient.CRLF +
+            SimpleHttpClient.CRLF +
             "test=data";
 
-        Client client = new Client(getPort());
+        Client client = new Client(tomcat.getConnector().getLocalPort());
         client.setRequest(new String[] {request});
 
         client.connect();
@@ -217,12 +222,19 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
     }
 
 
-    private void doTestWithTEChunked(boolean withCL) throws Exception {
+    private void doTestWithTEChunked(boolean withCL)
+            throws Exception {
 
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        // Use the normal Tomcat ROOT context
+        File root = new File("test/webapp-3.0");
+        tomcat.addWebapp("", root.getAbsolutePath());
+
+        tomcat.start();
 
         String request =
-            "POST /test/echo-params.jsp HTTP/1.1" + SimpleHttpClient.CRLF +
+            "POST /echo-params.jsp HTTP/1.1" + SimpleHttpClient.CRLF +
             "Host: any" + SimpleHttpClient.CRLF +
             (withCL ? "Content-length: 1" + SimpleHttpClient.CRLF : "") +
             "Transfer-encoding: chunked" + SimpleHttpClient.CRLF +
@@ -235,7 +247,7 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
             "0" + SimpleHttpClient.CRLF +
             SimpleHttpClient.CRLF;
 
-        Client client = new Client(getPort());
+        Client client = new Client(tomcat.getConnector().getLocalPort());
         client.setRequest(new String[] {request});
 
         client.connect();
@@ -247,20 +259,26 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
 
     @Test
     public void testWithTEIdentity() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        // Use the normal Tomcat ROOT context
+        File root = new File("test/webapp-3.0");
+        tomcat.addWebapp("", root.getAbsolutePath());
+
+        tomcat.start();
 
         String request =
-            "POST /test/echo-params.jsp HTTP/1.1" + SimpleHttpClient.CRLF +
+            "POST /echo-params.jsp HTTP/1.1" + SimpleHttpClient.CRLF +
             "Host: any" + SimpleHttpClient.CRLF +
             "Transfer-encoding: identity" + SimpleHttpClient.CRLF +
             "Content-Length: 9" + SimpleHttpClient.CRLF +
             "Content-Type: application/x-www-form-urlencoded" +
                     SimpleHttpClient.CRLF +
             "Connection: close" + SimpleHttpClient.CRLF +
-                SimpleHttpClient.CRLF +
+            SimpleHttpClient.CRLF +
             "test=data";
 
-        Client client = new Client(getPort());
+        Client client = new Client(tomcat.getConnector().getLocalPort());
         client.setRequest(new String[] {request});
 
         client.connect();
@@ -272,7 +290,13 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
 
     @Test
     public void testWithTESavedRequest() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        // Use the normal Tomcat ROOT context
+        File root = new File("test/webapp-3.0");
+        tomcat.addWebapp("", root.getAbsolutePath());
+
+        tomcat.start();
 
         String request =
             "POST /echo-params.jsp HTTP/1.1" + SimpleHttpClient.CRLF +
@@ -281,10 +305,10 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
             "Content-Length: 9" + SimpleHttpClient.CRLF +
             "Content-Type: application/x-www-form-urlencoded" +
                     SimpleHttpClient.CRLF +
-                    SimpleHttpClient.CRLF +
+            SimpleHttpClient.CRLF +
             "test=data";
 
-        Client client = new Client(getPort());
+        Client client = new Client(tomcat.getConnector().getLocalPort());
         client.setRequest(new String[] {request});
 
         client.connect();
@@ -295,7 +319,13 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
 
     @Test
     public void testWithTEUnsupported() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        // Use the normal Tomcat ROOT context
+        File root = new File("test/webapp-3.0");
+        tomcat.addWebapp("", root.getAbsolutePath());
+
+        tomcat.start();
 
         String request =
             "POST /echo-params.jsp HTTP/1.1" + SimpleHttpClient.CRLF +
@@ -304,10 +334,10 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
             "Content-Length: 9" + SimpleHttpClient.CRLF +
             "Content-Type: application/x-www-form-urlencoded" +
                     SimpleHttpClient.CRLF +
-                    SimpleHttpClient.CRLF +
+            SimpleHttpClient.CRLF +
             "test=data";
 
-        Client client = new Client(getPort());
+        Client client = new Client(tomcat.getConnector().getLocalPort());
         client.setRequest(new String[] {request});
 
         client.connect();
@@ -320,12 +350,13 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
     public void testPipelining() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctxt = tomcat.addContext("",
+                System.getProperty("java.io.tmpdir"));
 
         // Add protected servlet
-        Tomcat.addServlet(ctx, "TesterServlet", new TesterServlet());
-        ctx.addServletMapping("/foo", "TesterServlet");
+        Tomcat.addServlet(ctxt, "TesterServlet", new TesterServlet());
+        ctxt.addServletMapping("/foo", "TesterServlet");
 
         tomcat.start();
 
@@ -380,17 +411,19 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
     public void testChunking11NoContentLength() throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctxt = tomcat.addContext("",
+                System.getProperty("java.io.tmpdir"));
 
-        Tomcat.addServlet(ctx, "NoContentLengthFlushingServlet",
+        Tomcat.addServlet(ctxt, "NoContentLengthFlushingServlet",
                 new NoContentLengthFlushingServlet());
-        ctx.addServletMapping("/test", "NoContentLengthFlushingServlet");
+        ctxt.addServletMapping("/test", "NoContentLengthFlushingServlet");
 
         tomcat.start();
 
         ByteChunk responseBody = new ByteChunk();
-        Map<String,List<String>> responseHeaders = new HashMap<>();
+        Map<String,List<String>> responseHeaders =
+                new HashMap<String,List<String>>();
         int rc = getUrl("http://localhost:" + getPort() + "/test", responseBody,
                 responseHeaders);
 
@@ -407,18 +440,20 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
 
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctxt = tomcat.addContext("",
+                System.getProperty("java.io.tmpdir"));
 
-        Tomcat.addServlet(ctx, "NoContentLengthConnectionCloseFlushingServlet",
+        Tomcat.addServlet(ctxt, "NoContentLengthConnectionCloseFlushingServlet",
                 new NoContentLengthConnectionCloseFlushingServlet());
-        ctx.addServletMapping("/test",
+        ctxt.addServletMapping("/test",
                 "NoContentLengthConnectionCloseFlushingServlet");
 
         tomcat.start();
 
         ByteChunk responseBody = new ByteChunk();
-        Map<String,List<String>> responseHeaders = new HashMap<>();
+        Map<String,List<String>> responseHeaders =
+                new HashMap<String,List<String>>();
         int rc = getUrl("http://localhost:" + getPort() + "/test", responseBody,
                 responseHeaders);
 
@@ -447,23 +482,25 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
     private void doTestBug53677(boolean flush) throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctxt = tomcat.addContext("",
+                System.getProperty("java.io.tmpdir"));
 
-        Tomcat.addServlet(ctx, "LargeHeaderServlet",
+        Tomcat.addServlet(ctxt, "LargeHeaderServlet",
                 new LargeHeaderServlet(flush));
-        ctx.addServletMapping("/test", "LargeHeaderServlet");
+        ctxt.addServletMapping("/test", "LargeHeaderServlet");
 
         tomcat.start();
 
         ByteChunk responseBody = new ByteChunk();
-        Map<String,List<String>> responseHeaders = new HashMap<>();
+        Map<String,List<String>> responseHeaders =
+                new HashMap<String,List<String>>();
         int rc = getUrl("http://localhost:" + getPort() + "/test", responseBody,
                 responseHeaders);
 
         assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, rc);
         if (responseBody.getLength() > 0) {
-            // It will be >0 if the standard error page handling has been
+            // It will be >0 if the standard error page handlign has been
             // triggered
             assertFalse(responseBody.toString().contains("FAIL"));
         }
@@ -483,11 +520,12 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
         tomcat.getConnector().setProperty("processorCache", "1");
         tomcat.getConnector().setProperty("maxThreads", "1");
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctxt = tomcat.addContext("",
+                System.getProperty("java.io.tmpdir"));
 
-        Tomcat.addServlet(ctx, "async", new Bug55772Servlet());
-        ctx.addServletMapping("/*", "async");
+        Tomcat.addServlet(ctxt, "async", new Bug55772Servlet());
+        ctxt.addServletMapping("/*", "async");
 
         tomcat.start();
 
@@ -512,27 +550,46 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
                 "Accept-Language: en-US,en;q=0.8,fr;q=0.6,es;q=0.4\r\n" +
                 "\r\n";
 
-        try (final Socket connection = new Socket("localhost", getPort())) {
+        Socket connection = null;
+        try {
+            connection = new Socket("localhost", getPort());
             connection.setSoLinger(true, 0);
             Writer writer = new OutputStreamWriter(connection.getOutputStream(),
-                    StandardCharsets.US_ASCII);
+                    B2CConverter.getCharset("US-ASCII"));
             writer.write(request1);
             writer.flush();
 
             bug55772Latch1.await();
             connection.close();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (IOException ioe) {
+                    // Ignore
+                }
+            }
         }
 
         bug55772Latch2.await();
         bug55772IsSecondRequest = true;
 
-        try (final Socket connection = new Socket("localhost", getPort())) {
+        try {
+            connection = new Socket("localhost", getPort());
             connection.setSoLinger(true, 0);
             Writer writer = new OutputStreamWriter(connection.getOutputStream(),
                     B2CConverter.getCharset("US-ASCII"));
             writer.write(request2);
             writer.flush();
             connection.getInputStream().read();
+        } finally {
+            if (connection != null) {
+                try {
+                    connection.close();
+                } catch (IOException ioe) {
+                    // Ignore
+                }
+            }
         }
 
         bug55772Latch3.await();
@@ -556,8 +613,8 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
     private void doTestNon2xxResponseAndExpectation(boolean useExpectation) throws Exception {
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "echo", new EchoBodyServlet());
         ctx.addServletMapping("/echo", "echo");
@@ -571,16 +628,16 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
 
         tomcat.start();
 
-        byte[] requestBody = "HelloWorld".getBytes(StandardCharsets.UTF_8);
+        byte[] requestBody = "HelloWorld".getBytes("UTF-8");
         Map<String,List<String>> reqHeaders = null;
         if (useExpectation) {
-            reqHeaders = new HashMap<>();
-            List<String> expectation = new ArrayList<>();
+            reqHeaders = new HashMap<String,List<String>>();
+            List<String> expectation = new ArrayList<String>();
             expectation.add("100-continue");
             reqHeaders.put("Expect", expectation);
         }
         ByteChunk responseBody = new ByteChunk();
-        Map<String,List<String>> responseHeaders = new HashMap<>();
+        Map<String,List<String>> responseHeaders = new HashMap<String,List<String>>();
         int rc = postUrl(requestBody, "http://localhost:" + getPort() + "/echo",
                 responseBody, reqHeaders, responseHeaders);
 
@@ -712,7 +769,10 @@ public class TestAbstractHttp11Processor extends TomcatBaseTest {
     public void testBug57621() throws Exception {
 
         Tomcat tomcat = getTomcatInstance();
-        Context root = tomcat.addContext("", null);
+        
+        // Must have a real docBase - just use temp
+        Context root = tomcat.addContext("", System.getProperty("java.io.tmpdir"));
+        
         Wrapper w = Tomcat.addServlet(root, "Bug57621", new Bug57621Servlet());
         w.setAsyncSupported(true);
         root.addServletMapping("/test", "Bug57621");

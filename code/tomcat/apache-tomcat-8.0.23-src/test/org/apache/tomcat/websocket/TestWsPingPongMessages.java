@@ -46,8 +46,9 @@ public class TestWsPingPongMessages extends TomcatBaseTest {
     @Test
     public void testPingPongMessages() throws Exception {
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext("",
+                System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterEchoServer.Config.class.getName());
 
         Tomcat.addServlet(ctx, "default", new DefaultServlet());

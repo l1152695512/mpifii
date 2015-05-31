@@ -91,7 +91,7 @@ public class StatementCache extends StatementDecoratorInterceptor {
 
     /*begin the cache size*/
     private static ConcurrentHashMap<ConnectionPool,AtomicInteger> cacheSizeMap =
-        new ConcurrentHashMap<>();
+        new ConcurrentHashMap<ConnectionPool,AtomicInteger>();
 
     private AtomicInteger cacheSize;
 
@@ -119,8 +119,7 @@ public class StatementCache extends StatementDecoratorInterceptor {
             cacheSize = cacheSizeMap.get(parent);
             this.pcon = con;
             if (!pcon.getAttributes().containsKey(STATEMENT_CACHE_ATTR)) {
-                ConcurrentHashMap<String,CachedStatement> cache =
-                        new ConcurrentHashMap<>();
+                ConcurrentHashMap<String,CachedStatement> cache = new ConcurrentHashMap<String, CachedStatement>();
                 pcon.getAttributes().put(STATEMENT_CACHE_ATTR,cache);
             }
         }

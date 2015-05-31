@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.catalina.realm;
 
 import java.io.IOException;
@@ -63,6 +62,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 
 import org.apache.catalina.LifecycleException;
+
 import org.ietf.jgss.GSSCredential;
 
 /**
@@ -234,6 +234,12 @@ public class JNDIRealm extends RealmBase {
      */
     public static final String DEREF_ALIASES = "java.naming.ldap.derefAliases";
 
+    /**
+     * Descriptive information about this Realm implementation.
+     */
+    protected static final String info =
+        "org.apache.catalina.realm.JNDIRealm/1.0";
+
 
     /**
      * Descriptive information about this Realm implementation.
@@ -386,7 +392,7 @@ public class JNDIRealm extends RealmBase {
      * Should we search the entire subtree for matching memberships?
      */
     protected boolean roleSubtree = false;
-
+    
     /**
      * Should we look for nested group in order to determine roles?
      */
@@ -396,10 +402,10 @@ public class JNDIRealm extends RealmBase {
      * When searching for user roles, should the search be performed as the user
      * currently being authenticated? If false, {@link #connectionName} and
      * {@link #connectionPassword} will be used if specified, else an anonymous
-     * connection will be used.
+     * connection will be used. 
      */
     protected boolean roleSearchAsUser = false;
-
+    
     /**
      * An alternate URL, to which, we should connect if connectionURL fails.
      */
@@ -422,7 +428,7 @@ public class JNDIRealm extends RealmBase {
      * to the directory. The default is 5000 (5 seconds).
      */
     protected String connectionTimeout = "5000";
-
+    
     /**
      * The sizeLimit (also known as the countLimit) to use when the realm is
      * configured with {@link #userSearch}. Zero for no limit.
@@ -435,7 +441,7 @@ public class JNDIRealm extends RealmBase {
      */
     protected int timeLimit = 0;
 
-
+    
     /**
      * Should delegated credentials from the SPNEGO authenticator be used if
      * available
@@ -883,7 +889,7 @@ public class JNDIRealm extends RealmBase {
         this.roleSubtree = roleSubtree;
 
     }
-
+    
     /**
      * Return the "The nested group search flag" flag.
      */
@@ -954,7 +960,7 @@ public class JNDIRealm extends RealmBase {
      * separated by parentheses. (for example, either "cn={0}", or
      * "(cn={0})(cn={0},o=myorg)" Full LDAP search strings are also supported,
      * but only the "OR", "|" syntax, so "(|(cn={0})(cn={0},o=myorg))" is
-     * also valid. Complex search strings with &amp;, etc are NOT supported.
+     * also valid. Complex search strings with &, etc are NOT supported.
      *
      * @param userPattern The new user pattern
      */
@@ -1071,13 +1077,24 @@ public class JNDIRealm extends RealmBase {
         this.useDelegatedCredential = useDelegatedCredential;
     }
 
-
+    
     public String getSpnegoDelegationQop() {
         return spnegoDelegationQop;
     }
 
     public void setSpnegoDelegationQop(String spnegoDelegationQop) {
         this.spnegoDelegationQop = spnegoDelegationQop;
+    }
+
+    
+    /**
+     * Return descriptive information about this Realm implementation and
+     * the corresponding version number, in the format
+     * <code>&lt;description&gt;/&lt;version&gt;</code>.
+     */
+    @Override
+    public String getInfo() {
+        return info;
     }
 
 
@@ -1179,8 +1196,19 @@ public class JNDIRealm extends RealmBase {
                         "jndiRealm.invalidHostnameVerifier",
                         hostNameVerifierClassName));
             }
-        } catch (ClassNotFoundException | SecurityException
-                | InstantiationException | IllegalAccessException e) {
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException(sm.getString(
+                    "jndiRealm.invalidHostnameVerifier",
+                    hostNameVerifierClassName), e);
+        } catch (SecurityException e) {
+            throw new IllegalArgumentException(sm.getString(
+                    "jndiRealm.invalidHostnameVerifier",
+                    hostNameVerifierClassName), e);
+        } catch (InstantiationException e) {
+            throw new IllegalArgumentException(sm.getString(
+                    "jndiRealm.invalidHostnameVerifier",
+                    hostNameVerifierClassName), e);
+        } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(sm.getString(
                     "jndiRealm.invalidHostnameVerifier",
                     hostNameVerifierClassName), e);
@@ -1491,7 +1519,7 @@ public class JNDIRealm extends RealmBase {
         User user = null;
 
         // Get attributes to retrieve from user entry
-        ArrayList<String> list = new ArrayList<>();
+        ArrayList<String> list = new ArrayList<String>();
         if (userPassword != null)
             list.add(userPassword);
         if (userRoleName != null)
@@ -1803,7 +1831,7 @@ public class JNDIRealm extends RealmBase {
 
         String password = info.getPassword();
 
-        return getCredentialHandler().matches(credentials, password);
+        return compareCredentials(credentials, password);
     }
 
 
@@ -1874,7 +1902,7 @@ public class JNDIRealm extends RealmBase {
      * Configure the context to use {@link #connectionName} and
      * {@link #connectionPassword} if specified or an anonymous connection if
      * those attributes are not specified.
-     *
+     * 
       * @param context      DirContext to configure
      */
     private void userCredentialsRemove(DirContext context)
@@ -1924,10 +1952,10 @@ public class JNDIRealm extends RealmBase {
             containerLog.trace("  getRoles(" + dn + ")");
 
         // Start with roles retrieved from the user entry
-        List<String> list = new ArrayList<>();
+        List<String> list = new ArrayList<String>(); 
         List<String> userRoles = user.getRoles();
         if (userRoles != null) {
-            list.addAll(userRoles);
+            list.addAll(userRoles); 
         }
         if (commonRole != null)
             list.add(commonRole);
@@ -1941,7 +1969,7 @@ public class JNDIRealm extends RealmBase {
         // Are we configured to do role searches?
         if ((roleFormat == null) || (roleName == null))
             return (list);
-
+        
         // Set up parameters for an appropriate search
         String filter = roleFormat.format(new String[] { doRFC2254Encoding(dn), username, userRoleId });
         SearchControls controls = new SearchControls();
@@ -1981,7 +2009,7 @@ public class JNDIRealm extends RealmBase {
         if (results == null)
             return (list);  // Should never happen, but just in case ...
 
-        HashMap<String, String> groupMap = new HashMap<>();
+        HashMap<String, String> groupMap = new HashMap<String, String>();
         try {
             while (results.hasMore()) {
                 SearchResult result = results.next();
@@ -2010,13 +2038,13 @@ public class JNDIRealm extends RealmBase {
         // if nested group search is enabled, perform searches for nested groups until no new group is found
         if (getRoleNested()) {
 
-            // The following efficient algorithm is known as memberOf Algorithm, as described in "Practices in
+            // The following efficient algorithm is known as memberOf Algorithm, as described in "Practices in 
             // Directory Groups". It avoids group slurping and handles cyclic group memberships as well.
             // See http://middleware.internet2.edu/dir/ for details
 
-            Map<String, String> newGroups = new HashMap<>(groupMap);
+            Map<String, String> newGroups = new HashMap<String,String>(groupMap);
             while (!newGroups.isEmpty()) {
-                Map<String, String> newThisRound = new HashMap<>(); // Stores the groups we find in this iteration
+                Map<String, String> newThisRound = new HashMap<String, String>(); // Stores the groups we find in this iteration
 
                 for (Entry<String, String> group : newGroups.entrySet()) {
                     filter = roleFormat.format(new String[] { group.getKey(), group.getValue(), group.getValue() });
@@ -2112,7 +2140,7 @@ public class JNDIRealm extends RealmBase {
         if (attrId == null || attrs == null)
             return values;
         if (values == null)
-            values = new ArrayList<>();
+            values = new ArrayList<String>();
         Attribute attr = attrs.get(attrId);
         if (attr == null)
             return (values);
@@ -2190,7 +2218,7 @@ public class JNDIRealm extends RealmBase {
     protected Principal getPrincipal(String username) {
         return getPrincipal(username, null);
     }
-
+    
     @Override
     protected Principal getPrincipal(String username,
             GSSCredential gssCredential) {
@@ -2309,7 +2337,7 @@ public class JNDIRealm extends RealmBase {
             return new GenericPrincipal(user.getUserName(), user.getPassword(),
                     roles, null, null, gssCredential);
         }
-
+        
         return null;
     }
 
@@ -2398,8 +2426,19 @@ public class JNDIRealm extends RealmBase {
                         "jndiRealm.invalidSslSocketFactory",
                         className));
             }
-        } catch (ClassNotFoundException | SecurityException
-                | InstantiationException | IllegalAccessException e) {
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException(sm.getString(
+                    "jndiRealm.invalidSslSocketFactory",
+                    className), e);
+        } catch (SecurityException e) {
+            throw new IllegalArgumentException(sm.getString(
+                    "jndiRealm.invalidSslSocketFactory",
+                    className), e);
+        } catch (InstantiationException e) {
+            throw new IllegalArgumentException(sm.getString(
+                    "jndiRealm.invalidSslSocketFactory",
+                    className), e);
+        } catch (IllegalAccessException e) {
             throw new IllegalArgumentException(sm.getString(
                     "jndiRealm.invalidSslSocketFactory",
                     className), e);
@@ -2416,7 +2455,13 @@ public class JNDIRealm extends RealmBase {
                 sslContext = SSLContext.getDefault();
             }
             return sslContext.getSocketFactory();
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+        } catch (NoSuchAlgorithmException e) {
+            List<String> allowedProtocols = Arrays
+                    .asList(getSupportedSslProtocols());
+            throw new IllegalArgumentException(
+                    sm.getString("jndiRealm.invalidSslProtocol", protocol,
+                            allowedProtocols), e);
+        } catch (KeyManagementException e) {
             List<String> allowedProtocols = Arrays
                     .asList(getSupportedSslProtocols());
             throw new IllegalArgumentException(
@@ -2437,7 +2482,7 @@ public class JNDIRealm extends RealmBase {
      */
     private DirContext createTlsDirContext(
             Hashtable<String, String> env) throws NamingException {
-        Map<String, Object> savedEnv = new HashMap<>();
+        Map<String, Object> savedEnv = new HashMap<String, Object>();
         for (String key : Arrays.asList(Context.SECURITY_AUTHENTICATION,
                 Context.SECURITY_CREDENTIALS, Context.SECURITY_PRINCIPAL,
                 Context.SECURITY_PROTOCOL)) {
@@ -2482,7 +2527,7 @@ public class JNDIRealm extends RealmBase {
      */
     protected Hashtable<String,String> getDirectoryContextEnvironment() {
 
-        Hashtable<String,String> env = new Hashtable<>();
+        Hashtable<String,String> env = new Hashtable<String,String>();
 
         // Configure our directory context environment.
         if (containerLog.isDebugEnabled() && connectionAttempt == 0)
@@ -2585,7 +2630,7 @@ public class JNDIRealm extends RealmBase {
     protected String[] parseUserPatternString(String userPatternString) {
 
         if (userPatternString != null) {
-            ArrayList<String> pathList = new ArrayList<>();
+            ArrayList<String> pathList = new ArrayList<String>();
             int startParenLoc = userPatternString.indexOf('(');
             if (startParenLoc == -1) {
                 // no parens here; return whole thing
@@ -2623,13 +2668,13 @@ public class JNDIRealm extends RealmBase {
      * Given an LDAP search string, returns the string with certain characters
      * escaped according to RFC 2254 guidelines.
      * The character mapping is as follows:
-     *     char -&gt;  Replacement
+     *     char ->  Replacement
      *    ---------------------------
-     *     *  -&gt; \2a
-     *     (  -&gt; \28
-     *     )  -&gt; \29
-     *     \  -&gt; \5c
-     *     \0 -&gt; \00
+     *     *  -> \2a
+     *     (  -> \28
+     *     )  -> \29
+     *     \  -> \5c
+     *     \0 -> \00
      * @param inString string to escape according to RFC 2254 guidelines
      * @return String the escaped/encoded result
      */
@@ -2683,11 +2728,11 @@ public class JNDIRealm extends RealmBase {
            NameParser parser = context.getNameParser("");
            Name contextName = parser.parse(context.getNameInNamespace());
            Name baseName = parser.parse(base);
-
+   
            // Bugzilla 32269
            Name entryName =
                parser.parse(new CompositeName(result.getName()).get(0));
-
+   
            Name name = contextName.addAll(baseName);
            name = name.addAll(entryName);
            return name.toString();
@@ -2724,7 +2769,7 @@ public class JNDIRealm extends RealmBase {
      * A protected class representing a User
      */
     protected static class User {
-
+         
         private final String username;
         private final String dn;
         private final String password;
@@ -2744,28 +2789,28 @@ public class JNDIRealm extends RealmBase {
             }
             this.userRoleId = userRoleId;
         }
-
+    
         public String getUserName() {
             return username;
         }
-
+         
         public String getDN() {
             return dn;
         }
-
+        
         public String getPassword() {
             return password;
         }
-
+         
         public List<String> getRoles() {
             return roles;
         }
 
         public String getUserRoleId() {
             return userRoleId;
-        }
-
-
     }
+
+
+}
 }
 

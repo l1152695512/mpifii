@@ -59,7 +59,7 @@ public class CsrfPreventionFilter extends FilterBase {
 
     private int denyStatus = HttpServletResponse.SC_FORBIDDEN;
 
-    private final Set<String> entryPoints = new HashSet<>();
+    private final Set<String> entryPoints = new HashSet<String>();
 
     private int nonceCacheSize = 5;
 
@@ -193,7 +193,7 @@ public class CsrfPreventionFilter extends FilterBase {
             }
 
             if (nonceCache == null) {
-                nonceCache = new LruCache<>(nonceCacheSize);
+                nonceCache = new LruCache<String>(nonceCacheSize);
                 if (session == null) {
                     session = req.getSession(true);
                 }

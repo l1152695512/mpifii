@@ -24,13 +24,23 @@ import org.apache.catalina.tribes.transport.DataSender;
 import org.apache.catalina.tribes.transport.MultiPointSender;
 import org.apache.catalina.tribes.transport.PooledSender;
 
+/**
+ * <p>Title: </p>
+ *
+ * <p>Description: </p>
+ *
+ * <p>Company: </p>
+ *
+ * @author not attributable
+ * @version 1.0
+ */
 public class PooledMultiSender extends PooledSender {
-
+    
 
     public PooledMultiSender() {
         // NO-OP
     }
-
+    
     @Override
     public void sendMessage(Member[] destination, ChannelMessage msg) throws ChannelException {
         MultiPointSender sender = null;

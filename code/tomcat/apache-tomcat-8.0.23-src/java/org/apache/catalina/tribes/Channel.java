@@ -65,6 +65,7 @@ import java.io.Serializable;
  * </code></pre>
  *
  * For example usage @see org.apache.catalina.tribes.group.GroupChannel
+ * @author Filip Hanik
  */
 public interface Channel {
 
@@ -323,7 +324,7 @@ public interface Channel {
 
     /**
      * Returns true if there are any members in the group,
-     * this call is the same as <code>getMembers().length &gt; 0</code>
+     * this call is the same as <code>getMembers().length>0</code>
      * @return boolean - true if there are any members automatically discovered
      */
     public boolean hasMembers() ;

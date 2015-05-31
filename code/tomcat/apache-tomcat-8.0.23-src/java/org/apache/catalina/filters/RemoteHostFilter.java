@@ -39,7 +39,6 @@ import org.apache.juli.logging.LogFactory;
  */
 public final class RemoteHostFilter extends RequestFilter {
 
-    // ----------------------------------------------------- Instance Variables
 
     private static final Log log = LogFactory.getLog(RemoteHostFilter.class);
 

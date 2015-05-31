@@ -35,8 +35,8 @@ import org.apache.tomcat.util.net.SocketWrapper;
  * @author Costin Manolache
  */
 public class AjpAprProtocol extends AbstractAjpProtocol<Long> {
-
-
+    
+    
     private static final Log log = LogFactory.getLog(AjpAprProtocol.class);
 
     @Override
@@ -70,14 +70,14 @@ public class AjpAprProtocol extends AbstractAjpProtocol<Long> {
         ((AprEndpoint) endpoint).setUseSendfile(false);
     }
 
-
+    
     // ----------------------------------------------------- Instance Variables
 
 
     /**
      * Connection handler for AJP.
      */
-    private final AjpConnectionHandler cHandler;
+    private AjpConnectionHandler cHandler;
 
 
     // --------------------------------------------------------- Public Methods
@@ -106,7 +106,7 @@ public class AjpAprProtocol extends AbstractAjpProtocol<Long> {
             extends AbstractAjpConnectionHandler<Long,AjpAprProcessor>
             implements Handler {
 
-        protected final AjpAprProtocol proto;
+        protected AjpAprProtocol proto;
 
         public AjpConnectionHandler(AjpAprProtocol proto) {
             this.proto = proto;
@@ -131,9 +131,12 @@ public class AjpAprProtocol extends AbstractAjpProtocol<Long> {
                 Processor<Long> processor, boolean isSocketClosing,
                 boolean addToPoller) {
             processor.recycle(isSocketClosing);
-            recycledProcessors.push(processor);
+            recycledProcessors.offer(processor);
             if (addToPoller) {
-                socket.registerforEvent(proto.endpoint.getKeepAliveTimeout(), true, false);
+                ((AprEndpoint)proto.endpoint).getPoller().add(
+                        socket.getSocket().longValue(),
+                        proto.endpoint.getKeepAliveTimeout(),
+                        true, false);
             }
         }
 
@@ -141,7 +144,12 @@ public class AjpAprProtocol extends AbstractAjpProtocol<Long> {
         @Override
         protected AjpAprProcessor createProcessor() {
             AjpAprProcessor processor = new AjpAprProcessor(proto.packetSize, (AprEndpoint)proto.endpoint);
-            proto.configureProcessor(processor);
+            processor.setAdapter(proto.adapter);
+            processor.setTomcatAuthentication(proto.tomcatAuthentication);
+            processor.setTomcatAuthorization(proto.getTomcatAuthorization());
+            processor.setRequiredSecret(proto.requiredSecret);
+            processor.setKeepAliveTimeout(proto.getKeepAliveTimeout());
+            processor.setClientCertProvider(proto.getClientCertProvider());
             register(processor);
             return processor;
         }

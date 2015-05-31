@@ -43,6 +43,11 @@ import org.apache.tomcat.util.res.StringManager;
 public class StuckThreadDetectionValve extends ValveBase {
 
     /**
+     * The descriptive information related to this implementation.
+     */
+    private static final String info =
+            "org.apache.catalina.valves.StuckThreadDetectionValve/1.0";
+    /**
      * Logger
      */
     private static final Log log = LogFactory.getLog(StuckThreadDetectionValve.class);
@@ -80,12 +85,12 @@ public class StuckThreadDetectionValve extends ValveBase {
      * are stuck (caused by a long monitor interval)
      */
     private final ConcurrentHashMap<Long, MonitoredThread> activeThreads =
-            new ConcurrentHashMap<>();
+            new ConcurrentHashMap<Long, MonitoredThread>();
     /**
      *
      */
     private final Queue<CompletedStuckThread> completedStuckThreadsQueue =
-            new ConcurrentLinkedQueue<>();
+            new ConcurrentLinkedQueue<CompletedStuckThread>();
 
     /**
      * Specifies the threshold (in seconds) used when checking for stuck threads.
@@ -140,6 +145,14 @@ public class StuckThreadDetectionValve extends ValveBase {
                     + threshold
                     + " sec");
         }
+    }
+
+    /**
+     * Return descriptive information about this Valve implementation.
+     */
+    @Override
+    public String getInfo() {
+        return info;
     }
 
     private void notifyStuckThreadDetected(MonitoredThread monitoredThread,
@@ -252,7 +265,7 @@ public class StuckThreadDetectionValve extends ValveBase {
     }
 
     public long[] getStuckThreadIds() {
-        List<Long> idList = new ArrayList<>();
+        List<Long> idList = new ArrayList<Long>();
         for (MonitoredThread monitoredThread : activeThreads.values()) {
             if (monitoredThread.isMarkedAsStuck()) {
                 idList.add(Long.valueOf(monitoredThread.getThread().getId()));
@@ -267,7 +280,7 @@ public class StuckThreadDetectionValve extends ValveBase {
     }
 
     public String[] getStuckThreadNames() {
-        List<String> nameList = new ArrayList<>();
+        List<String> nameList = new ArrayList<String>();
         for (MonitoredThread monitoredThread : activeThreads.values()) {
             if (monitoredThread.isMarkedAsStuck()) {
                 nameList.add(monitoredThread.getThread().getName());

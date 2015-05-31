@@ -30,7 +30,7 @@ import org.apache.catalina.util.IOTools;
  * The entry point to SSI processing. This class does the actual parsing,
  * delegating to the SSIMediator, SSICommand, and SSIExternalResolver as
  * necessary[
- *
+ * 
  * @author Dan Sandberg
  * @author David Becker
  */
@@ -39,9 +39,11 @@ public class SSIProcessor {
     protected static final String COMMAND_START = "<!--#";
     /** The end pattern */
     protected static final String COMMAND_END = "-->";
-    protected final SSIExternalResolver ssiExternalResolver;
-    protected final HashMap<String,SSICommand> commands = new HashMap<>();
-    protected final int debug;
+    protected static final int BUFFER_SIZE = 4096;
+    protected SSIExternalResolver ssiExternalResolver;
+    protected HashMap<String,SSICommand> commands =
+        new HashMap<String,SSICommand>();
+    protected int debug;
     protected final boolean allowExec;
 
 
@@ -82,7 +84,7 @@ public class SSIProcessor {
      * Process a file with server-side commands, reading from reader and
      * writing the processed version to writer. NOTE: We really should be doing
      * this in a streaming way rather than converting it to an array first.
-     *
+     * 
      * @param reader
      *            the reader to read the file containing SSIs from
      * @param writer
@@ -95,7 +97,7 @@ public class SSIProcessor {
     public long process(Reader reader, long lastModifiedDate,
             PrintWriter writer) throws IOException {
         SSIMediator ssiMediator = new SSIMediator(ssiExternalResolver,
-                lastModifiedDate);
+                lastModifiedDate, debug);
         StringWriter stringWriter = new StringWriter();
         IOTools.flow(reader, stringWriter);
         String fileContents = stringWriter.toString();
@@ -158,7 +160,7 @@ public class SSIProcessor {
                                                paramNames, paramValues, writer);
                                 if (lmd > lastModifiedDate) {
                                     lastModifiedDate = lmd;
-                                }
+                                }                                    
                             }
                         }
                         if (errorMessage != null) {
@@ -182,7 +184,7 @@ public class SSIProcessor {
     /**
      * Parse a StringBuilder and take out the param type token. Called from
      * <code>requestHandler</code>
-     *
+     * 
      * @param cmd
      *            a value of type 'StringBuilder'
      * @return a value of type 'String[]'
@@ -232,7 +234,7 @@ public class SSIProcessor {
     /**
      * Parse a StringBuilder and take out the param token. Called from
      * <code>requestHandler</code>
-     *
+     * 
      * @param cmd
      *            a value of type 'StringBuilder'
      * @return a value of type 'String[]'
@@ -283,7 +285,7 @@ public class SSIProcessor {
     /**
      * Parse a StringBuilder and take out the command token. Called from
      * <code>requestHandler</code>
-     *
+     * 
      * @param cmd
      *            a value of type 'StringBuilder'
      * @return a value of type 'String', or null if there is none
@@ -322,7 +324,7 @@ public class SSIProcessor {
     protected boolean isSpace(char c) {
         return c == ' ' || c == '\n' || c == '\t' || c == '\r';
     }
-
+    
     protected boolean isQuote(char c) {
         return c == '\'' || c == '\"' || c == '`';
     }

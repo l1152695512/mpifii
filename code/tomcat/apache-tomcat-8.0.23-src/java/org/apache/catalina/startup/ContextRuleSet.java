@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,13 +38,13 @@ public class ContextRuleSet extends RuleSetBase {
     /**
      * The matching pattern prefix to use for recognizing our elements.
      */
-    protected final String prefix;
+    protected String prefix = null;
 
 
     /**
      * Should the context be created.
      */
-    protected final boolean create;
+    protected boolean create = true;
 
 
     // ------------------------------------------------------------ Constructor
@@ -55,7 +55,9 @@ public class ContextRuleSet extends RuleSetBase {
      * matching pattern prefix.
      */
     public ContextRuleSet() {
+
         this("");
+
     }
 
 
@@ -67,7 +69,11 @@ public class ContextRuleSet extends RuleSetBase {
      *  trailing slash character)
      */
     public ContextRuleSet(String prefix) {
-        this(prefix, true);
+
+        super();
+        this.namespaceURI = null;
+        this.prefix = prefix;
+
     }
 
 
@@ -79,9 +85,12 @@ public class ContextRuleSet extends RuleSetBase {
      *  trailing slash character)
      */
     public ContextRuleSet(String prefix, boolean create) {
+
+        super();
         this.namespaceURI = null;
         this.prefix = prefix;
         this.create = create;
+
     }
 
 
@@ -161,53 +170,28 @@ public class ContextRuleSet extends RuleSetBase {
                             "org.apache.catalina.SessionIdGenerator");
 
         digester.addObjectCreate(prefix + "Context/Parameter",
-                                 "org.apache.tomcat.util.descriptor.web.ApplicationParameter");
+                                 "org.apache.catalina.deploy.ApplicationParameter");
         digester.addSetProperties(prefix + "Context/Parameter");
         digester.addSetNext(prefix + "Context/Parameter",
                             "addApplicationParameter",
-                            "org.apache.tomcat.util.descriptor.web.ApplicationParameter");
+                            "org.apache.catalina.deploy.ApplicationParameter");
 
         digester.addRuleSet(new RealmRuleSet(prefix + "Context/"));
 
         digester.addObjectCreate(prefix + "Context/Resources",
-                                 "org.apache.catalina.webresources.StandardRoot",
+                                 "org.apache.naming.resources.FileDirContext",
                                  "className");
         digester.addSetProperties(prefix + "Context/Resources");
         digester.addSetNext(prefix + "Context/Resources",
                             "setResources",
-                            "org.apache.catalina.WebResourceRoot");
-
-        digester.addObjectCreate(prefix + "Context/Resources/PreResources",
-                                 null, // MUST be specified in the element
-                                 "className");
-        digester.addSetProperties(prefix + "Context/Resources/PreResources");
-        digester.addSetNext(prefix + "Context/Resources/PreResources",
-                            "addPreResources",
-                            "org.apache.catalina.WebResourceSet");
-
-        digester.addObjectCreate(prefix + "Context/Resources/JarResources",
-                                 null, // MUST be specified in the element
-                                 "className");
-        digester.addSetProperties(prefix + "Context/Resources/JarResources");
-        digester.addSetNext(prefix + "Context/Resources/JarResources",
-                            "addJarResources",
-                            "org.apache.catalina.WebResourceSet");
-
-        digester.addObjectCreate(prefix + "Context/Resources/PostResources",
-                                 null, // MUST be specified in the element
-                                 "className");
-        digester.addSetProperties(prefix + "Context/Resources/PostResources");
-        digester.addSetNext(prefix + "Context/Resources/PostResources",
-                            "addPostResources",
-                            "org.apache.catalina.WebResourceSet");
-
+                            "javax.naming.directory.DirContext");
 
         digester.addObjectCreate(prefix + "Context/ResourceLink",
-                "org.apache.tomcat.util.descriptor.web.ContextResourceLink");
+                "org.apache.catalina.deploy.ContextResourceLink");
         digester.addSetProperties(prefix + "Context/ResourceLink");
         digester.addRule(prefix + "Context/ResourceLink",
                 new SetNextNamingRule("addResourceLink",
-                        "org.apache.tomcat.util.descriptor.web.ContextResourceLink"));
+                        "org.apache.catalina.deploy.ContextResourceLink"));
 
         digester.addObjectCreate(prefix + "Context/Valve",
                                  null, // MUST be specified in the element
@@ -234,21 +218,6 @@ public class ContextRuleSet extends RuleSetBase {
                             "setJarScanner",
                             "org.apache.tomcat.JarScanner");
 
-        digester.addObjectCreate(prefix + "Context/JarScanner/JarScanFilter",
-                                 "org.apache.tomcat.util.scan.StandardJarScanFilter",
-                                 "className");
-        digester.addSetProperties(prefix + "Context/JarScanner/JarScanFilter");
-        digester.addSetNext(prefix + "Context/JarScanner/JarScanFilter",
-                            "setJarScanFilter",
-                            "org.apache.tomcat.JarScanFilter");
-
-        digester.addObjectCreate(prefix + "Context/CookieProcessor",
-                                 "org.apache.tomcat.util.http.LegacyCookieProcessor",
-                                 "className");
-        digester.addSetProperties(prefix + "Context/CookieProcessor");
-        digester.addSetNext(prefix + "Context/CookieProcessor",
-                            "setCookieProcessor",
-                            "org.apache.tomcat.util.http.CookieProcessor");
     }
 
 }

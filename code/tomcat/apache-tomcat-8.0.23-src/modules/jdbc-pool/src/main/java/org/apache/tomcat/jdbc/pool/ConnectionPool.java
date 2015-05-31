@@ -50,8 +50,10 @@ import org.apache.juli.logging.LogFactory;
  * The ConnectionPool uses a {@link PoolProperties} object for storing all the meta information about the connection pool.
  * As the underlying implementation, the connection pool uses {@link java.util.concurrent.BlockingQueue} to store active and idle connections.
  * A custom implementation of a fair {@link FairBlockingQueue} blocking queue is provided with the connection pool itself.
+ * @author Filip Hanik
  * @version 1.0
  */
+
 public class ConnectionPool {
 
     /**
@@ -439,16 +441,16 @@ public class ConnectionPool {
         }
 
         //make space for 10 extra in case we flow over a bit
-        busy = new ArrayBlockingQueue<>(properties.getMaxActive(),false);
+        busy = new ArrayBlockingQueue<PooledConnection>(properties.getMaxActive(),false);
         //busy = new FairBlockingQueue<PooledConnection>();
         //make space for 10 extra in case we flow over a bit
         if (properties.isFairQueue()) {
-            idle = new FairBlockingQueue<>();
+            idle = new FairBlockingQueue<PooledConnection>();
             //idle = new MultiLockFairBlockingQueue<PooledConnection>();
             //idle = new LinkedTransferQueue<PooledConnection>();
             //idle = new ArrayBlockingQueue<PooledConnection>(properties.getMaxActive(),false);
         } else {
-            idle = new ArrayBlockingQueue<>(properties.getMaxActive(),properties.isFairQueue());
+            idle = new ArrayBlockingQueue<PooledConnection>(properties.getMaxActive(),properties.isFairQueue());
         }
 
         initializePoolCleaner(properties);
@@ -746,20 +748,30 @@ public class ConnectionPool {
         boolean setToNull = false;
         try {
             con.lock();
+            boolean usercheck = con.checkUser(username, password);
+
             if (con.isReleased()) {
                 return null;
             }
 
-            //evaluate username/password change as well as max age functionality
-            boolean forceReconnect = con.shouldForceReconnect(username, password) || con.isMaxAgeExpired();
-
             if (!con.isDiscarded() && !con.isInitialized()) {
-                //here it states that the connection not discarded, but the connection is null
-                //don't attempt a connect here. It will be done during the reconnect.
-                forceReconnect = true;
+                //attempt to connect
+                try {
+                    con.connect();
+                } catch (Exception x) {
+                    release(con);
+                    setToNull = true;
+                    if (x instanceof SQLException) {
+                        throw (SQLException)x;
+                    } else {
+                        SQLException ex  = new SQLException(x.getMessage());
+                        ex.initCause(x);
+                        throw ex;
+                    }
+                }
             }
 
-            if (!forceReconnect) {
+            if (usercheck) {
                 if ((!con.isDiscarded()) && con.validate(PooledConnection.VALIDATE_BORROW)) {
                     //set the timestamp
                     con.setTimestamp(now);
@@ -780,11 +792,7 @@ public class ConnectionPool {
             //the connection shouldn't have to poll again.
             try {
                 con.reconnect();
-                int validationMode = getPoolProperties().isTestOnConnect() || getPoolProperties().getInitSQL()!=null ?
-                    PooledConnection.VALIDATE_INIT :
-                    PooledConnection.VALIDATE_BORROW;
-
-                if (con.validate(validationMode)) {
+                if (con.validate(PooledConnection.VALIDATE_INIT)) {
                     //set the timestamp
                     con.setTimestamp(now);
                     if (getPoolProperties().isLogAbandoned()) {
@@ -856,8 +864,11 @@ public class ConnectionPool {
         if (isClosed()) return true;
         if (!con.validate(action)) return true;
         if (!terminateTransaction(con)) return true;
-        if (con.isMaxAgeExpired()) return true;
-        else return false;
+        if (getPoolProperties().getMaxAge()>0 ) {
+            return (System.currentTimeMillis()-con.getLastConnected()) > getPoolProperties().getMaxAge();
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -1151,6 +1162,7 @@ public class ConnectionPool {
      * and performs the initialization according to
      * interceptors and validation rules.
      * This class is thread safe and is cancellable
+     * @author fhanik
      *
      */
     protected class ConnectionFuture implements Future<Connection>, Runnable {
@@ -1260,7 +1272,7 @@ public class ConnectionPool {
 
 
     private static volatile Timer poolCleanTimer = null;
-    private static HashSet<PoolCleaner> cleaners = new HashSet<>();
+    private static HashSet<PoolCleaner> cleaners = new HashSet<PoolCleaner>();
 
     private static synchronized void registerCleaner(PoolCleaner cleaner) {
         unregisterCleaner(cleaner);
@@ -1269,7 +1281,7 @@ public class ConnectionPool {
             ClassLoader loader = Thread.currentThread().getContextClassLoader();
             try {
                 Thread.currentThread().setContextClassLoader(ConnectionPool.class.getClassLoader());
-                poolCleanTimer = new Timer("Tomcat JDBC Pool Cleaner["+ System.identityHashCode(ConnectionPool.class.getClassLoader()) + ":"+
+                poolCleanTimer = new Timer("PoolCleaner["+ System.identityHashCode(ConnectionPool.class.getClassLoader()) + ":"+
                                            System.currentTimeMillis() + "]", true);
             }finally {
                 Thread.currentThread().setContextClassLoader(loader);
@@ -1310,7 +1322,7 @@ public class ConnectionPool {
         protected volatile long lastRun = 0;
 
         PoolCleaner(ConnectionPool pool, long sleepTime) {
-            this.pool = new WeakReference<>(pool);
+            this.pool = new WeakReference<ConnectionPool>(pool);
             this.sleepTime = sleepTime;
             if (sleepTime <= 0) {
                 log.warn("Database connection pool evicter thread interval is set to 0, defaulting to 30 seconds");

@@ -5,15 +5,15 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ */ 
 
 
 package org.apache.juli.logging;
@@ -24,7 +24,7 @@ package org.apache.juli.logging;
  * this interface must have a constructor that takes a single String
  * parameter representing the "name" of this Log.</p>
  *
- * <p> The six logging levels used by <code>Log</code> are (in order):</p>
+ * <p> The six logging levels used by <code>Log</code> are (in order):
  * <ol>
  * <li>trace (the least serious)</li>
  * <li>debug</li>
@@ -33,7 +33,7 @@ package org.apache.juli.logging;
  * <li>error</li>
  * <li>fatal (the most serious)</li>
  * </ol>
- * <p>The mapping of these log levels to the concepts used by the underlying
+ * The mapping of these log levels to the concepts used by the underlying
  * logging system is implementation dependent.
  * The implementation should ensure, though, that this ordering behaves
  * as expected.</p>
@@ -44,12 +44,12 @@ package org.apache.juli.logging;
  * to be logged).</p>
  *
  * <p> For example,
- * <code>
+ * <code><pre>
  *    if (log.isDebugEnabled()) {
  *        ... do something expensive ...
  *        log.debug(theResult);
  *    }
- * </code>
+ * </pre></code>
  * </p>
  *
  * <p>Configuration of the underlying logging system will generally be done

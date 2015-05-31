@@ -18,6 +18,7 @@ package org.apache.tomcat.util.http.fileupload.disk;
 
 import java.io.File;
 
+import org.apache.tomcat.util.http.fileupload.FileCleaningTracker;
 import org.apache.tomcat.util.http.fileupload.FileItem;
 import org.apache.tomcat.util.http.fileupload.FileItemFactory;
 
@@ -76,6 +77,13 @@ public class DiskFileItemFactory implements FileItemFactory {
      * The threshold above which uploads will be stored on disk.
      */
     private int sizeThreshold = DEFAULT_SIZE_THRESHOLD;
+
+    /**
+     * <p>The instance of {@link FileCleaningTracker}, which is responsible
+     * for deleting temporary files.</p>
+     * <p>May be null, if tracking files is not required.</p>
+     */
+    private FileCleaningTracker fileCleaningTracker;
 
     // ----------------------------------------------------------- Constructors
 
@@ -173,7 +181,36 @@ public class DiskFileItemFactory implements FileItemFactory {
     @Override
     public FileItem createItem(String fieldName, String contentType,
             boolean isFormField, String fileName) {
-        return new DiskFileItem(fieldName, contentType,
+        DiskFileItem result = new DiskFileItem(fieldName, contentType,
                 isFormField, fileName, sizeThreshold, repository);
+        FileCleaningTracker tracker = getFileCleaningTracker();
+        if (tracker != null) {
+            tracker.track(result.getTempFile(), result);
+        }
+        return result;
     }
+
+    /**
+     * Returns the tracker, which is responsible for deleting temporary
+     * files.
+     *
+     * @return An instance of {@link FileCleaningTracker}, or null
+     *   (default), if temporary files aren't tracked.
+     */
+    public FileCleaningTracker getFileCleaningTracker() {
+        return fileCleaningTracker;
+    }
+
+    /**
+     * Sets the tracker, which is responsible for deleting temporary
+     * files.
+     *
+     * @param pTracker An instance of {@link FileCleaningTracker},
+     *   which will from now on track the created files, or null
+     *   (default), to disable tracking.
+     */
+    public void setFileCleaningTracker(FileCleaningTracker pTracker) {
+        fileCleaningTracker = pTracker;
+    }
+
 }

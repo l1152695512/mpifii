@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,10 +32,8 @@ public @interface Resource {
         APPLICATION
     }
     public String name() default "";
-    /**
-     * Uses generics since Common Annotations 1.2.
-     */
-    public Class<?> type() default Object.class;
+    @SuppressWarnings("rawtypes") // Can't use Class<?> because API needs to match specification
+    public Class type() default Object.class;
     public AuthenticationType authenticationType() default AuthenticationType.CONTAINER;
     public boolean shareable() default true;
     public String description() default "";

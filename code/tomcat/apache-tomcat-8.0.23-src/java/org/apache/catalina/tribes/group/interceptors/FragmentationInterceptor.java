@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -33,20 +33,21 @@ import org.apache.catalina.tribes.io.XByteBuffer;
  * The fragmentation interceptor splits up large messages into smaller messages and assembles them on the other end.
  * This is very useful when you don't want large messages hogging the sending sockets
  * and smaller messages can make it through.
- *
+ * 
  * <br><b>Configuration Options</b><br>
- * OrderInteceptor.expire=&lt;milliseconds&gt; - how long do we keep the fragments in memory and wait for the rest to arrive<b>default=60,000ms -&gt; 60seconds</b>
+ * OrderInteceptor.expire=<milliseconds> - how long do we keep the fragments in memory and wait for the rest to arrive<b>default=60,000ms -> 60seconds</b>
  * This setting is useful to avoid OutOfMemoryErrors<br>
- * OrderInteceptor.maxSize=&lt;max message size&gt; - message size in bytes <b>default=1024*100 (around a tenth of a MB)</b><br>
+ * OrderInteceptor.maxSize=<max message size> - message size in bytes <b>default=1024*100 (around a tenth of a MB)</b><br>
+ * @author Filip Hanik
  * @version 1.0
  */
 public class FragmentationInterceptor extends ChannelInterceptorBase {
     private static final org.apache.juli.logging.Log log = org.apache.juli.logging.LogFactory.getLog( FragmentationInterceptor.class );
-
-    protected final HashMap<FragKey, FragCollection> fragpieces = new HashMap<>();
+    
+    protected HashMap<FragKey, FragCollection> fragpieces = new HashMap<FragKey, FragCollection>();
     private int maxSize = 1024*100;
     private long expire = 1000 * 60; //one minute expiration
-    protected final boolean deepclone = true;
+    protected boolean deepclone = true;
 
 
     @Override
@@ -60,7 +61,7 @@ public class FragmentationInterceptor extends ChannelInterceptorBase {
             super.sendMessage(destination, msg, payload);
         }
     }
-
+    
     @Override
     public void messageReceived(ChannelMessage msg) {
         boolean isFrag = XByteBuffer.toBoolean(msg.getMessage().getBytesDirect(),msg.getMessage().getLength()-1);
@@ -72,7 +73,7 @@ public class FragmentationInterceptor extends ChannelInterceptorBase {
         }
     }
 
-
+    
     public FragCollection getFragCollection(FragKey key, ChannelMessage msg) {
         FragCollection coll = fragpieces.get(key);
         if ( coll == null ) {
@@ -83,15 +84,15 @@ public class FragmentationInterceptor extends ChannelInterceptorBase {
                     fragpieces.put(key, coll);
                 }
             }
-        }
+        } 
         return coll;
     }
-
+    
     public void removeFragCollection(FragKey key) {
         fragpieces.remove(key);
     }
-
-    public void defrag(ChannelMessage msg ) {
+    
+    public void defrag(ChannelMessage msg ) { 
         FragKey key = new FragKey(msg.getUniqueId());
         FragCollection coll = getFragCollection(key,msg);
         coll.addMessage((ChannelMessage)msg.deepclone());
@@ -100,7 +101,7 @@ public class FragmentationInterceptor extends ChannelInterceptorBase {
             removeFragCollection(key);
             ChannelMessage complete = coll.assemble();
             super.messageReceived(complete);
-
+            
         }
     }
 
@@ -128,21 +129,21 @@ public class FragmentationInterceptor extends ChannelInterceptorBase {
             tmp.getMessage().append(true);
             messages[i] = tmp;
             remaining -= length;
-
+            
         }
         for ( int i=0; i<messages.length; i++ ) {
             super.sendMessage(destination,messages[i],payload);
         }
     }
-
+    
     @Override
     public void heartbeat() {
         try {
-            Set<FragKey> set = fragpieces.keySet();
+            Set<FragKey> set = fragpieces.keySet(); 
             Object[] keys = set.toArray();
             for ( int i=0; i<keys.length; i++ ) {
                 FragKey key = (FragKey)keys[i];
-                if ( key != null && key.expired(getExpire()) )
+                if ( key != null && key.expired(getExpire()) ) 
                     removeFragCollection(key);
             }
         }catch ( Exception x ) {
@@ -171,16 +172,16 @@ public class FragmentationInterceptor extends ChannelInterceptorBase {
     }
 
     public static class FragCollection {
-        private final long received = System.currentTimeMillis();
-        private final ChannelMessage msg;
-        private final XByteBuffer[] frags;
+        private long received = System.currentTimeMillis();
+        private ChannelMessage msg;
+        private XByteBuffer[] frags;
         public FragCollection(ChannelMessage msg) {
             //get the total messages
             int count = XByteBuffer.toInt(msg.getMessage().getBytesDirect(),msg.getMessage().getLength()-4);
             frags = new XByteBuffer[count];
             this.msg = msg;
         }
-
+        
         public void addMessage(ChannelMessage msg) {
             //remove the total messages
             msg.getMessage().trim(4);
@@ -189,15 +190,15 @@ public class FragmentationInterceptor extends ChannelInterceptorBase {
             //remove the msg nr
             msg.getMessage().trim(4);
             frags[nr] = msg.getMessage();
-
+            
         }
-
+        
         public boolean complete() {
             boolean result = true;
             for ( int i=0; (i<frags.length) && (result); i++ ) result = (frags[i] != null);
             return result;
         }
-
+        
         public ChannelMessage assemble() {
             if ( !complete() ) throw new IllegalStateException("Fragments are missing.");
             int buffersize = 0;
@@ -209,15 +210,17 @@ public class FragmentationInterceptor extends ChannelInterceptorBase {
             }
             return msg;
         }
-
+        
         public boolean expired(long expire) {
             return (System.currentTimeMillis()-received)>expire;
         }
-    }
 
+
+    }
+    
     public static class FragKey {
-        private final byte[] uniqueId;
-        private final long received = System.currentTimeMillis();
+        private byte[] uniqueId;
+        private long received = System.currentTimeMillis();
         public FragKey(byte[] id ) {
             this.uniqueId = id;
         }
@@ -225,7 +228,7 @@ public class FragmentationInterceptor extends ChannelInterceptorBase {
         public int hashCode() {
             return XByteBuffer.toInt(uniqueId,0);
         }
-
+        
         @Override
         public boolean equals(Object o ) {
             if ( o instanceof FragKey ) {
@@ -233,11 +236,11 @@ public class FragmentationInterceptor extends ChannelInterceptorBase {
         } else return false;
 
         }
-
+        
         public boolean expired(long expire) {
             return (System.currentTimeMillis()-received)>expire;
         }
 
     }
-
+    
 }

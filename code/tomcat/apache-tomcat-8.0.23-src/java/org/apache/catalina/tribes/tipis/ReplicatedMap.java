@@ -27,7 +27,7 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
 /**
- * All-to-all replication for a hash map implementation. Each node in the cluster will carry an identical
+ * All-to-all replication for a hash map implementation. Each node in the cluster will carry an identical 
  * copy of the map.<br><br>
  * This map implementation doesn't have a background thread running to replicate changes.
  * If you do have changes without invoking put/remove then you need to invoke one of the following methods:
@@ -47,6 +47,7 @@ import org.apache.juli.logging.LogFactory;
  * TODO memberDisappeared, should do nothing except change map membership
  *       by default it relocates the primary objects
  *
+ * @author Filip Hanik
  * @version 1.0
  */
 public class ReplicatedMap<K,V> extends AbstractReplicatedMap<K,V> {
@@ -192,7 +193,7 @@ public class ReplicatedMap<K,V> extends AbstractReplicatedMap<K,V> {
                         getChannel().send(backup, msg, getChannelSendOptions());
                     }
                     entry.setBackupNodes(backup);
-                    if ( mapOwner!=null ) mapOwner.objectMadePrimary(entry.getKey(),entry.getValue());
+                    if ( mapOwner!=null ) mapOwner.objectMadePrimay(entry.getKey(),entry.getValue());
 
                 } catch (ChannelException x) {
                     log.error("Unable to relocate[" + entry.getKey() + "] to a new backup node", x);
@@ -229,4 +230,5 @@ public class ReplicatedMap<K,V> extends AbstractReplicatedMap<K,V> {
             }
         }
     }
+
 }

@@ -20,9 +20,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
+import java.nio.charset.Charset;
 
 import org.apache.coyote.InputBuffer;
 import org.apache.coyote.Request;
@@ -72,7 +70,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
         parsingHeader = true;
         swallowInput = true;
-
+        
     }
 
 
@@ -82,7 +80,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
     /**
      * Direct byte buffer used to perform actual reading.
      */
-    private final ByteBuffer bbuf;
+    private ByteBuffer bbuf;
 
 
     /**
@@ -91,32 +89,28 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
     private long socket;
 
 
-    private SocketWrapper<Long> wrapper;
-
-
     // --------------------------------------------------------- Public Methods
 
     /**
-     * Recycle the input buffer. This should be called when closing the
+     * Recycle the input buffer. This should be called when closing the 
      * connection.
      */
     @Override
     public void recycle() {
         socket = 0;
-        wrapper = null;
         super.recycle();
     }
 
 
     /**
-     * Read the request line. This function is meant to be used during the
-     * HTTP request header parsing. Do NOT attempt to read the request body
+     * Read the request line. This function is meant to be used during the 
+     * HTTP request header parsing. Do NOT attempt to read the request body 
      * using it.
      *
      * @throws IOException If an exception occurs during the underlying socket
      * read operations, or if the given buffer is not big enough to accommodate
      * the whole line.
-     * @return true if data is properly fed; false if no data is available
+     * @return true if data is properly fed; false if no data is available 
      * immediately and thread should be freed
      */
     @Override
@@ -137,7 +131,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
                 if (useAvailableData) {
                     return false;
                 }
-                if (!fill(true))
+                if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
             // Set the start time once we start reading data (even if it is
@@ -157,7 +151,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
             if (useAvailableData) {
                 return false;
             }
-            if (!fill(true))
+            if (!fill())
                 throw new EOFException(sm.getString("iib.eof.error"));
         }
 
@@ -172,7 +166,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
             // Read new bytes if needed
             if (pos >= lastValid) {
-                if (!fill(true))
+                if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
 
@@ -195,7 +189,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
         while (space) {
             // Read new bytes if needed
             if (pos >= lastValid) {
-                if (!fill(true))
+                if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
             if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {
@@ -220,7 +214,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
             // Read new bytes if needed
             if (pos >= lastValid) {
-                if (!fill(true))
+                if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
 
@@ -228,13 +222,13 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
             if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {
                 space = true;
                 end = pos;
-            } else if ((buf[pos] == Constants.CR)
+            } else if ((buf[pos] == Constants.CR) 
                        || (buf[pos] == Constants.LF)) {
                 // HTTP/0.9 style request
                 eol = true;
                 space = true;
                 end = pos;
-            } else if ((buf[pos] == Constants.QUESTION)
+            } else if ((buf[pos] == Constants.QUESTION) 
                        && (questionPos == -1)) {
                 questionPos = pos;
             }
@@ -243,8 +237,9 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
         }
 
+        request.unparsedURI().setBytes(buf, start, end - start);
         if (questionPos >= 0) {
-            request.queryString().setBytes(buf, questionPos + 1,
+            request.queryString().setBytes(buf, questionPos + 1, 
                                            end - questionPos - 1);
             request.requestURI().setBytes(buf, start, questionPos - start);
         } else {
@@ -255,7 +250,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
         while (space) {
             // Read new bytes if needed
             if (pos >= lastValid) {
-                if (!fill(true))
+                if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
             if (buf[pos] == Constants.SP || buf[pos] == Constants.HT) {
@@ -279,7 +274,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
             // Read new bytes if needed
             if (pos >= lastValid) {
-                if (!fill(true))
+                if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
 
@@ -300,7 +295,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
         } else {
             request.protocol().setString("");
         }
-
+        
         return true;
 
     }
@@ -329,7 +324,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
     /**
      * Parse an HTTP header.
-     *
+     * 
      * @return false after reading a blank line (which indicates that the
      * HTTP header parsing is done
      */
@@ -346,7 +341,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
             // Read new bytes if needed
             if (pos >= lastValid) {
-                if (!fill(true))
+                if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
 
@@ -380,7 +375,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
             // Read new bytes if needed
             if (pos >= lastValid) {
-                if (!fill(true))
+                if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
 
@@ -422,7 +417,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
                 // Read new bytes if needed
                 if (pos >= lastValid) {
-                    if (!fill(true))
+                    if (!fill())
                         throw new EOFException(sm.getString("iib.eof.error"));
                 }
 
@@ -441,7 +436,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
                 // Read new bytes if needed
                 if (pos >= lastValid) {
-                    if (!fill(true))
+                    if (!fill())
                         throw new EOFException(sm.getString("iib.eof.error"));
                 }
 
@@ -469,7 +464,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
             // Read new bytes if needed
             if (pos >= lastValid) {
-                if (!fill(true))
+                if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
 
@@ -493,19 +488,19 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
     }
 
-
+    
     private void skipLine(int start) throws IOException {
         boolean eol = false;
         int lastRealByte = start;
         if (pos - 1 > start) {
             lastRealByte = pos - 1;
         }
-
+        
         while (!eol) {
 
             // Read new bytes if needed
             if (pos >= lastValid) {
-                if (!fill(true))
+                if (!fill())
                     throw new EOFException(sm.getString("iib.eof.error"));
             }
 
@@ -521,11 +516,11 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
 
         if (log.isDebugEnabled()) {
             log.debug(sm.getString("iib.invalidheader", new String(buf, start,
-                    lastRealByte - start + 1, StandardCharsets.ISO_8859_1)));
+                    lastRealByte - start + 1, Charset.forName("ISO-8859-1"))));
         }
     }
-
-
+    
+    
     // ---------------------------------------------------- InputBuffer Methods
 
 
@@ -533,7 +528,7 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
      * Read some bytes.
      */
     @Override
-    public int doRead(ByteChunk chunk, Request req)
+    public int doRead(ByteChunk chunk, Request req) 
         throws IOException {
 
         if (lastActiveFilter == -1)
@@ -551,24 +546,52 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
             AbstractEndpoint<Long> endpoint) throws IOException {
 
         socket = socketWrapper.getSocket().longValue();
-        wrapper = socketWrapper;
         Socket.setrbb(this.socket, bbuf);
     }
 
 
     @Override
     protected boolean fill(boolean block) throws IOException {
+        // Ignore the block parameter and just call fill
+        return fill();
+    }
+    
+    
+    /**
+     * Fill the internal buffer using data from the underlying input stream.
+     * 
+     * @return false if at end of stream
+     */
+    protected boolean fill()
+        throws IOException {
 
         int nRead = 0;
 
         if (parsingHeader) {
+
             if (lastValid == buf.length) {
                 throw new IllegalArgumentException
                     (sm.getString("iib.requestheadertoolarge.error"));
             }
+
+            bbuf.clear();
+            nRead = Socket.recvbb(socket, 0, buf.length - lastValid);
+            if (nRead > 0) {
+                bbuf.limit(nRead);
+                bbuf.get(buf, pos, nRead);
+                lastValid = pos + nRead;
+            } else {
+                if ((-nRead) == Status.EAGAIN) {
+                    return false;
+                } else {
+                    throw new IOException(sm.getString("iib.failedread"));
+                }
+            }
+
         } else {
+
             if (buf.length - end < 4500) {
-                // In this case, the request header was really large, so we allocate a
+                // In this case, the request header was really large, so we allocate a 
                 // brand new one; the old one will get GCed when subsequent requests
                 // clear all references
                 buf = new byte[buf.length];
@@ -576,104 +599,38 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
             }
             pos = end;
             lastValid = pos;
-        }
-
-        bbuf.clear();
-
-        nRead = doReadSocket(block);
-        if (nRead > 0) {
-            bbuf.limit(nRead);
-            bbuf.get(buf, pos, nRead);
-            lastValid = pos + nRead;
-        } else if (-nRead == Status.EAGAIN) {
-            return false;
-        } else if ((-nRead) == Status.ETIMEDOUT || (-nRead) == Status.TIMEUP) {
-            if (block) {
-                throw new SocketTimeoutException(
-                        sm.getString("iib.readtimeout"));
+            bbuf.clear();
+            nRead = Socket.recvbb(socket, 0, buf.length - lastValid);
+            if (nRead > 0) {
+                bbuf.limit(nRead);
+                bbuf.get(buf, pos, nRead);
+                lastValid = pos + nRead;
             } else {
-                // Attempting to read from the socket when the poller
-                // has not signalled that there is data to read appears
-                // to behave like a blocking read with a short timeout
-                // on OSX rather than like a non-blocking read. If no
-                // data is read, treat the resulting timeout like a
-                // non-blocking read that returned no data.
-                return false;
+                if ((-nRead) == Status.ETIMEDOUT || (-nRead) == Status.TIMEUP) {
+                    throw new SocketTimeoutException(sm.getString("iib.failedread"));
+                } else if (nRead == 0) {
+                    // APR_STATUS_IS_EOF, since native 1.1.22
+                    return false;
+                } else {
+                    throw new IOException(sm.getString("iib.failedread"));
+                }
             }
-        } else if (nRead == 0) {
-            // APR_STATUS_IS_EOF, since native 1.1.22
-            return false;
-        } else {
-            throw new IOException(sm.getString("iib.failedread.apr",
-                    Integer.valueOf(-nRead)));
+
         }
 
         return (nRead > 0);
-    }
 
-
-    @Override
-    protected final Log getLog() {
-        return log;
-    }
-
-
-    private int doReadSocket(boolean block) {
-
-        Lock readLock = wrapper.getBlockingStatusReadLock();
-        WriteLock writeLock = wrapper.getBlockingStatusWriteLock();
-
-        boolean readDone = false;
-        int result = 0;
-        readLock.lock();
-        try {
-            if (wrapper.getBlockingStatus() == block) {
-                result = Socket.recvbb(socket, 0, buf.length - lastValid);
-                readDone = true;
-            }
-        } finally {
-            readLock.unlock();
-        }
-
-        if (!readDone) {
-            writeLock.lock();
-            try {
-                wrapper.setBlockingStatus(block);
-                // Set the current settings for this socket
-                if (block) {
-                    Socket.optSet(socket, Socket.APR_SO_NONBLOCK, 0);
-                } else {
-                    Socket.optSet(socket, Socket.APR_SO_NONBLOCK, 1);
-                    Socket.timeoutSet(socket, 0);
-                }
-                // Downgrade the lock
-                readLock.lock();
-                try {
-                    writeLock.unlock();
-                    result = Socket.recvbb(socket, 0, buf.length - lastValid);
-                } finally {
-                    readLock.unlock();
-                }
-            } finally {
-                // Should have been released above but may not have been on some
-                // exception paths
-                if (writeLock.isHeldByCurrentThread()) {
-                    writeLock.unlock();
-                }
-            }
-        }
-
-        return result;
     }
 
 
     // ------------------------------------- InputStreamInputBuffer Inner Class
 
+
     /**
      * This class is an input buffer which will read its data from an input
      * stream.
      */
-    protected class SocketInputBuffer
+    protected class SocketInputBuffer 
         implements InputBuffer {
 
 
@@ -681,11 +638,11 @@ public class InternalAprInputBuffer extends AbstractInputBuffer<Long> {
          * Read bytes into the specified chunk.
          */
         @Override
-        public int doRead(ByteChunk chunk, Request req )
+        public int doRead(ByteChunk chunk, Request req ) 
             throws IOException {
 
             if (pos >= lastValid) {
-                if (!fill(true))
+                if (!fill())
                     return -1;
             }
 

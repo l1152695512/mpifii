@@ -18,13 +18,11 @@ package org.apache.coyote.http11;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.nio.ByteBuffer;
-
-import javax.servlet.http.HttpUpgradeHandler;
 
 import org.apache.coyote.AbstractProtocol;
 import org.apache.coyote.Processor;
 import org.apache.coyote.http11.upgrade.BioProcessor;
+import org.apache.coyote.http11.upgrade.servlet31.HttpUpgradeHandler;
 import org.apache.juli.logging.Log;
 import org.apache.tomcat.util.net.AbstractEndpoint;
 import org.apache.tomcat.util.net.JIoEndpoint;
@@ -46,7 +44,7 @@ public class Http11Protocol extends AbstractHttp11JsseProtocol<Socket> {
 
     private static final org.apache.juli.logging.Log log
         = org.apache.juli.logging.LogFactory.getLog(Http11Protocol.class);
-
+    
     @Override
     protected Log getLog() { return log; }
 
@@ -69,10 +67,10 @@ public class Http11Protocol extends AbstractHttp11JsseProtocol<Socket> {
         setTcpNoDelay(Constants.DEFAULT_TCP_NO_DELAY);
     }
 
-
+    
     // ----------------------------------------------------------------- Fields
 
-    private final Http11ConnectionHandler cHandler;
+    protected Http11ConnectionHandler cHandler;
 
 
     // ------------------------------------------------ HTTP specific properties
@@ -91,8 +89,7 @@ public class Http11Protocol extends AbstractHttp11JsseProtocol<Socket> {
             this.disableKeepAlivePercentage = disableKeepAlivePercentage;
         }
     }
-
-
+    
     // ----------------------------------------------------- JMX related methods
 
     @Override
@@ -107,7 +104,7 @@ public class Http11Protocol extends AbstractHttp11JsseProtocol<Socket> {
             extends AbstractConnectionHandler<Socket, Http11Processor> implements Handler {
 
         protected Http11Protocol proto;
-
+            
         Http11ConnectionHandler(Http11Protocol proto) {
             this.proto = proto;
         }
@@ -121,7 +118,7 @@ public class Http11Protocol extends AbstractHttp11JsseProtocol<Socket> {
         protected Log getLog() {
             return log;
         }
-
+        
         @Override
         public SSLImplementation getSslImplementation() {
             return proto.sslImplementation;
@@ -130,7 +127,7 @@ public class Http11Protocol extends AbstractHttp11JsseProtocol<Socket> {
         /**
          * Expected to be used by the handler once the processor is no longer
          * required.
-         *
+         * 
          * @param socket            Not used in BIO
          * @param processor
          * @param isSocketClosing   Not used in HTTP
@@ -141,7 +138,7 @@ public class Http11Protocol extends AbstractHttp11JsseProtocol<Socket> {
                 Processor<Socket> processor, boolean isSocketClosing,
                 boolean addToPoller) {
             processor.recycle(isSocketClosing);
-            recycledProcessors.push(processor);
+            recycledProcessors.offer(processor);
         }
 
         @Override
@@ -169,24 +166,46 @@ public class Http11Protocol extends AbstractHttp11JsseProtocol<Socket> {
                     proto.getMaxHttpHeaderSize(), (JIoEndpoint)proto.endpoint,
                     proto.getMaxTrailerSize(), proto.getAllowedTrailerHeadersAsSet(),
                     proto.getMaxExtensionSize(), proto.getMaxSwallowSize());
-            proto.configureProcessor(processor);
-            // BIO specific configuration
-            processor.setDisableKeepAlivePercentage(proto.getDisableKeepAlivePercentage());
+            processor.setAdapter(proto.adapter);
+            processor.setMaxKeepAliveRequests(proto.getMaxKeepAliveRequests());
+            processor.setKeepAliveTimeout(proto.getKeepAliveTimeout());
+            processor.setConnectionUploadTimeout(
+                    proto.getConnectionUploadTimeout());
+            processor.setDisableUploadTimeout(proto.getDisableUploadTimeout());
+            processor.setCompressionMinSize(proto.getCompressionMinSize());
+            processor.setCompression(proto.getCompression());
+            processor.setNoCompressionUserAgents(proto.getNoCompressionUserAgents());
+            processor.setCompressableMimeTypes(proto.getCompressableMimeTypes());
+            processor.setRestrictedUserAgents(proto.getRestrictedUserAgents());
+            processor.setSocketBuffer(proto.getSocketBuffer());
+            processor.setMaxSavePostSize(proto.getMaxSavePostSize());
+            processor.setServer(proto.getServer());
+            processor.setDisableKeepAlivePercentage(
+                    proto.getDisableKeepAlivePercentage());
             register(processor);
             return processor;
         }
 
+        /**
+         * @deprecated  Will be removed in Tomcat 8.0.x.
+         */
+        @Deprecated
         @Override
         protected Processor<Socket> createUpgradeProcessor(
-                SocketWrapper<Socket> socket, ByteBuffer leftoverInput,
+                SocketWrapper<Socket> socket,
+                org.apache.coyote.http11.upgrade.UpgradeInbound inbound)
+                throws IOException {
+            return new org.apache.coyote.http11.upgrade.UpgradeBioProcessor(
+                    socket, inbound);
+        }
+        
+        @Override
+        protected Processor<Socket> createUpgradeProcessor(
+                SocketWrapper<Socket> socket,
                 HttpUpgradeHandler httpUpgradeProcessor)
                 throws IOException {
-            return new BioProcessor(socket, leftoverInput, httpUpgradeProcessor,
+            return new BioProcessor(socket, httpUpgradeProcessor,
                     proto.getUpgradeAsyncWriteBufferSize());
-        }
-
-        @Override
-        public void beforeHandshake(SocketWrapper<Socket> socket) {
         }
     }
 }

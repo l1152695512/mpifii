@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
   contributor license agreements.  See the NOTICE file distributed with
@@ -857,27 +857,6 @@ has been reloaded several times, it may be listed several times.</p>
 
 </subsection>
 
-<subsection name="Connector SSL/TLS diagnostics">
-
-<source>http://localhost:8080/manager/text/sslConnectorCiphers</source>
-
-<p>The SSL Connector/Ciphers diagnostic lists the SSL/TLS ciphers that are currently
-configured for each connector. For BIO and NIO, the names of the individual
-cipher suites are listed. For APR, the value of SSLCipherSuite is returned.</p>
-
-<p>The response will look something like this:</p>
-<source>OK - Connector / SSL Cipher information
-Connector[HTTP/1.1-8080]
-  SSL is not enabled for this connector
-Connector[HTTP/1.1-8443]
-  TLS_ECDH_RSA_WITH_3DES_EDE_CBC_SHA
-  TLS_DHE_RSA_WITH_AES_128_CBC_SHA
-  TLS_ECDH_RSA_WITH_AES_128_CBC_SHA
-  TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA
-  ...</source>
-
-</subsection>
-
 <subsection name="Thread Dump">
 
 <source>http://localhost:8080/manager/text/threaddump</source>
@@ -930,29 +909,6 @@ Runtime information:
 OS information:
 ...
 ]]></source>
-
-</subsection>
-
-<subsection name="Save Configuration">
-
-<source>http://localhost:8080/manager/text/save</source>
-
-<p>If specified without any parameters, this command saves the current
-configuration of the server to server.xml. The existing file will be renamed as
-a backup if required.</p>
-
-<p>If specified with a <code>path</code> parameter that matches the path of
-a deployed web application then the configuration for that web application will
-be saved to an appropriately named context.xml file in the <code>xmlBase</code>
-for the current Host.</p>
-
-<p>To use the command a StoreConfig MBean must be present. Typically this is
-configured using the <a
-href="config/listeners.html#StoreConfig_Lifecycle_Listener_-_org.apache.catalina.storeconfig.StoreConfigLifecycleListener">StoreConfigLifecycleListener</a>.
-</p>
-
-<p>If the command does not succeed, the response will start with
-<code>FAIL</code> and include an error message.</p>
 
 </subsection>
 
@@ -1133,6 +1089,7 @@ on each of deployed web applications will be available.</p>
 <source>http://localhost:8080/manager/jmxproxy/
  ?invoke=Catalina%3Atype%3DService&amp;op=findConnectors&amp;ps=</source>
   </subsection>
+
 </section>
 
 <section name="Executing Manager Commands With Ant">
@@ -1185,7 +1142,6 @@ file might look something like this:</p>
   <taskdef name="findleaks" classname="org.apache.catalina.ant.FindLeaksTask"/>
   <typedef name="vminfo"    classname="org.apache.catalina.ant.VminfoTask"/>
   <typedef name="threaddump" classname="org.apache.catalina.ant.ThreaddumpTask"/>
-  <typedef name="sslConnectorCiphers" classname="org.apache.catalina.ant.SslConnectorCiphersTask"/>
 
   <!-- Executable Targets -->
   <target name="compile" description="Compile web application">
@@ -1418,6 +1374,7 @@ see the output of each task call appended to the file.
 </subsection>
 
 </section>
+
 
 
 </body>

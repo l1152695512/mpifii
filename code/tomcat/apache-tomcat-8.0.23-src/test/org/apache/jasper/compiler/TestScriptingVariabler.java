@@ -17,6 +17,7 @@
 
 package org.apache.jasper.compiler;
 
+import java.io.File;
 import java.io.IOException;
 
 import javax.servlet.jsp.tagext.TagData;
@@ -28,13 +29,21 @@ import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
+import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 
 public class TestScriptingVariabler extends TomcatBaseTest {
 
     @Test
     public void testBug42390() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         Exception e = null;
         try {
@@ -70,7 +79,14 @@ public class TestScriptingVariabler extends TomcatBaseTest {
 
     @Test
     public void testBug48616() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         Exception e = null;
         try {
@@ -85,7 +101,14 @@ public class TestScriptingVariabler extends TomcatBaseTest {
 
     @Test
     public void testBug48616b() throws Exception {
-        getTomcatInstanceTestWebapp(false, true);
+        Tomcat tomcat = getTomcatInstance();
+
+        File appDir =
+            new File("test/webapp-3.0");
+        // app dir is relative to server home
+        tomcat.addWebapp(null, "/test", appDir.getAbsolutePath());
+
+        tomcat.start();
 
         Exception e = null;
         try {

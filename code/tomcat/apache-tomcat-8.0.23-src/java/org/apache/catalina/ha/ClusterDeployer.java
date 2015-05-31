@@ -26,9 +26,14 @@ import org.apache.catalina.tribes.ChannelListener;
 /**
  * A <b>ClusterDeployer</b> interface allows to plug in and out the
  * different deployment implementations
+ *
+ * @author Filip Hanik
  */
 public interface ClusterDeployer extends ChannelListener {
-
+    /**
+     * Descriptive information about this component implementation.
+     */
+    public String info = "ClusterDeployer/1.0";
     /**
      * Start the cluster deployer, the owning container will invoke this
      * @throws Exception - if failure to start cluster
@@ -46,7 +51,7 @@ public interface ClusterDeployer extends ChannelListener {
      * specified URL, into this container and all the other
      * members of the cluster with the specified context name.
      * <p>
-     * If this application is successfully installed locally,
+     * If this application is successfully installed locally, 
      * a ContainerEvent of type
      * <code>INSTALL_EVENT</code> will be sent to all registered listeners,
      * with the newly created <code>Context</code> as an argument.
@@ -89,7 +94,7 @@ public interface ClusterDeployer extends ChannelListener {
      * call from container Background Process
      */
     public void backgroundProcess();
-
+    
     /**
      * Returns the cluster the cluster deployer is associated with
      * @return CatalinaCluster

@@ -34,6 +34,16 @@ import org.apache.catalina.tribes.util.ExecutorFactory;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
+/**
+ * <p>Title: </p>
+ *
+ * <p>Description: </p>
+ *
+ * <p>Company: </p>
+ *
+ * @author not attributable
+ * @version 1.0
+ */
 public abstract class ReceiverBase implements ChannelReceiver, ListenCallback, RxTaskPool.TaskCreator {
 
     public static final int OPTION_DIRECT_BUFFER = 0x0004;
@@ -74,7 +84,7 @@ public abstract class ReceiverBase implements ChannelReceiver, ListenCallback, R
     private boolean useBufferPool = true;
     private boolean daemon = true;
     private long maxIdleTime = 60000;
-
+    
     private ExecutorService executor;
 
 
@@ -126,6 +136,15 @@ public abstract class ReceiverBase implements ChannelReceiver, ListenCallback, R
     }
 
     /**
+     * @deprecated use getMinThreads()/getMaxThreads()
+     * @return int
+     */
+    @Deprecated
+    public int getTcpThreadCount() {
+        return getMaxThreads();
+    }
+
+    /**
      * setMessageListener
      *
      * @param listener MessageListener
@@ -136,12 +155,40 @@ public abstract class ReceiverBase implements ChannelReceiver, ListenCallback, R
         this.listener = listener;
     }
 
+    /**
+     * @deprecated use setPort
+     * @param tcpListenPort int
+     */
+    @Deprecated
+    public void setTcpListenPort(int tcpListenPort) {
+        setPort(tcpListenPort);
+    }
+
+    /**
+     * @deprecated use setAddress
+     * @param tcpListenHost String
+     */
+    @Deprecated
+    public void setTcpListenAddress(String tcpListenHost) {
+        setAddress(tcpListenHost);
+    }
+
     public void setRxBufSize(int rxBufSize) {
         this.rxBufSize = rxBufSize;
     }
 
     public void setTxBufSize(int txBufSize) {
         this.txBufSize = txBufSize;
+    }
+
+    /**
+     * @deprecated use setMaxThreads/setMinThreads
+     * @param tcpThreadCount int
+     */
+    @Deprecated
+    public void setTcpThreadCount(int tcpThreadCount) {
+        setMaxThreads(tcpThreadCount);
+        setMinThreads(tcpThreadCount);
     }
 
     /**
@@ -255,6 +302,16 @@ public abstract class ReceiverBase implements ChannelReceiver, ListenCallback, R
         this.bind = bind;
     }
 
+    /**
+     * @deprecated use getPort
+     * @return int
+     */
+    @Deprecated
+    public int getTcpListenPort() {
+        return getPort();
+    }
+
+
     public boolean getDirect() {
         return direct;
     }
@@ -279,6 +336,14 @@ public abstract class ReceiverBase implements ChannelReceiver, ListenCallback, R
     public long getSelectorTimeout() {
         return tcpSelectorTimeout;
     }
+    /**
+     * @deprecated use getSelectorTimeout
+     * @return long
+     */
+    @Deprecated
+    public long getTcpSelectorTimeout() {
+        return getSelectorTimeout();
+    }
 
     public boolean doListen() {
         return listen;
@@ -290,6 +355,15 @@ public abstract class ReceiverBase implements ChannelReceiver, ListenCallback, R
 
     public RxTaskPool getTaskPool() {
         return pool;
+    }
+
+    /**
+     * @deprecated use getAddress
+     * @return String
+     */
+    @Deprecated
+    public String getTcpListenAddress() {
+        return getAddress();
     }
 
     public int getAutoBind() {
@@ -360,6 +434,15 @@ public abstract class ReceiverBase implements ChannelReceiver, ListenCallback, R
 
     public boolean isListening() {
         return listen;
+    }
+
+    /**
+     * @deprecated use setSelectorTimeout
+     * @param selTimeout long
+     */
+    @Deprecated
+    public void setTcpSelectorTimeout(long selTimeout) {
+        setSelectorTimeout(selTimeout);
     }
 
     public void setSelectorTimeout(long selTimeout) {
@@ -521,6 +604,6 @@ public abstract class ReceiverBase implements ChannelReceiver, ListenCallback, R
 
     public void setMaxIdleTime(long maxIdleTime) {
         this.maxIdleTime = maxIdleTime;
-    }
-
+    }    
+    
 }

@@ -5,9 +5,9 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0
  * (the "License"); you may not use this file except in compliance with
  * the License.  You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,15 +40,31 @@ import org.apache.tomcat.util.buf.MessageBytes;
  * @author Craig R. McClanahan
  */
 final class StandardContextValve extends ValveBase {
-
+    
     public StandardContextValve() {
         super(true);
     }
 
 
     /**
+     * The descriptive information related to this implementation.
+     */
+    private static final String info =
+        "org.apache.catalina.core.StandardContextValve/1.0";
+    
+
+    /**
+     * Return descriptive information about this Valve implementation.
+     */
+    @Override
+    public String getInfo() {
+        return (info);
+    }
+
+
+    /**
      * Cast to a StandardContext right away, as it will be needed later.
-     *
+     * 
      * @see org.apache.catalina.Contained#setContainer(org.apache.catalina.Container)
      */
     @Override
@@ -56,7 +72,7 @@ final class StandardContextValve extends ValveBase {
         super.setContainer(container);
     }
 
-
+    
     /**
      * Select the appropriate child Wrapper to process this request,
      * based on the specified request URI.  If no matching Wrapper can
@@ -99,7 +115,7 @@ final class StandardContextValve extends ValveBase {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             return;
         }
-
+        
         if (request.isAsyncSupported()) {
             request.setAsyncSupported(wrapper.getPipeline().isAsyncSupported());
         }

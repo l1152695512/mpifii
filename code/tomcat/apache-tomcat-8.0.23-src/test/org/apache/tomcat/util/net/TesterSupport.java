@@ -20,13 +20,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
-import java.util.Locale;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 import javax.net.ssl.X509TrustManager;
@@ -38,15 +41,39 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.catalina.Context;
 import org.apache.catalina.authenticator.SSLAuthenticator;
 import org.apache.catalina.connector.Connector;
-import org.apache.catalina.startup.TesterMapRealm;
+import org.apache.catalina.deploy.LoginConfig;
+import org.apache.catalina.deploy.SecurityCollection;
+import org.apache.catalina.deploy.SecurityConstraint;
+import org.apache.catalina.startup.TestTomcat.MapRealm;
 import org.apache.catalina.startup.Tomcat;
-import org.apache.tomcat.util.descriptor.web.LoginConfig;
-import org.apache.tomcat.util.descriptor.web.SecurityCollection;
-import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 
 public final class TesterSupport {
 
     public static final String ROLE = "testrole";
+
+    protected static final boolean RFC_5746_SUPPORTED;
+
+    static {
+        boolean result = false;
+        SSLContext context;
+        try {
+            context = SSLContext.getInstance("TLS");
+            context.init(null, null, null);
+            SSLServerSocketFactory ssf = context.getServerSocketFactory();
+            String ciphers[] = ssf.getSupportedCipherSuites();
+            for (String cipher : ciphers) {
+                if ("TLS_EMPTY_RENEGOTIATION_INFO_SCSV".equals(cipher)) {
+                    result = true;
+                    break;
+                }
+            }
+        } catch (NoSuchAlgorithmException e) {
+            // Assume no RFC 5746 support
+        } catch (KeyManagementException e) {
+            // Assume no RFC 5746 support
+        }
+        RFC_5746_SUPPORTED = result;
+    }
 
     public static void initSsl(Tomcat tomcat) {
         initSsl(tomcat, "localhost.jks", null, null);
@@ -55,18 +82,25 @@ public final class TesterSupport {
     protected static void initSsl(Tomcat tomcat, String keystore,
             String keystorePass, String keyPass) {
 
+        ClassLoader cl = TesterSupport.class.getClassLoader();
+
         String protocol = tomcat.getConnector().getProtocolHandlerClassName();
         if (protocol.indexOf("Apr") == -1) {
             Connector connector = tomcat.getConnector();
             connector.setProperty("sslProtocol", "tls");
-            File keystoreFile =
-                new File("test/org/apache/tomcat/util/net/" + keystore);
+            
+            java.net.URL keyStoreUrl =
+                    cl.getResource("org/apache/tomcat/util/net/" + keystore);
+            File keystoreFile = toFile(keyStoreUrl);
             connector.setAttribute("keystoreFile",
                     keystoreFile.getAbsolutePath());
-            File truststoreFile = new File(
-                    "test/org/apache/tomcat/util/net/ca.jks");
+            
+            java.net.URL truststoreUrl =
+                    cl.getResource("org/apache/tomcat/util/net/ca.jks");
+            File truststoreFile = toFile(truststoreUrl);
             connector.setAttribute("truststoreFile",
                     truststoreFile.getAbsolutePath());
+            
             if (keystorePass != null) {
                 connector.setAttribute("keystorePass", keystorePass);
             }
@@ -74,23 +108,34 @@ public final class TesterSupport {
                 connector.setAttribute("keyPass", keyPass);
             }
         } else {
-            File keystoreFile = new File(
-                    "test/org/apache/tomcat/util/net/localhost-cert.pem");
+            java.net.URL keyStoreUrl =
+                    cl.getResource("org/apache/tomcat/util/net/localhost-cert.pem");
+            File keystoreFile = toFile(keyStoreUrl);
             tomcat.getConnector().setAttribute("SSLCertificateFile",
                     keystoreFile.getAbsolutePath());
-            keystoreFile = new File(
-                    "test/org/apache/tomcat/util/net/localhost-key.pem");
+            
+            java.net.URL sslCertificateKeyUrl =
+                    cl.getResource("org/apache/tomcat/util/net/localhost-key.pem");
+            File sslCertificateKeyFile = toFile(sslCertificateKeyUrl);
             tomcat.getConnector().setAttribute("SSLCertificateKeyFile",
-                    keystoreFile.getAbsolutePath());
+                    sslCertificateKeyFile.getAbsolutePath());
         }
         tomcat.getConnector().setSecure(true);
         tomcat.getConnector().setProperty("SSLEnabled", "true");
     }
 
+    private static File toFile(java.net.URL url) {
+        try {
+            return new File(url.toURI());
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+    
     protected static KeyManager[] getUser1KeyManagers() throws Exception {
         KeyManagerFactory kmf = KeyManagerFactory.getInstance(
                 KeyManagerFactory.getDefaultAlgorithm());
-        kmf.init(getKeyStore("test/org/apache/tomcat/util/net/user1.jks"),
+        kmf.init(getKeyStore("org/apache/tomcat/util/net/user1.jks"),
                 "changeit".toCharArray());
         return kmf.getKeyManagers();
     }
@@ -98,7 +143,7 @@ public final class TesterSupport {
     protected static TrustManager[] getTrustManagers() throws Exception {
         TrustManagerFactory tmf = TrustManagerFactory.getInstance(
                 TrustManagerFactory.getDefaultAlgorithm());
-        tmf.init(getKeyStore("test/org/apache/tomcat/util/net/ca.jks"));
+        tmf.init(getKeyStore("org/apache/tomcat/util/net/ca.jks"));
         return tmf.getTrustManagers();
     }
 
@@ -116,16 +161,24 @@ public final class TesterSupport {
     }
 
     private static KeyStore getKeyStore(String keystore) throws Exception {
-        File keystoreFile = new File(keystore);
+        ClassLoader cl = TesterSupport.class.getClassLoader();
+        java.net.URL keystoreUrl = cl.getResource(keystore);
+        File keystoreFile = toFile(keystoreUrl);
         KeyStore ks = KeyStore.getInstance("JKS");
-        try (InputStream is = new FileInputStream(keystoreFile)) {
+        InputStream is = null;
+        try {
+            is = new FileInputStream(keystoreFile);
             ks.load(is, "changeit".toCharArray());
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException ioe) {
+                    // Ignore
+                }
+            }
         }
         return ks;
-    }
-
-    protected static boolean isMacOs() {
-        return System.getProperty("os.name").toLowerCase(Locale.ENGLISH).startsWith("mac os x");
     }
 
     protected static boolean isRenegotiationSupported(Tomcat tomcat) {
@@ -134,11 +187,6 @@ public final class TesterSupport {
             // Disabled by default in 1.1.20 windows binary (2010-07-27)
             return false;
         }
-        if (protocol.contains("NioProtocol") || (protocol.contains("Nio2Protocol") && isMacOs())) {
-            // Doesn't work on all platforms - see BZ 56448.
-            return false;
-        }
-
         return true;
     }
 
@@ -146,8 +194,9 @@ public final class TesterSupport {
         TesterSupport.initSsl(tomcat);
 
         // Need a web application with a protected and unprotected URL
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "simple", new SimpleServlet());
         ctx.addServletMapping("/unprotected", "simple");
@@ -162,7 +211,7 @@ public final class TesterSupport {
         ctx.addConstraint(sc);
 
         // Configure the Realm
-        TesterMapRealm realm = new TesterMapRealm();
+        MapRealm realm = new MapRealm();
         realm.addUser("CN=user1, C=US", "not used");
         realm.addUserRole("CN=user1, C=US", ROLE);
         ctx.setRealm(realm);

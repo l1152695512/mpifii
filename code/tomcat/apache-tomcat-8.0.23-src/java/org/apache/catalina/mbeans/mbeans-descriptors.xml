@@ -27,6 +27,15 @@
     <!-- value is the object name of the corresponding MBean for the new    -->
     <!-- component.                                                         -->
 
+    <operation   name="createAccessLoggerValve"
+          description="Create a new AccessLoggerValve"
+               impact="ACTION"
+           returnType="java.lang.String">
+      <parameter name="parent"
+          description="MBean Name of the associated parent component"
+                 type="java.lang.String"/>
+    </operation>
+
     <operation   name="createAjpConnector"
           description="Create a new AjpConnector"
                impact="ACTION"
@@ -128,7 +137,7 @@
           description="MBean Name of the associated parent component"
                  type="java.lang.String"/>
     </operation>
-
+    
     <operation   name="createUserDatabaseRealm"
           description="Create a new  UserDatabaseRealm"
                impact="ACTION"
@@ -138,6 +147,33 @@
                  type="java.lang.String"/>
       <parameter name="resourceName"
           description="Global JNDI resource name of the associated"
+                 type="java.lang.String"/>
+    </operation>
+
+    <operation   name="createRemoteAddrValve"
+          description="Create a new Remote Address Filter Valve"
+               impact="ACTION"
+           returnType="java.lang.String">
+      <parameter name="parent"
+          description="MBean Name of the associated parent component"
+                 type="java.lang.String"/>
+    </operation>
+
+    <operation   name="createRemoteHostValve"
+          description="Create a new Remote Host Filter Valve"
+               impact="ACTION"
+           returnType="java.lang.String">
+      <parameter name="parent"
+          description="MBean Name of the associated parent component"
+                 type="java.lang.String"/>
+    </operation>
+
+    <operation   name="createSingleSignOn"
+          description="Create a new Single Sign On Valve"
+               impact="ACTION"
+           returnType="java.lang.String">
+      <parameter name="parent"
+          description="MBean Name of the associated parent component"
                  type="java.lang.String"/>
     </operation>
 
@@ -186,13 +222,13 @@
                  type="java.lang.String"/>
       <parameter name="autoDeploy"
           description="The auto deploy flag for this Host"
-               type="boolean"/>
+               type="boolean"/>           
       <parameter name="deployOnStartup"
           description="The deploy on startup flag for this Host"
                type="boolean"/>
       <parameter name="deployXML"
           description="deploy Context XML config files property"
-               type="boolean"/>
+               type="boolean"/> 
       <parameter name="unpackWARs"
           description="Unpack WARs property"
                type="boolean"/>

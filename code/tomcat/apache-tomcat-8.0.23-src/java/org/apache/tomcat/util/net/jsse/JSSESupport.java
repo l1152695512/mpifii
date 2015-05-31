@@ -23,8 +23,8 @@ import java.io.InputStream;
 import java.net.SocketException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 import javax.net.ssl.HandshakeCompletedEvent;
 import javax.net.ssl.HandshakeCompletedListener;
@@ -35,7 +35,6 @@ import javax.security.cert.X509Certificate;
 
 import org.apache.tomcat.util.net.SSLSessionManager;
 import org.apache.tomcat.util.net.SSLSupport;
-import org.apache.tomcat.util.net.jsse.openssl.Cipher;
 import org.apache.tomcat.util.res.StringManager;
 
 /** JSSESupport
@@ -48,6 +47,7 @@ import org.apache.tomcat.util.res.StringManager;
 
    @author EKR
    @author Craig R. McClanahan
+   @author Filip Hanik
    Parts cribbed from JSSECertCompat
    Parts cribbed from CertificatesValve
 */
@@ -60,24 +60,8 @@ class JSSESupport implements SSLSupport, SSLSessionManager {
     private static final StringManager sm =
         StringManager.getManager("org.apache.tomcat.util.net.jsse.res");
 
-    private static final Map<String,Integer> keySizeCache = new HashMap<>();
-
-    static {
-        for (Cipher cipher : Cipher.values()) {
-            for (String jsseName : cipher.getJsseNames()) {
-                keySizeCache.put(jsseName, Integer.valueOf(cipher.getStrength_bits()));
-            }
-        }
-    }
-
-    /*
-     * NO-OP method provided to make it easy for other classes in this package
-     * to trigger the loading of this class and the population of the
-     * keySizeCache.
-     */
-    static void init() {
-        // NO-OP
-    }
+    private static final Map<SSLSession,Integer> keySizeCache =
+        new WeakHashMap<SSLSession, Integer>();
 
     protected SSLSocket ssl;
     protected SSLSession session;
@@ -100,6 +84,12 @@ class JSSESupport implements SSLSupport, SSLSessionManager {
         if (session == null)
             return null;
         return session.getCipherSuite();
+    }
+
+    @Override
+    public Object[] getPeerCertificateChain()
+        throws IOException {
+        return getPeerCertificateChain(false);
     }
 
     protected java.security.cert.X509Certificate [] getX509Certificates(
@@ -143,7 +133,7 @@ class JSSESupport implements SSLSupport, SSLSessionManager {
     }
 
     @Override
-    public java.security.cert.X509Certificate[] getPeerCertificateChain(boolean force)
+    public Object[] getPeerCertificateChain(boolean force)
         throws IOException {
         // Look up the current SSLSession
         if (session == null)
@@ -222,13 +212,33 @@ class JSSESupport implements SSLSupport, SSLSessionManager {
      * Copied from <code>org.apache.catalina.valves.CertificateValve</code>
      */
     @Override
-    public Integer getKeySize() throws IOException {
+    public Integer getKeySize()
+        throws IOException {
         // Look up the current SSLSession
-        if (session == null) {
+        SSLSupport.CipherData c_aux[]=ciphers;
+        if (session == null)
             return null;
+
+        Integer keySize = null;
+        synchronized(keySizeCache) {
+            keySize = keySizeCache.get(session);
         }
 
-        return keySizeCache.get(session.getCipherSuite());
+        if (keySize == null) {
+            int size = 0;
+            String cipherSuite = session.getCipherSuite();
+            for (int i = 0; i < c_aux.length; i++) {
+                if (cipherSuite.indexOf(c_aux[i].phrase) >= 0) {
+                    size = c_aux[i].keySize;
+                    break;
+                }
+            }
+            keySize = Integer.valueOf(size);
+            synchronized(keySizeCache) {
+                keySizeCache.put(session, keySize);
+            }
+        }
+        return keySize;
     }
 
     @Override

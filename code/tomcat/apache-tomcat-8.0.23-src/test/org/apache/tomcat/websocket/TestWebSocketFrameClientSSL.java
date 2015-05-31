@@ -16,7 +16,9 @@
  */
 package org.apache.tomcat.websocket;
 
+import java.io.File;
 import java.net.URI;
+import java.net.URL;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -44,13 +46,16 @@ public class TestWebSocketFrameClientSSL extends TomcatBaseTest {
 
 
     @Test
-    public void testConnectToServerEndpoint() throws Exception {
+    public void testConnectToServerEndpointSSL() throws Exception {
+
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterFirehoseServer.Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
+
 
         TesterSupport.initSsl(tomcat);
 
@@ -60,9 +65,12 @@ public class TestWebSocketFrameClientSSL extends TomcatBaseTest {
                 ContainerProvider.getWebSocketContainer();
         ClientEndpointConfig clientEndpointConfig =
                 ClientEndpointConfig.Builder.create().build();
+        URL truststoreUrl = this.getClass().getClassLoader().getResource(
+                "org/apache/tomcat/util/net/ca.jks");
+        File truststoreFile = new File(truststoreUrl.toURI());
         clientEndpointConfig.getUserProperties().put(
                 WsWebSocketContainer.SSL_TRUSTSTORE_PROPERTY,
-                "test/org/apache/tomcat/util/net/ca.jks");
+                truststoreFile.getAbsolutePath());
         Session wsSession = wsContainer.connectToServer(
                 TesterProgrammaticEndpoint.class,
                 clientEndpointConfig,
@@ -94,14 +102,11 @@ public class TestWebSocketFrameClientSSL extends TomcatBaseTest {
     public void testBug56032() throws Exception {
         // TODO Investigate options to get this test to pass with the HTTP BIO
         //      connector.
-        Assume.assumeFalse(
-                "Skip this test on BIO. TODO: investigate options to make it pass with HTTP BIO connector",
-                getTomcatInstance().getConnector().getProtocol()
-                        .equals("org.apache.coyote.http11.Http11Protocol"));
 
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx =
+            tomcat.addContext("", System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(TesterFirehoseServer.Config.class.getName());
         Tomcat.addServlet(ctx, "default", new DefaultServlet());
         ctx.addServletMapping("/", "default");
@@ -132,7 +137,7 @@ public class TestWebSocketFrameClientSSL extends TomcatBaseTest {
         int count = 0;
         int limit = TesterFirehoseServer.WAIT_TIME_MILLIS / 100;
 
-        System.out.println("Waiting for server to report an error");
+        System.err.println("Waiting for server to report an error");
         while (TesterFirehoseServer.Endpoint.getErrorCount() == 0 && count < limit) {
             Thread.sleep(100);
             count ++;
@@ -142,11 +147,10 @@ public class TestWebSocketFrameClientSSL extends TomcatBaseTest {
             Assert.fail("No error reported by Endpoint when timeout was expected");
         }
 
-        // Wait up to another 10 seconds for the connection to be closed -
-        // should be a lot faster.
-        System.out.println("Waiting for connection to be closed");
+        // Wait up to another 20 seconds for the connection to be closed
+        System.err.println("Waiting for connection to be closed");
         count = 0;
-        limit = (TesterFirehoseServer.SEND_TIME_OUT_MILLIS * 2) / 100;
+        limit = (TesterFirehoseServer.SEND_TIME_OUT_MILLIS * 4) / 100;
         while (TesterFirehoseServer.Endpoint.getOpenConnectionCount() != 0 && count < limit) {
             Thread.sleep(100);
             count ++;
@@ -157,4 +161,5 @@ public class TestWebSocketFrameClientSSL extends TomcatBaseTest {
             Assert.fail("There are [" + openConnectionCount + "] connections still open");
         }
     }
+
 }

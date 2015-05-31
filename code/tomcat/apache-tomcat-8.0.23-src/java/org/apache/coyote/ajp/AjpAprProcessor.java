@@ -17,17 +17,22 @@
 package org.apache.coyote.ajp;
 
 import java.io.IOException;
-import java.net.SocketTimeoutException;
+import java.io.InterruptedIOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
+import org.apache.coyote.ActionCode;
+import org.apache.coyote.ErrorState;
+import org.apache.coyote.RequestInfo;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 import org.apache.tomcat.jni.Socket;
 import org.apache.tomcat.jni.Status;
+import org.apache.tomcat.util.ExceptionUtils;
+import org.apache.tomcat.util.net.AbstractEndpoint.Handler.SocketState;
 import org.apache.tomcat.util.net.AprEndpoint;
+import org.apache.tomcat.util.net.SocketStatus;
 import org.apache.tomcat.util.net.SocketWrapper;
+
 
 /**
  * Processes AJP requests.
@@ -38,14 +43,21 @@ import org.apache.tomcat.util.net.SocketWrapper;
  * @author Keith Wannamaker
  * @author Kevin Seguin
  * @author Costin Manolache
+ * @author Bill Barker
  */
 public class AjpAprProcessor extends AbstractAjpProcessor<Long> {
 
+
+    /**
+     * Logger.
+     */
     private static final Log log = LogFactory.getLog(AjpAprProcessor.class);
     @Override
     protected Log getLog() {
         return log;
     }
+
+    // ----------------------------------------------------------- Constructors
 
 
     public AjpAprProcessor(int packetSize, AprEndpoint endpoint) {
@@ -61,22 +73,207 @@ public class AjpAprProcessor extends AbstractAjpProcessor<Long> {
     }
 
 
+    // ----------------------------------------------------- Instance Variables
+
     /**
      * Direct buffer used for input.
      */
-    protected final ByteBuffer inputBuffer;
+    protected ByteBuffer inputBuffer = null;
 
 
     /**
      * Direct buffer used for output.
      */
-    protected final ByteBuffer outputBuffer;
+    protected ByteBuffer outputBuffer = null;
 
 
+    // --------------------------------------------------------- Public Methods
+
+
+    /**
+     * Process pipelined HTTP requests using the specified input and output
+     * streams.
+     *
+     * @throws IOException error during an I/O operation
+     */
     @Override
-    protected void registerForEvent(boolean read, boolean write) {
-        socketWrapper.registerforEvent(-1, read, write);
+    public SocketState process(SocketWrapper<Long> socket)
+        throws IOException {
+        RequestInfo rp = request.getRequestProcessor();
+        rp.setStage(org.apache.coyote.Constants.STAGE_PARSE);
+
+        // Setting up the socket
+        this.socketWrapper = socket;
+        long socketRef = socket.getSocket().longValue();
+        Socket.setrbb(socketRef, inputBuffer);
+        Socket.setsbb(socketRef, outputBuffer);
+        boolean cping = false;
+
+        boolean keptAlive = false;
+
+        while (!getErrorState().isError() && !endpoint.isPaused()) {
+            // Parsing the request header
+            try {
+                // Get first message of the request
+                if (!readMessage(requestHeaderMessage, true, keptAlive)) {
+                    // This means that no data is available right now
+                    // (long keepalive), so that the processor should be recycled
+                    // and the method should return true
+                    break;
+                }
+                // Check message type, process right away and break if
+                // not regular request processing
+                int type = requestHeaderMessage.getByte();
+                if (type == Constants.JK_AJP13_CPING_REQUEST) {
+                    if (endpoint.isPaused()) {
+                        recycle(true);
+                        break;
+                    }
+                    cping = true;
+                    if (Socket.send(socketRef, pongMessageArray, 0,
+                            pongMessageArray.length) < 0) {
+                        setErrorState(ErrorState.CLOSE_NOW, null);
+                    }
+                    continue;
+                } else if(type != Constants.JK_AJP13_FORWARD_REQUEST) {
+                    // Unexpected packet type. Unread body packets should have
+                    // been swallowed in finish().
+                    if (log.isDebugEnabled()) {
+                        log.debug("Unexpected message: " + type);
+                    }
+                    setErrorState(ErrorState.CLOSE_NOW, null);
+                    break;
+                }
+                keptAlive = true;
+                request.setStartTime(System.currentTimeMillis());
+            } catch (IOException e) {
+                setErrorState(ErrorState.CLOSE_NOW, e);
+                break;
+            } catch (Throwable t) {
+                ExceptionUtils.handleThrowable(t);
+                log.debug(sm.getString("ajpprocessor.header.error"), t);
+                // 400 - Bad Request
+                response.setStatus(400);
+                setErrorState(ErrorState.CLOSE_CLEAN, t);
+                getAdapter().log(request, response, 0);
+            }
+
+            if (!getErrorState().isError()) {
+                // Setting up filters, and parse some request headers
+                rp.setStage(org.apache.coyote.Constants.STAGE_PREPARE);
+                try {
+                    prepareRequest();
+                } catch (Throwable t) {
+                    ExceptionUtils.handleThrowable(t);
+                    log.debug(sm.getString("ajpprocessor.request.prepare"), t);
+                    // 500 - Internal Server Error
+                    response.setStatus(500);
+                    setErrorState(ErrorState.CLOSE_CLEAN, t);
+                    getAdapter().log(request, response, 0);
+                }
+            }
+
+            if (!getErrorState().isError() && !cping && endpoint.isPaused()) {
+                // 503 - Service unavailable
+                response.setStatus(503);
+                setErrorState(ErrorState.CLOSE_CLEAN, null);
+                getAdapter().log(request, response, 0);
+            }
+            cping = false;
+
+            // Process the request in the adapter
+            if (!getErrorState().isError()) {
+                try {
+                    rp.setStage(org.apache.coyote.Constants.STAGE_SERVICE);
+                    adapter.service(request, response);
+                } catch (InterruptedIOException e) {
+                    setErrorState(ErrorState.CLOSE_NOW, e);
+                } catch (Throwable t) {
+                    ExceptionUtils.handleThrowable(t);
+                    log.error(sm.getString("ajpprocessor.request.process"), t);
+                    // 500 - Internal Server Error
+                    response.setStatus(500);
+                    setErrorState(ErrorState.CLOSE_CLEAN, t);
+                    getAdapter().log(request, response, 0);
+                }
+            }
+
+            if (isAsync() && !getErrorState().isError()) {
+                break;
+            }
+
+            // Finish the response if not done yet
+            if (!finished && getErrorState().isIoAllowed()) {
+                try {
+                    finish();
+                } catch (Throwable t) {
+                    ExceptionUtils.handleThrowable(t);
+                    setErrorState(ErrorState.CLOSE_NOW, t);
+                }
+            }
+
+            // If there was an error, make sure the request is counted as
+            // and error, and update the statistics counter
+            if (getErrorState().isError()) {
+                response.setStatus(500);
+            }
+            request.updateCounters();
+
+            rp.setStage(org.apache.coyote.Constants.STAGE_KEEPALIVE);
+            recycle(false);
+        }
+
+        rp.setStage(org.apache.coyote.Constants.STAGE_ENDED);
+
+        if (!getErrorState().isError() && !endpoint.isPaused()) {
+            if (isAsync()) {
+                return SocketState.LONG;
+            } else {
+                return SocketState.OPEN;
+            }
+        } else {
+            return SocketState.CLOSED;
+        }
     }
+
+
+    // ----------------------------------------------------- ActionHook Methods
+
+
+    /**
+     * Send an action to the connector.
+     *
+     * @param actionCode Type of the action
+     * @param param Action parameter
+     */
+    @Override
+    @SuppressWarnings("incomplete-switch") // Other cases are handled by action()
+    protected void actionInternal(ActionCode actionCode, Object param) {
+
+        switch (actionCode) {
+        case ASYNC_COMPLETE: {
+            if (asyncStateMachine.asyncComplete()) {
+                ((AprEndpoint)endpoint).processSocketAsync(this.socketWrapper,
+                        SocketStatus.OPEN_READ);
+            }
+            break;
+        }
+        case ASYNC_SETTIMEOUT: {
+            if (param == null) return;
+            long timeout = ((Long)param).longValue();
+            socketWrapper.setTimeout(timeout);
+            break;
+        }
+        case ASYNC_DISPATCH: {
+            if (asyncStateMachine.asyncDispatch()) {
+                ((AprEndpoint)endpoint).processSocketAsync(this.socketWrapper,
+                        SocketStatus.OPEN_READ);
+            }
+            break;
+        }
+        }
+    }
+
 
     @Override
     protected void resetTimeouts() {
@@ -86,105 +283,30 @@ public class AjpAprProcessor extends AbstractAjpProcessor<Long> {
 
 
     @Override
-    protected void setupSocket(SocketWrapper<Long> socketWrapper) {
-        long socketRef = socketWrapper.getSocket().longValue();
-        Socket.setrbb(socketRef, inputBuffer);
-        Socket.setsbb(socketRef, outputBuffer);
-    }
-
-
-    @Override
-    protected void setTimeout(SocketWrapper<Long> socketWrapper,
-            int timeout) throws IOException {
-        Socket.timeoutSet(
-                socketWrapper.getSocket().longValue(), timeout * 1000);
-    }
-
-
-    @Override
-    protected int output(byte[] src, int offset, int length, boolean block)
+    protected void output(byte[] src, int offset, int length)
             throws IOException {
-
-        if (length == 0) {
-            return 0;
-        }
-
         outputBuffer.put(src, offset, length);
-
-        int result = -1;
-
-        if (socketWrapper.getSocket().longValue() != 0) {
-            result = writeSocket(0, outputBuffer.position(), block);
-            if (Status.APR_STATUS_IS_EAGAIN(-result)) {
-                result = 0;
-            }
-            if (result < 0) {
+        
+        long socketRef = socketWrapper.getSocket().longValue();
+        
+        if (outputBuffer.position() > 0) {
+            if ((socketRef != 0) && Socket.sendbb(socketRef, 0, outputBuffer.position()) < 0) {
                 // There are no re-tries so clear the buffer to prevent a
                 // possible overflow if the buffer is used again. BZ53119.
                 outputBuffer.clear();
                 throw new IOException(sm.getString("ajpprocessor.failedsend"));
             }
+            outputBuffer.clear();
         }
-        outputBuffer.clear();
-
-        return result;
     }
 
 
-    private int writeSocket(int pos, int len, boolean block) {
-
-        Lock readLock = socketWrapper.getBlockingStatusReadLock();
-        WriteLock writeLock = socketWrapper.getBlockingStatusWriteLock();
-        long socket = socketWrapper.getSocket().longValue();
-
-        boolean writeDone = false;
-        int result = 0;
-        readLock.lock();
-        try {
-            if (socketWrapper.getBlockingStatus() == block) {
-                result = Socket.sendbb(socket, pos, len);
-                writeDone = true;
-            }
-        } finally {
-            readLock.unlock();
-        }
-
-        if (!writeDone) {
-            writeLock.lock();
-            try {
-                socketWrapper.setBlockingStatus(block);
-                // Set the current settings for this socket
-                Socket.optSet(socket, Socket.APR_SO_NONBLOCK, (block ? 0 : 1));
-                // Downgrade the lock
-                readLock.lock();
-                try {
-                    writeLock.unlock();
-                    result = Socket.sendbb(socket, pos, len);
-                } finally {
-                    readLock.unlock();
-                }
-            } finally {
-                // Should have been released above but may not have been on some
-                // exception paths
-                if (writeLock.isHeldByCurrentThread()) {
-                    writeLock.unlock();
-                }
-            }
-        }
-
-        return result;
-    }
-
-
-    @Override
-    protected boolean read(byte[] buf, int pos, int n, boolean block)
-            throws IOException {
-
-        boolean nextReadBlocks = block;
-
-        if (!block && inputBuffer.remaining() > 0) {
-            nextReadBlocks = true;
-        }
+    /**
+     * Read at least the specified amount of bytes, and place them
+     * in the input buffer.
+     */
+    protected boolean read(int n)
+        throws IOException {
 
         if (inputBuffer.capacity() - inputBuffer.limit() <=
                 n - inputBuffer.remaining()) {
@@ -194,82 +316,135 @@ public class AjpAprProcessor extends AbstractAjpProcessor<Long> {
         }
         int nRead;
         while (inputBuffer.remaining() < n) {
-            nRead = readSocket(inputBuffer.limit(),
-                    inputBuffer.capacity() - inputBuffer.limit(),
-                    nextReadBlocks);
-            if (nRead == 0) {
-                // Must be a non-blocking read
-                return false;
-            } else if (-nRead == Status.EAGAIN) {
-                return false;
-            } else if ((-nRead) == Status.ETIMEDOUT || (-nRead) == Status.TIMEUP) {
-                if (block) {
-                    throw new SocketTimeoutException(
-                            sm.getString("ajpprocessor.readtimeout"));
-                } else {
-                    // Attempting to read from the socket when the poller
-                    // has not signalled that there is data to read appears
-                    // to behave like a blocking read with a short timeout
-                    // on OSX rather than like a non-blocking read. If no
-                    // data is read, treat the resulting timeout like a
-                    // non-blocking read that returned no data.
-                    return false;
-                }
-            } else if (nRead > 0) {
+            nRead = Socket.recvbb
+                (socketWrapper.getSocket().longValue(), inputBuffer.limit(),
+                        inputBuffer.capacity() - inputBuffer.limit());
+            if (nRead > 0) {
                 inputBuffer.limit(inputBuffer.limit() + nRead);
-                nextReadBlocks = true;
             } else {
                 throw new IOException(sm.getString("ajpprocessor.failedread"));
             }
         }
 
-        inputBuffer.get(buf, pos, n);
+        return true;
+
+    }
+
+
+    /**
+     * Read at least the specified amount of bytes, and place them
+     * in the input buffer.
+     */
+    protected boolean readt(int n, boolean useAvailableData)
+        throws IOException {
+
+        if (useAvailableData && inputBuffer.remaining() == 0) {
+            return false;
+        }
+        if (inputBuffer.capacity() - inputBuffer.limit() <=
+                n - inputBuffer.remaining()) {
+            inputBuffer.compact();
+            inputBuffer.limit(inputBuffer.position());
+            inputBuffer.position(0);
+        }
+        int nRead;
+        while (inputBuffer.remaining() < n) {
+            nRead = Socket.recvbb
+                (socketWrapper.getSocket().longValue(), inputBuffer.limit(),
+                    inputBuffer.capacity() - inputBuffer.limit());
+            if (nRead > 0) {
+                inputBuffer.limit(inputBuffer.limit() + nRead);
+            } else {
+                if ((-nRead) == Status.ETIMEDOUT || (-nRead) == Status.TIMEUP) {
+                    return false;
+                } else {
+                    throw new IOException(sm.getString("ajpprocessor.failedread"));
+                }
+            }
+        }
+
+        return true;
+
+    }
+
+
+    /** Receive a chunk of data. Called to implement the
+     *  'special' packet in ajp13 and to receive the data
+     *  after we send a GET_BODY packet
+     */
+    @Override
+    public boolean receive() throws IOException {
+
+        first = false;
+        bodyMessage.reset();
+        if (!readMessage(bodyMessage, false, false)) {
+            // Invalid message
+            return false;
+        }
+        // No data received.
+        if (bodyMessage.getLen() == 0) {
+            // just the header
+            // Don't mark 'end of stream' for the first chunk.
+            return false;
+        }
+        int blen = bodyMessage.peekInt();
+        if (blen == 0) {
+            return false;
+        }
+
+        bodyMessage.getBodyBytes(bodyBytes);
+        empty = false;
         return true;
     }
 
 
-    private int readSocket(int pos, int len, boolean block) {
+    /**
+     * Read an AJP message.
+     *
+     * @param first is true if the message is the first in the request, which
+     *        will cause a short duration blocking read
+     * @return true if the message has been read, false if the short read
+     *         didn't return anything
+     * @throws IOException any other failure, including incomplete reads
+     */
+    protected boolean readMessage(AjpMessage message, boolean first,
+            boolean useAvailableData)
+        throws IOException {
 
-        Lock readLock = socketWrapper.getBlockingStatusReadLock();
-        WriteLock writeLock = socketWrapper.getBlockingStatusWriteLock();
-        long socket = socketWrapper.getSocket().longValue();
+        int headerLength = message.getHeaderLength();
 
-        boolean readDone = false;
-        int result = 0;
-        readLock.lock();
-        try {
-            if (socketWrapper.getBlockingStatus() == block) {
-                result = Socket.recvbb(socket, pos, len);
-                readDone = true;
+        if (first) {
+            if (!readt(headerLength, useAvailableData)) {
+                return false;
             }
-        } finally {
-            readLock.unlock();
+        } else {
+            read(headerLength);
+        }
+        inputBuffer.get(message.getBuffer(), 0, headerLength);
+        int messageLength = message.processHeader(true);
+        if (messageLength < 0) {
+            // Invalid AJP header signature
+            // TODO: Throw some exception and close the connection to frontend.
+            return false;
+        }
+        else if (messageLength == 0) {
+            // Zero length message.
+            return true;
+        }
+        else {
+            if (messageLength > message.getBuffer().length) {
+                // Message too long for the buffer
+                // Need to trigger a 400 response
+                throw new IllegalArgumentException(sm.getString(
+                        "ajpprocessor.header.tooLong",
+                        Integer.valueOf(messageLength),
+                        Integer.valueOf(message.getBuffer().length)));
+            }
+            read(messageLength);
+            inputBuffer.get(message.getBuffer(), headerLength, messageLength);
+            return true;
         }
 
-        if (!readDone) {
-            writeLock.lock();
-            try {
-                socketWrapper.setBlockingStatus(block);
-                // Set the current settings for this socket
-                Socket.optSet(socket, Socket.APR_SO_NONBLOCK, (block ? 0 : 1));
-                // Downgrade the lock
-                readLock.lock();
-                try {
-                    writeLock.unlock();
-                    result = Socket.recvbb(socket, pos, len);
-                } finally {
-                    readLock.unlock();
-                }
-            } finally {
-                // Should have been released above but may not have been on some
-                // exception paths
-                if (writeLock.isHeldByCurrentThread()) {
-                    writeLock.unlock();
-                }
-            }
-        }
-
-        return result;
     }
 
 

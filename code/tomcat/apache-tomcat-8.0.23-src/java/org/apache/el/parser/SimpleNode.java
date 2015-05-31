@@ -38,7 +38,7 @@ public abstract class SimpleNode extends ELSupport implements Node {
 
     protected Node[] children;
 
-    protected final int id;
+    protected int id;
 
     protected String image;
 
@@ -104,6 +104,10 @@ public abstract class SimpleNode extends ELSupport implements Node {
         return ELParserTreeConstants.jjtNodeName[id];
     }
 
+    public String toString(String prefix) {
+        return prefix + toString();
+    }
+
     @Override
     public String getImage() {
         return image;
@@ -158,8 +162,8 @@ public abstract class SimpleNode extends ELSupport implements Node {
             Class<?>[] paramTypes) throws ELException {
         throw new UnsupportedOperationException();
     }
-
-
+    
+    
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -202,7 +206,7 @@ public abstract class SimpleNode extends ELSupport implements Node {
     public ValueReference getValueReference(EvaluationContext ctx) {
         return null;
     }
-
+    
     /**
      * @since EL 2.2
      */

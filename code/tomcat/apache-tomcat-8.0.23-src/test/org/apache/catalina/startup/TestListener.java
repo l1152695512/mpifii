@@ -33,7 +33,7 @@ import org.apache.catalina.Context;
 
 public class TestListener extends TomcatBaseTest {
 
-    /*
+    /**
      * Check that a ServletContainerInitializer can install a
      * {@link ServletContextListener} and that it gets initialized.
      * @throws Exception
@@ -50,9 +50,9 @@ public class TestListener extends TomcatBaseTest {
         assertTrue(SCL.initialized);
     }
 
-    /*
+    /**
      * Check that a {@link ServletContextListener} cannot install a
-     * {@link ServletContainerInitializer}.
+     * {@link javax.servlet.ServletContainerInitializer}.
      * @throws Exception
      */
     @Test
@@ -63,11 +63,11 @@ public class TestListener extends TomcatBaseTest {
                 System.getProperty("java.io.tmpdir"));
 
         // SCL2 pretends to be in web.xml, and tries to install a
-        // ServletContextInitializer.
+        // ServletContainerInitializer.
         context.addApplicationListener(SCL2.class.getName());
         tomcat.start();
 
-        //check that the ServletContextInitializer wasn't initialized.
+        //check that the ServletContainerInitializer wasn't initialized.
         assertFalse(SCL3.initialized);
     }
 

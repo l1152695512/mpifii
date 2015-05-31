@@ -49,8 +49,9 @@ public class TestWsSubprotocols extends TomcatBaseTest {
     @Test
     public void testWsSubprotocols() throws Exception {
         Tomcat tomcat = getTomcatInstance();
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext("",
+                System.getProperty("java.io.tmpdir"));
         ctx.addApplicationListener(Config.class.getName());
 
         Tomcat.addServlet(ctx, "default", new DefaultServlet());

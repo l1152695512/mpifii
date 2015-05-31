@@ -276,13 +276,12 @@ public class DiskFileItem
      * contents of the file were not yet cached in memory, they will be
      * loaded from the disk storage and cached.
      *
-     * @return The contents of the file as an array of bytes
-     * or {@code null} if the data cannot be read
+     * @return The contents of the file as an array of bytes.
      */
     @Override
     public byte[] get() {
         if (isInMemory()) {
-            if (cachedContent == null && dfos != null) {
+            if (cachedContent == null) {
                 cachedContent = dfos.getData();
             }
             return cachedContent;
@@ -292,12 +291,18 @@ public class DiskFileItem
         InputStream fis = null;
 
         try {
-            fis = new FileInputStream(dfos.getFile());
-            IOUtils.readFully(fis, fileData);
+            fis = new BufferedInputStream(new FileInputStream(dfos.getFile()));
+            fis.read(fileData);
         } catch (IOException e) {
             fileData = null;
         } finally {
-            IOUtils.closeQuietly(fis);
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (IOException e) {
+                    // ignore
+                }
+            }
         }
 
         return fileData;
@@ -395,10 +400,21 @@ public class DiskFileItem
                         out = new BufferedOutputStream(
                                 new FileOutputStream(file));
                         IOUtils.copy(in, out);
-                        out.close();
                     } finally {
-                        IOUtils.closeQuietly(in);
-                        IOUtils.closeQuietly(out);
+                        if (in != null) {
+                            try {
+                                in.close();
+                            } catch (IOException e) {
+                                // ignore
+                            }
+                        }
+                        if (out != null) {
+                            try {
+                                out.close();
+                            } catch (IOException e) {
+                                // ignore
+                            }
+                        }
                     }
                 }
             } else {
@@ -533,9 +549,6 @@ public class DiskFileItem
      */
     @Override
     protected void finalize() {
-        if (dfos == null) {
-            return;
-        }
         File outputFile = dfos.getFile();
 
         if (outputFile != null && outputFile.exists()) {
@@ -548,9 +561,6 @@ public class DiskFileItem
      * named temporary file in the configured repository path. The lifetime of
      * the file is tied to the lifetime of the <code>FileItem</code> instance;
      * the file will be deleted when the instance is garbage collected.
-     * <p>
-     * <b>Note: Subclasses that override this method must ensure that they return the
-     * same File each time.</b>
      *
      * @return The {@link java.io.File File} to be used for temporary storage.
      */

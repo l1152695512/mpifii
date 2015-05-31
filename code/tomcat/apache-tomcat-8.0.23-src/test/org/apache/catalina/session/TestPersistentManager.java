@@ -17,6 +17,7 @@
 package org.apache.catalina.session;
 
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -104,8 +105,8 @@ public class TestPersistentManager extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        StandardContext ctx = (StandardContext) tomcat.addContext("", null);
+        File appDir = new File("test/webapp-3.0-fragments-empty-absolute-ordering");
+        StandardContext ctx = (StandardContext) tomcat.addContext("", appDir.getAbsolutePath());
 
         Tomcat.addServlet(ctx, "DummyServlet", new DummyServlet());
         ctx.addServletMapping("/dummy", "DummyServlet");
@@ -136,8 +137,8 @@ public class TestPersistentManager extends TomcatBaseTest {
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
 
-        // No file system docBase required
-        StandardContext ctx = (StandardContext) tomcat.addContext("", null);
+        File appDir = new File("test/webapp-3.0-fragments-empty-absolute-ordering");
+        StandardContext ctx = (StandardContext) tomcat.addContext("", appDir.getAbsolutePath());
 
         Tomcat.addServlet(ctx, "DummyServlet", new DummyServlet());
         ctx.addServletMapping("/dummy", "DummyServlet");
@@ -167,9 +168,9 @@ public class TestPersistentManager extends TomcatBaseTest {
 
         // Setup Tomcat instance
         Tomcat tomcat = getTomcatInstance();
-
-        // No file system docBase required
-        Context ctx = tomcat.addContext("", null);
+        // Must have a real docBase - just use temp
+        Context ctx = tomcat.addContext("",
+                System.getProperty("java.io.tmpdir"));
 
         Tomcat.addServlet(ctx, "DummyServlet", new DummyServlet());
         ctx.addServletMapping("/dummy", "DummyServlet");
@@ -249,8 +250,8 @@ public class TestPersistentManager extends TomcatBaseTest {
     private static class DummyStore implements Store {
 
         private Manager manager;
-        private Map<String, Session> sessions = new HashMap<>();
-        private List<String> savedIds = new ArrayList<>();
+        private Map<String, Session> sessions = new HashMap<String, Session>();
+        private List<String> savedIds = new ArrayList<String>();
 
         List<String> getSavedIds() {
             return savedIds;
@@ -277,7 +278,7 @@ public class TestPersistentManager extends TomcatBaseTest {
 
         @Override
         public String[] keys() throws IOException {
-            return new ArrayList<>(sessions.keySet()).toArray(new String[] {});
+            return new ArrayList<String>(sessions.keySet()).toArray(new String[] {});
         }
 
         @Override
@@ -305,5 +306,9 @@ public class TestPersistentManager extends TomcatBaseTest {
             savedIds.add(session.getId());
         }
 
+        @Override
+        public String getInfo() {
+            return null;
+        }
     }
 }

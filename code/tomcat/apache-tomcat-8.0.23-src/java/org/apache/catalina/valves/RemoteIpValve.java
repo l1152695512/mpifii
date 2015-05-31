@@ -31,7 +31,6 @@ import org.apache.catalina.connector.Request;
 import org.apache.catalina.connector.Response;
 import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
-import org.apache.tomcat.util.http.MimeHeaders;
 
 /**
  * <p>
@@ -48,7 +47,6 @@ import org.apache.tomcat.util.http.MimeHeaders;
  * </p>
  * <p>
  * If the incoming <code>request.getRemoteAddr()</code> matches the valve's list of internal proxies :
- * </p>
  * <ul>
  * <li>Loop on the comma delimited list of IPs and hostnames passed by the preceding load balancer or proxy in the given request's Http
  * header named <code>$remoteIpHeader</code> (default value <code>x-forwarded-for</code>). Values are processed in right-to-left order.</li>
@@ -64,8 +62,10 @@ import org.apache.tomcat.util.http.MimeHeaders;
  * <code>request.scheme = https</code> and <code>request.serverPort = 443</code>. Note that 443 can be overwritten with the
  * <code>$httpsServerPort</code> configuration parameter.</li>
  * </ul>
+ * </p>
+ * <p>
+ * <strong>Configuration parameters:</strong>
  * <table border="1">
- * <caption>Configuration parameters</caption>
  * <tr>
  * <th>RemoteIpValve property</th>
  * <th>Description</th>
@@ -89,12 +89,10 @@ import org.apache.tomcat.util.http.MimeHeaders;
  * <td>RemoteIPInternalProxy</td>
  * <td>Regular expression (in the syntax supported by
  * {@link java.util.regex.Pattern java.util.regex})</td>
- * <td>10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|
- *     169\.254\.\d{1,3}\.\d{1,3}|127\.\d{1,3}\.\d{1,3}\.\d{1,3}|
- *     172\.1[6-9]{1}\.\d{1,3}\.\d{1,3}|172\.2[0-9]{1}\.\d{1,3}\.\d{1,3}|
- *     172\.3[0-1]{1}\.\d{1,3}\.\d{1,3}
- *     <br>
- * By default, 10/8, 192.168/16, 169.254/16, 127/8 and 172.16/12 are allowed.</td>
+ * <td>10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|169\.254\.\d{1,3}\.\d{1,3}|127\.\d{1,3}\.\d{1,3}\.\d{1,3}<br/>
+ * By default, 10/8, 192.168/16, 169.254/16 and 127/8 are allowed ; 172.16/12 has not been enabled by default because it is complex to
+ * describe with regular expressions</td>
+ * </tr>
  * </tr>
  * <tr>
  * <td>proxiesHeader</td>
@@ -143,6 +141,7 @@ import org.apache.tomcat.util.http.MimeHeaders;
  * <td>443</td>
  * </tr>
  * </table>
+ * </p>
  * <p>
  * <p>
  * This Valve may be attached to any Container, depending on the granularity of the filtering you wish to perform.
@@ -155,23 +154,24 @@ import org.apache.tomcat.util.http.MimeHeaders;
  * <code>RemoteIpValve</code> uses regular expression to configure <code>internalProxies</code> and <code>trustedProxies</code> in the same
  * fashion as {@link RequestFilterValve} does.
  * </p>
- * <hr>
+ * <hr/>
  * <p>
  * <strong>Sample with internal proxies</strong>
  * </p>
  * <p>
  * RemoteIpValve configuration:
  * </p>
- * <code>
+ * <code><pre>
  * &lt;Valve
  *   className="org.apache.catalina.valves.RemoteIpValve"
  *   internalProxies="192\.168\.0\.10|192\.168\.0\.11"
  *   remoteIpHeader="x-forwarded-for"
  *   proxiesHeader="x-forwarded-by"
  *   protocolHeader="x-forwarded-proto"
- *   /&gt;</code>
+ *   /&gt;</pre></code>
+ * <p>
+ * Request values:
  * <table border="1">
- * <caption>Request Values</caption>
  * <tr>
  * <th>property</th>
  * <th>Value Before RemoteIpValve</th>
@@ -213,27 +213,27 @@ import org.apache.tomcat.util.http.MimeHeaders;
  * <td>443</td>
  * </tr>
  * </table>
- * <p>
  * Note : <code>x-forwarded-by</code> header is null because only internal proxies as been traversed by the request.
  * <code>x-forwarded-by</code> is null because all the proxies are trusted or internal.
  * </p>
- * <hr>
+ * <hr/>
  * <p>
  * <strong>Sample with trusted proxies</strong>
  * </p>
  * <p>
  * RemoteIpValve configuration:
  * </p>
- * <code>
+ * <code><pre>
  * &lt;Valve
  *   className="org.apache.catalina.valves.RemoteIpValve"
  *   internalProxies="192\.168\.0\.10|192\.168\.0\.11"
  *   remoteIpHeader="x-forwarded-for"
  *   proxiesHeader="x-forwarded-by"
  *   trustedProxies="proxy1|proxy2"
- *   /&gt;</code>
+ *   /&gt;</pre></code>
+ * <p>
+ * Request values:
  * <table border="1">
- * <caption>Request Values</caption>
  * <tr>
  * <th>property</th>
  * <th>Value Before RemoteIpValve</th>
@@ -255,27 +255,27 @@ import org.apache.tomcat.util.http.MimeHeaders;
  * <td>proxy1, proxy2</td>
  * </tr>
  * </table>
- * <p>
  * Note : <code>proxy1</code> and <code>proxy2</code> are both trusted proxies that come in <code>x-forwarded-for</code> header, they both
  * are migrated in <code>x-forwarded-by</code> header. <code>x-forwarded-by</code> is null because all the proxies are trusted or internal.
  * </p>
- * <hr>
+ * <hr/>
  * <p>
  * <strong>Sample with internal and trusted proxies</strong>
  * </p>
  * <p>
  * RemoteIpValve configuration:
  * </p>
- * <code>
+ * <code><pre>
  * &lt;Valve
  *   className="org.apache.catalina.valves.RemoteIpValve"
  *   internalProxies="192\.168\.0\.10|192\.168\.0\.11"
  *   remoteIpHeader="x-forwarded-for"
  *   proxiesHeader="x-forwarded-by"
  *   trustedProxies="proxy1|proxy2"
- *   /&gt;</code>
+ *   /&gt;</pre></code>
+ * <p>
+ * Request values:
  * <table border="1">
- * <caption>Request Values</caption>
  * <tr>
  * <th>property</th>
  * <th>Value Before RemoteIpValve</th>
@@ -297,28 +297,28 @@ import org.apache.tomcat.util.http.MimeHeaders;
  * <td>proxy1, proxy2</td>
  * </tr>
  * </table>
- * <p>
  * Note : <code>proxy1</code> and <code>proxy2</code> are both trusted proxies that come in <code>x-forwarded-for</code> header, they both
  * are migrated in <code>x-forwarded-by</code> header. As <code>192.168.0.10</code> is an internal proxy, it does not appear in
  * <code>x-forwarded-by</code>. <code>x-forwarded-by</code> is null because all the proxies are trusted or internal.
  * </p>
- * <hr>
+ * <hr/>
  * <p>
  * <strong>Sample with an untrusted proxy</strong>
  * </p>
  * <p>
  * RemoteIpValve configuration:
  * </p>
- * <code>
+ * <code><pre>
  * &lt;Valve
  *   className="org.apache.catalina.valves.RemoteIpValve"
  *   internalProxies="192\.168\.0\.10|192\.168\.0\.11"
  *   remoteIpHeader="x-forwarded-for"
  *   proxiesHeader="x-forwarded-by"
  *   trustedProxies="proxy1|proxy2"
- *   /&gt;</code>
+ *   /&gt;</pre></code>
+ * <p>
+ * Request values:
  * <table border="1">
- * <caption>Request Values</caption>
  * <tr>
  * <th>property</th>
  * <th>Value Before RemoteIpValve</th>
@@ -340,7 +340,6 @@ import org.apache.tomcat.util.http.MimeHeaders;
  * <td>proxy1</td>
  * </tr>
  * </table>
- * <p>
  * Note : <code>x-forwarded-by</code> holds the trusted proxy <code>proxy1</code>. <code>x-forwarded-by</code> holds
  * <code>140.211.11.130</code> because <code>untrusted-proxy</code> is not trusted and thus, we can not trust that
  * <code>untrusted-proxy</code> is the actual remote ip. <code>request.remoteAddr</code> is <code>untrusted-proxy</code> that is an IP
@@ -353,6 +352,11 @@ public class RemoteIpValve extends ValveBase {
      * {@link Pattern} for a comma delimited string that support whitespace characters
      */
     private static final Pattern commaSeparatedValuesPattern = Pattern.compile("\\s*,\\s*");
+
+    /**
+     * The descriptive information related to this implementation.
+     */
+    private static final String info = "org.apache.catalina.valves.RemoteIpValve/1.0";
 
     /**
      * Logger
@@ -408,10 +412,7 @@ public class RemoteIpValve extends ValveBase {
             "10\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|" +
             "192\\.168\\.\\d{1,3}\\.\\d{1,3}|" +
             "169\\.254\\.\\d{1,3}\\.\\d{1,3}|" +
-            "127\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}|" +
-            "172\\.1[6-9]{1}\\.\\d{1,3}\\.\\d{1,3}|" +
-            "172\\.2[0-9]{1}\\.\\d{1,3}\\.\\d{1,3}|" +
-            "172\\.3[0-1]{1}\\.\\d{1,3}\\.\\d{1,3}");
+            "127\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}");
 
     /**
      * @see #setProtocolHeader(String)
@@ -495,6 +496,14 @@ public class RemoteIpValve extends ValveBase {
     }
 
     /**
+     * Return descriptive information about this Valve implementation.
+     */
+    @Override
+    public String getInfo() {
+        return info;
+    }
+
+    /**
      * @see #setInternalProxies(String)
      * @return Regular expression that defines the internal proxies
      */
@@ -567,14 +576,12 @@ public class RemoteIpValve extends ValveBase {
         final String originalScheme = request.getScheme();
         final boolean originalSecure = request.isSecure();
         final int originalServerPort = request.getServerPort();
-        final String originalProxiesHeader = request.getHeader(proxiesHeader);
-        final String originalRemoteIpHeader = request.getHeader(remoteIpHeader);
 
         if (internalProxies !=null &&
                 internalProxies.matcher(originalRemoteAddr).matches()) {
             String remoteIp = null;
             // In java 6, proxiesHeaderValue should be declared as a java.util.Deque
-            LinkedList<String> proxiesHeaderValue = new LinkedList<>();
+            LinkedList<String> proxiesHeaderValue = new LinkedList<String>();
             StringBuilder concatRemoteIpHeaderValue = new StringBuilder();
 
             for (Enumeration<String> e = request.getHeaders(remoteIpHeader); e.hasMoreElements();) {
@@ -602,7 +609,7 @@ public class RemoteIpValve extends ValveBase {
                 }
             }
             // continue to loop on remoteIpHeaderValue to build the new value of the remoteIpHeader
-            LinkedList<String> newRemoteIpHeaderValue = new LinkedList<>();
+            LinkedList<String> newRemoteIpHeaderValue = new LinkedList<String>();
             for (; idx >= 0; idx--) {
                 String currentRemoteIp = remoteIpHeaderValue[idx];
                 newRemoteIpHeaderValue.addFirst(currentRemoteIp);
@@ -680,23 +687,10 @@ public class RemoteIpValve extends ValveBase {
 
             request.setSecure(originalSecure);
 
-            MimeHeaders headers = request.getCoyoteRequest().getMimeHeaders();
             // use request.coyoteRequest.scheme instead of request.setScheme() because request.setScheme() is no-op in Tomcat 6.0
             request.getCoyoteRequest().scheme().setString(originalScheme);
 
             request.setServerPort(originalServerPort);
-
-            if (originalProxiesHeader == null || originalProxiesHeader.length() == 0) {
-                headers.removeHeader(proxiesHeader);
-            } else {
-                headers.setValue(proxiesHeader).setString(originalProxiesHeader);
-            }
-
-            if (originalRemoteIpHeader == null || originalRemoteIpHeader.length() == 0) {
-                headers.removeHeader(remoteIpHeader);
-            } else {
-                headers.setValue(remoteIpHeader).setString(originalRemoteIpHeader);
-            }
         }
     }
 

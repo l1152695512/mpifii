@@ -27,13 +27,13 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
 import org.apache.catalina.Context;
+import org.apache.catalina.deploy.LoginConfig;
+import org.apache.catalina.deploy.SecurityCollection;
+import org.apache.catalina.deploy.SecurityConstraint;
 import org.apache.catalina.startup.TesterServlet;
 import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.startup.TomcatBaseTest;
 import org.apache.tomcat.util.buf.ByteChunk;
-import org.apache.tomcat.util.descriptor.web.LoginConfig;
-import org.apache.tomcat.util.descriptor.web.SecurityCollection;
-import org.apache.tomcat.util.descriptor.web.SecurityConstraint;
 import org.apache.tomcat.util.security.ConcurrentMessageDigest;
 import org.apache.tomcat.util.security.MD5Encoder;
 
@@ -86,7 +86,7 @@ public class TestSSOnonLoginAndDigestAuthenticator extends TomcatBaseTest {
 
     private List<String> cookies;
 
-    /*
+    /**
      * Try to access an unprotected resource without an
      * established SSO session.
      * This should be permitted.
@@ -108,7 +108,7 @@ public class TestSSOnonLoginAndDigestAuthenticator extends TomcatBaseTest {
                        false, true, 403);
     }
 
-    /*
+    /**
      * Logon to access a protected resource using DIGEST authentication,
      * which will establish an SSO session.
      * Wait until the SSO session times-out, then try to re-access
@@ -204,8 +204,10 @@ public class TestSSOnonLoginAndDigestAuthenticator extends TomcatBaseTest {
             boolean expectedReject, int expectedRC)
             throws Exception {
 
-        Map<String,List<String>> reqHeaders = new HashMap<>();
-        Map<String,List<String>> respHeaders = new HashMap<>();
+        Map<String,List<String>> reqHeaders =
+                new HashMap<String,List<String>>();
+        Map<String,List<String>> respHeaders =
+                new HashMap<String,List<String>>();
 
         ByteChunk bc = new ByteChunk();
         if (addCookies) {
@@ -234,9 +236,11 @@ public class TestSSOnonLoginAndDigestAuthenticator extends TomcatBaseTest {
 
         String digestUri= uri;
 
-        List<String> auth = new ArrayList<>();
-        Map<String,List<String>> reqHeaders1 = new HashMap<>();
-        Map<String,List<String>> respHeaders1 = new HashMap<>();
+        List<String> auth = new ArrayList<String>();
+        Map<String,List<String>> reqHeaders1 =
+                new HashMap<String,List<String>>();
+        Map<String,List<String>> respHeaders1 =
+                new HashMap<String,List<String>>();
 
         // the first access attempt should be challenged
         auth.add(buildDigestResponse(user, pwd, digestUri, REALM, "null",
@@ -259,8 +263,10 @@ public class TestSSOnonLoginAndDigestAuthenticator extends TomcatBaseTest {
         }
 
         // Second request should succeed (if we use the server nonce)
-        Map<String,List<String>> reqHeaders2 = new HashMap<>();
-        Map<String,List<String>> respHeaders2 = new HashMap<>();
+        Map<String,List<String>> reqHeaders2 =
+                new HashMap<String,List<String>>();
+        Map<String,List<String>> respHeaders2 =
+                new HashMap<String,List<String>>();
 
         auth.clear();
         if (useServerNonce) {
