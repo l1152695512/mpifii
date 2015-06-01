@@ -154,6 +154,7 @@
 		sObj.after(accessControlStr);
 		var btn = $("#accessControlBtn_"+treeNode.tId);
 		if (btn) btn.bind("click", function(){
+<<<<<<< HEAD
 			var id = treeNode.id;
 			var rootId = getRoot().id;
 			$.ajax({
@@ -168,6 +169,10 @@
 					$('#myModal').modal('show');
 				}
 			});
+=======
+			roleGrant(treeNode.id);
+			return false;
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		});
 	};
 	
@@ -379,6 +384,7 @@
 	
 	//用于捕获节点拖拽操作结束的事件回调函数
 	function onDrop(event, treeId, treeNodes, targetNode, moveType, isCopy) {
+<<<<<<< HEAD
 // 		className = (className === "dark" ? "":"dark");
 // 		//alert(treeNodes.length + ":"+treeNodes[0].id + ", " + (targetNode ? (targetNode.id + ", " + targetNode.name) : "isRoot" ));
 // 		if( treeNodes.length > 0 && targetNode){
@@ -405,6 +411,23 @@
 	    var treeObj = $.fn.zTree.getZTreeObj("zTreeRoleContent");
 	    //返回根节点集合
 	   return treeObj.getNodesByFilter(function (node) { return node.level == 0 });
+=======
+		className = (className === "dark" ? "":"dark");
+		//alert(treeNodes.length + ":"+treeNodes[0].id + ", " + (targetNode ? (targetNode.id + ", " + targetNode.name) : "isRoot" ));
+		if( treeNodes.length > 0 && targetNode){
+			var dragId = treeNodes[0].id;//被拖拽角色
+			var targetId = targetNode.id;//拖拽到的目标角色
+			$.post(
+				"${cxt}/jf/station/update",
+				{ "ids" : dragId, "pIds" : targetId },
+				function(data){//返回数据库标示
+			     	if(data == "error"){
+			     		alert("移动角色失败！");
+			     	}
+				}
+			);
+		}
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	}
 	
 	//用于捕获节点被展开的事件回调函数
@@ -449,6 +472,10 @@
 			<h2><i class="icon-edit"></i>角色管理</h2>
 			<div class="box-icon">
 				<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
+<<<<<<< HEAD
+=======
+				<a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			</div>
 		</div>
 		<div class="box-content">

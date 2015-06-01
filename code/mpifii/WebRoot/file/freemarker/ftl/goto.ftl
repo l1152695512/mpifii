@@ -9,7 +9,11 @@
 		<script type="text/javascript" src="../commonjs/jquery-1.8.3.min.js"></script>
 		<script src="../commonjs/jquery.cookie.js" type="text/javascript"></script>
 		<script src="../commonjs/commons.js" type="text/javascript"></script>
+<<<<<<< HEAD
 		<title>${(title)!}</title>
+=======
+		<title>尊贵的商户</title>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
         <style type="text/css">
        		.result{
 				display:none;
@@ -27,7 +31,11 @@
         </script>
 	</head>
 	<body>
+<<<<<<< HEAD
 		<a href="javascript:void(0)"><img class="result" src="${(gotoAdv.image)!}"/></a>
+=======
+		<a href="${(gotoAdv.link)!}"><img class="result" src="${(gotoAdv.image)!}"/></a>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
     	<noscript>
 			该浏览器不能执行javascript！请检查是否有禁用浏览器！
 		</noscript>
@@ -36,7 +44,11 @@
 				setInterval(goto,4000);
 			});
 			function goto(){
+<<<<<<< HEAD
 				window.location.href = "${(gotoAdv.indexUrl)!}?mac="+mac+"&routersn="+routersn+"&"+randomString(10);
+=======
+				window.location.href = "index.html?mac="+mac+"&routersn="+routersn;
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			}
         </script>
 	</body>

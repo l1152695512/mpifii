@@ -4,9 +4,13 @@ package com.yinfu.jbase.util;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+<<<<<<< HEAD
 
 import javax.imageio.ImageIO;
 
+=======
+import javax.imageio.ImageIO;
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.jfinal.upload.UploadFile;
 import com.mortennobel.imagescaling.ResampleOp;
 
@@ -164,8 +168,12 @@ public class ImageKit {
 	public static File renameFile(UploadFile uf, String newName) {
 		File src = uf.getFile();
 		String srcName = src.getName();
+<<<<<<< HEAD
 //		String dstName = src.getParent() + File.separator + newName + srcName.substring(srcName.indexOf('.'));
 		String dstName = src.getParent() + File.separator + newName + getFileExtension(srcName); 
+=======
+		String dstName = src.getParent() + File.separator + newName + srcName.substring(srcName.indexOf('.'));
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		File dst = new File(dstName);
 		/**
 		 * 重命名的文件存在则删除！
@@ -176,6 +184,7 @@ public class ImageKit {
 		src.renameTo(dst);
 		return dst;
 	}
+<<<<<<< HEAD
 	
 	public static String getFileExtension(String name){
 		int index = name.lastIndexOf(".");
@@ -185,4 +194,6 @@ public class ImageKit {
 			return "";
 		}
 	}
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 }

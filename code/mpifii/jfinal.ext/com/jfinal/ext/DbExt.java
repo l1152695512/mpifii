@@ -47,16 +47,28 @@ public class DbExt{
 	}
 	
 	public static int[] batch(String sql, Object[][] paras) {
+<<<<<<< HEAD
 //		if(paras.length>1000){
 //			throw new ActiveRecordException("批量处理的数据条数过大！");
 //		}
+=======
+		if(paras.length>1000){
+			throw new ActiveRecordException("批量处理的数据条数过大！");
+		}
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		return DbExt.use().execute(sql, paras);
 	}
 	
 	public static int[] batch(List<String> sqlList) {
+<<<<<<< HEAD
 //		if(sqlList.size()>1000){
 //			throw new ActiveRecordException("批量处理的数据条数过大！");
 //		}
+=======
+		if(sqlList.size()>1000){
+			throw new ActiveRecordException("批量处理的数据条数过大！");
+		}
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		return DbExt.use().execute(sqlList);
     }
 	

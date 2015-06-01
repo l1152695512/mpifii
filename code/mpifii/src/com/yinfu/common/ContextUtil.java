@@ -1,16 +1,24 @@
+<<<<<<< HEAD
 
 package com.yinfu.common;
 
 import java.util.ArrayList;
 import java.util.List;
+=======
+package com.yinfu.common;
+
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.subject.Subject;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.yinfu.Consts;
+<<<<<<< HEAD
 import com.yinfu.business.shop.model.Shop;
 import com.yinfu.business.util.DataOrgUtil;
 import com.yinfu.system.model.Org;
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.yinfu.system.model.User;
 
 public class ContextUtil {
@@ -24,6 +32,7 @@ public class ContextUtil {
 		 * @return 
 		 */
 		//@formatter:on
+<<<<<<< HEAD
 	public static User getCurrentUser() {
 		Subject currentUser = SecurityUtils.getSubject();
 		if (currentUser != null) {
@@ -35,6 +44,19 @@ public class ContextUtil {
 	}
 	
 	//@formatter:off 
+=======
+		public static User getCurrentUser() {
+			Subject currentUser = SecurityUtils.getSubject();
+			if (currentUser != null) {
+				String key = Consts.SESSION_USER;
+				return (User) SecurityUtils.getSubject().getSession().getAttribute(key);
+				/* return (User) currentUser; */
+			}
+			return null;
+		}
+		
+		//@formatter:off 
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		/**
 		 * Title: getCurrentUserId
 		 * Description:获取当前用户ID
@@ -44,6 +66,7 @@ public class ContextUtil {
 		 * @return 
 		 */
 		//@formatter:on
+<<<<<<< HEAD
 	public static String getCurrentUserId() {
 		User curUser = getCurrentUser();
 		if (curUser != null) {
@@ -53,6 +76,17 @@ public class ContextUtil {
 	}
 	
 	//@formatter:off 
+=======
+		public static String getCurrentUserId() {
+			User curUser = getCurrentUser();
+			if (curUser != null) {
+				return curUser.getInt("id").toString();
+			}
+			return null;
+		}
+		
+		//@formatter:off 
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		/**
 		 * Title: isAdmin
 		 * Description:判断当前用户是不是管理员
@@ -62,6 +96,7 @@ public class ContextUtil {
 		 * @return 
 		 */
 		//@formatter:on
+<<<<<<< HEAD
 	public static boolean isAdmin() {
 		User curUser = getCurrentUser();
 		if (curUser != null) {
@@ -207,4 +242,24 @@ public class ContextUtil {
 		}
 		return list;
 	}
+=======
+		public static boolean isAdmin() {
+			User curUser = getCurrentUser();
+			if(curUser!=null){
+				String userid = curUser.get("id").toString();
+				StringBuffer sql = new StringBuffer("SELECT u.`id` AS userid,r.`id` AS roleid,u.`name` AS username ,r.`isadmin`  FROM system_user u  ");
+				sql.append("  LEFT JOIN system_user_role ur ON u.`id` = ur.`user_id` ");
+				sql.append(" LEFT JOIN system_role  r ON r.`id` = ur.`role_id` ");
+				sql.append(" where u.id=?");
+				Record r = Db.findFirst(sql.toString(), userid);
+				if(r.getInt("isadmin")==1){
+					return true;
+				}else{
+					return false;
+				}
+			}else{
+				return false;
+			}
+		}
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 }

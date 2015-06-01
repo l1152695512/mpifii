@@ -1,9 +1,13 @@
 package com.yinfu.jbase.util.remote;
 
 import java.net.URLEncoder;
+<<<<<<< HEAD
 
 import org.apache.commons.httpclient.NameValuePair;
 
+=======
+import org.apache.commons.httpclient.NameValuePair;
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 
@@ -395,6 +399,7 @@ public class RouterHelper {
 		
 		return flag;
 	}
+<<<<<<< HEAD
 	
 	public static String sys_upgrade_get(String token) {
 		YFHttpClient client = YFHttpClient.getInstance();
@@ -412,6 +417,8 @@ public class RouterHelper {
 		return client.httpRouterGet("module/sys_upgrade_set", params);
 	}
 	
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 
 	/**
 	 * 测试范例，一般情况下，直接调用routerToken(调用一次)方法，得到token后就可以对路由器进行其它控制

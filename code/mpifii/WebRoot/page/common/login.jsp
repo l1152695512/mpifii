@@ -146,6 +146,7 @@
 				$('#login').submit();
 			}
 			function changeCode() {
+<<<<<<< HEAD
 				$("#validateCode").attr("src", "servlet/captchaCode?"+Math.floor(Math.random()*100));
 // 				var request = getXMLRequest();//得到XMLHttpRequest对象  
 // 			    request.onreadystatechange = function(){  
@@ -156,6 +157,18 @@
 // 			                //将请求发送出去  
 // 			    request.open("GET","servlet/captchaCode",true);  
 // 			    request.send(null);  
+=======
+				/* $("#validateCode").attr("src", "validateCode.gif?date=" + new Date()); */
+				var request = getXMLRequest();//得到XMLHttpRequest对象  
+			    request.onreadystatechange = function(){  
+			        if(request.readyState == 4){  
+			            document.getElementById("validateCode").src = "servlet/captchaCode";//改变验证码图片  
+			        }  
+			    };
+			                //将请求发送出去  
+			    request.open("GET","servlet/captchaCode",true);  
+			    request.send(null);  
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			}
 		</script>
 	</head>
@@ -212,12 +225,24 @@
 							<input id="exponent" type="hidden" value="${exponent}" />
 						</div>
 						<div style="text-align: center; margin-bottom: 40px;">
+<<<<<<< HEAD
 							<input type="text" maxlength="4" name="validateCode" style="width: 80px; height: 23px;" />
 							<a href="javascript:void(0);" onclick="changeCode()" style="color: #50A0EC; font-weight: bold;">
 								<img id="validateCode" src="servlet/captchaCode?<%=new java.util.Date().getTime()%>"
 										style="width: 80px; height: 23px; margin-bottom: -6px;" />
 									看不清？换一张
 							</a>
+=======
+							<input type="text" maxlength="4" name="validateCode"
+								style="width: 80px; height: 23px;" /> <a
+								href="javascript:void(0);" onclick="changeCode()"
+								style="color: #50A0EC; font-weight: bold;"> <img
+								id="validateCode"
+								src="servlet/captchaCode?_sed=<%=new java.util.Date().getTime()%>"
+								style="width: 80px; height: 23px; margin-bottom: -6px;" />
+								看不清？换一张
+							</a> </a>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 						</div>
 						<div
 							style="text-align: center; float: left; margin-left: 30%; margin-top: -30px;">

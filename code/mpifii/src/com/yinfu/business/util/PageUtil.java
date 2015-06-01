@@ -4,11 +4,15 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+<<<<<<< HEAD
 import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 
 import com.jfinal.ext.DbExt;
+=======
+
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.IAtom;
 import com.jfinal.plugin.activerecord.Record;
@@ -89,6 +93,7 @@ public class PageUtil {
 			return "";
 		}
 	}
+<<<<<<< HEAD
 	public static Object getPageIdByShopId(Object shopId){
 		Record rec = Db.findFirst("select id from bp_shop_page where shop_id=? ", new Object[]{shopId});
 		if(null != rec){
@@ -199,4 +204,7 @@ public class PageUtil {
 			DbExt.batch("insert into bp_adv_shop(id,shop_id,adv_spaces,content_id,update_by_shop,create_date) values(?,?,?,?,?,now()) ",parames);
 		}
 	}
+=======
+	
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 }

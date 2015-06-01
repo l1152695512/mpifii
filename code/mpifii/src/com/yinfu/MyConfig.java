@@ -88,10 +88,17 @@ loadPropertyFile("classes/db.properties");
 		DruidPlugin dp=new DruidPlugin(getProperty("jdbcUrl"), getProperty("user"), getProperty("password").trim());
 		dp.set(50,50,100);
 		dp.addFilter(new StatFilter());
+<<<<<<< HEAD
 		WallFilter wf=new WallFilter();
 		wf.setDbType("mysql");
 		dp.addFilter(wf);
 		me.add(dp);
+=======
+		me.add(dp);
+		WallFilter wf=new WallFilter();
+		wf.setDbType("mysql");
+		dp.addFilter(wf);
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		me.add(new EhCachePlugin());
 		// add sql xml plugin
 		me.add(new SqlInXmlPlugin());
@@ -106,6 +113,11 @@ loadPropertyFile("classes/db.properties");
 			atbp.setShowSql(true);
 		atbp.autoScan(false);
 		me.add(atbp);
+<<<<<<< HEAD
+=======
+		
+		
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	}
 	
 	private void c3poPlugin(Plugins me){
@@ -127,6 +139,14 @@ loadPropertyFile("classes/db.properties");
 		me.add(atbp);
 		// sql记录
 		SqlReporter.setLogger(true);
+<<<<<<< HEAD
+=======
+		
+	
+		
+		
+		
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	}
 	/**
 	 * 配置全局拦截器

@@ -2,7 +2,10 @@ package com.yinfu.common;
 
 import java.security.interfaces.RSAPublicKey;
 import java.util.List;
+<<<<<<< HEAD
 
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import org.apache.commons.codec.binary.Hex;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
@@ -12,6 +15,7 @@ import org.apache.shiro.authc.LockedAccountException;
 import org.apache.shiro.authc.UnknownAccountException;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
+<<<<<<< HEAD
 
 import com.jfinal.ext.route.ControllerBind;
 import com.jfinal.kit.JsonKit;
@@ -22,6 +26,13 @@ import com.yinfu.business.util.DataOrgUtil;
 import com.yinfu.jbase.jfinal.ext.Controller;
 import com.yinfu.jbase.jfinal.ext.ShiroExt;
 import com.yinfu.jbase.util.PropertyUtils;
+=======
+import com.jfinal.ext.route.ControllerBind;
+import com.yinfu.Consts;
+import com.yinfu.UrlConfig;
+import com.yinfu.jbase.jfinal.ext.Controller;
+import com.yinfu.jbase.jfinal.ext.ShiroExt;
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.yinfu.jbase.util.RSA;
 import com.yinfu.jbase.util.Sec;
 import com.yinfu.model.tree.Tree;
@@ -51,10 +62,14 @@ public class CommonController extends Controller {
 	public void index()
 	{
 		setAttr("menuList", showMneu());
+<<<<<<< HEAD
 		User user = ShiroExt.getSessionAttr(Consts.SESSION_USER);
 		setAttr("user",user);
 		setAttr("theme",DataOrgUtil.getUserSettingData("united",user.getId(),"theme"));
 		setAttr("user_logo",DataOrgUtil.getUserSettingData("images/business/userLogo/logo_china_mobile.png",user.getId(),"logo"));
+=======
+		setAttr("user",ShiroExt.getSessionAttr(Consts.SESSION_USER));
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		render(UrlConfig.VIEW_INDEX);
 	}
 	
@@ -196,11 +211,14 @@ public class CommonController extends Controller {
 	 */
 	//@formatter:on
 	public void content(){
+<<<<<<< HEAD
 		String userid = ContextUtil.getCurrentUserId();
 		List<Shop> shopList = Shop.dao.findListByUserId(userid);
 		setAttr("shopList", JsonKit.toJson(shopList));
 		String city = PropertyUtils.getProperty("platfrom.city", "广州");
 		setAttr("city", city);
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		render("/page/index/content.jsp");
 	}
 }

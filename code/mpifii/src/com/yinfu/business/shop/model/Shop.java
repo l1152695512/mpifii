@@ -1,6 +1,7 @@
 
 package com.yinfu.business.shop.model;
 
+<<<<<<< HEAD
 import java.io.File;
 import java.io.FileInputStream;
 import java.sql.SQLException;
@@ -34,6 +35,19 @@ import com.yinfu.jbase.util.ExcelRead;
 import com.yinfu.jbase.util.PropertyUtils;
 import com.yinfu.model.SplitPage.SplitPage;
 import com.yinfu.system.model.Org;
+=======
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import com.alibaba.fastjson.JSONObject;
+import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.yinfu.Consts;
+import com.yinfu.jbase.jfinal.ext.Model;
+import com.yinfu.jbase.jfinal.ext.ShiroExt;
+import com.yinfu.jbase.util.DbUtil;
+import com.yinfu.model.SplitPage.SplitPage;
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.yinfu.system.model.User;
 
 @TableBind(tableName = "bp_shop")
@@ -53,7 +67,11 @@ public class Shop extends Model<Shop> {
 		return json;
 	}
 	
+<<<<<<< HEAD
 	public JSONObject add(String name, String des) {
+=======
+	public JSONObject add(String name,String des) {
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		User user = ShiroExt.getSessionAttr(Consts.SESSION_USER);
 		Shop shop = new Shop().set("owner", user.getId()).set("name", name).set("des", des);
 		JSONObject json = new JSONObject();
@@ -67,7 +85,11 @@ public class Shop extends Model<Shop> {
 		json.put("success", shop.update());
 		return json;
 	}
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	//@formatter:off 
 	/**
 	 * Title: getShopList
@@ -80,6 +102,7 @@ public class Shop extends Model<Shop> {
 	 */
 	//@formatter:on
 	public SplitPage getShopList(SplitPage splitPage) {
+<<<<<<< HEAD
 		/*
 		 * String userid = ContextUtil.getCurrentUserId(); String sql =
 		 * " SELECT s.*,COUNT(*) AS counts  FROM bp_shop s   ";
@@ -93,10 +116,26 @@ public class Shop extends Model<Shop> {
 	}
 	
 	// modify by dengwuhua 改为组织关联
+=======
+	/*	String userid = ContextUtil.getCurrentUserId();
+		String sql =  " SELECT s.*,COUNT(*) AS counts  FROM bp_shop s   ";
+		sql+=" LEFT JOIN bp_device d  ON s.`id` = d.`shop_id`  ";
+		sql+=" LEFT JOIN SYSTEM_USER u ON u.`id` = s.`owner`  ";
+		sql+=" where 1=1 and s.delete_date is null ";
+		if(!ContextUtil.isAdmin()){
+			sql+=" and  u.id="+userid;
+		}
+		sql+=" GROUP BY d.`shop_id`  ";*/
+		String sql = "SELECT s.*,u.id as userid,IF(u.name IS NULL ,'暂未绑定商户',u.name) AS username,SUM(IF(d.`id` IS NULL ,0,1)) AS sbs,ifnull(sg.name,'未设置分组') groupName ";
+		splitPage = splitPageBase(splitPage,sql);
+		return splitPage;
+	}
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	public void makeFilter(Map<String, String> queryParam, StringBuilder formSqlSb, List<Object> paramValue) {
 		formSqlSb.append(" FROM bp_shop s ");
 		formSqlSb.append(" LEFT JOIN SYSTEM_USER u ON s.`owner` = u.`id` ");
 		formSqlSb.append(" LEFT JOIN bp_device d ON    d.`shop_id` = s.`id` ");
+<<<<<<< HEAD
 		// formSqlSb.append(" LEFT JOIN bp_shop_group sg on (s.group_id=sg.id) ");
 		formSqlSb.append(" LEFT JOIN sys_org so on (s.org_id=so.id) ");
 		formSqlSb.append("where 1=1 and s.delete_date is null ");
@@ -109,13 +148,30 @@ public class Shop extends Model<Shop> {
 					formSqlSb.append("and s." + keyInfo[0] + " like '" + DbUtil.queryLike(queryParam.get(key)) + "' ");
 				} else {
 					formSqlSb.append("and s." + key + "='" + queryParam.get(key) + "' ");
+=======
+		formSqlSb.append(" LEFT JOIN bp_shop_group sg on (s.group_id=sg.id) ");
+		formSqlSb.append("where 1=1 and s.delete_date is null ");
+		if(null != queryParam){
+			Iterator<String> ite = queryParam.keySet().iterator();
+			while(ite.hasNext()){
+				String key = ite.next();
+				String[] keyInfo = key.split("_");
+				if(keyInfo.length > 1 && "like".equalsIgnoreCase(keyInfo[1])){
+					formSqlSb.append("and s."+keyInfo[0]+" like '"+DbUtil.queryLike(queryParam.get(key))+"' ");
+				}else{
+					formSqlSb.append("and s."+key+"='"+queryParam.get(key)+"' ");
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				}
 			}
 		}
 		formSqlSb.append(" GROUP BY s.`id`  ");
 		formSqlSb.append(" order by s.create_date desc ");
 	}
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	//@formatter:off 
 	/**
 	 * Title: checkOwner
@@ -127,11 +183,18 @@ public class Shop extends Model<Shop> {
 	 */
 	//@formatter:on
 	public boolean checkOwner(String shopid) {
+<<<<<<< HEAD
 		if (shopid != null) {
 			String sql = "SELECT s.*,u.`id` AS userid FROM bp_shop s LEFT JOIN SYSTEM_USER u ON s.`owner` = u.`id` WHERE s.`delete_date` IS NULL and s.id="
 					+ shopid;
 			Shop shop = dao.findFirst(sql);
 			if (shop.get("userid") != null) {
+=======
+		if(shopid!=null){
+			String sql = "SELECT s.*,u.`id` AS userid FROM bp_shop s LEFT JOIN SYSTEM_USER u ON s.`owner` = u.`id` WHERE s.`delete_date` IS NULL and s.id="+shopid;
+			Shop shop = dao.findFirst(sql);
+			if(shop.get("userid")!=null){
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				return true;
 			}
 			return false;
@@ -139,7 +202,11 @@ public class Shop extends Model<Shop> {
 		return false;
 		
 	}
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	//@formatter:off 
 	/**
 	 * Title: getShopView
@@ -153,18 +220,30 @@ public class Shop extends Model<Shop> {
 	 */
 	//@formatter:on
 	public Shop getShopView(String shopid, String userid) {
+<<<<<<< HEAD
 		if (shopid != null) {
+=======
+		if(shopid!=null){
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			StringBuffer sql = new StringBuffer(" SELECT s.*,IF(u.name IS NULL ,'暂未绑定商户',u.name) AS username ");
 			sql.append(" FROM bp_shop s  ");
 			sql.append(" LEFT JOIN SYSTEM_USER u ON s.`owner` = u.`id` ");
 			sql.append(" WHERE s.`delete_date` IS NULL  ");
+<<<<<<< HEAD
 			sql.append(" and s.id=" + shopid);
+=======
+			sql.append(" and s.id="+shopid);
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			Shop shop = dao.findFirst(sql.toString());
 			return shop;
 		}
 		return new Shop();
 	}
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	//@formatter:off 
 	/**
 	 * Title: findListByUserId
@@ -177,6 +256,7 @@ public class Shop extends Model<Shop> {
 	 */
 	//@formatter:on
 	public List<Shop> findListByUserId(String userid) {
+<<<<<<< HEAD
 		if (userid != null) {
 			String shopIds = ContextUtil.getShopByUser();
 			if (!"".equals(shopIds) && shopIds != null) {
@@ -706,4 +786,25 @@ public class Shop extends Model<Shop> {
 		return resultMap;
 		
 	}
+=======
+		if(userid!=null){
+			String sql = " select * from bp_shop s where 1=1 ";
+			if(!userid.equals("1")){
+				sql+=" and s.owner= "+userid;
+			}
+			sql+=" and s.delete_date is null ";
+			return dao.find(sql);
+		}
+		return new ArrayList<Shop>();
+	}
+
+	public List<Shop> findInfoByName(String name) {
+		String sql=" SELECT t.`id`,t.`name`,u.`name` AS username FROM bp_shop t LEFT JOIN SYSTEM_USER u ON t.`owner` = u.`id` WHERE t.`delete_date` IS NULL  ";
+		if(name!=null || !name.equals("")){
+			sql+=" AND t.name LIKE '%"+name+"%' ";
+		}
+		return dao.find(sql);
+	}
+
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 }

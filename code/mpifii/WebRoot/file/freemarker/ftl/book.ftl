@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html>
 	<head>
+<<<<<<< HEAD
 		<title>${(name)!}</title>
+=======
+		<title>小说列表页</title>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no"/>
 		<meta name="MobileOptimized" content="320"/>
@@ -58,12 +62,20 @@
 	</head>
 	<body>
 		<div id="content">
+<<<<<<< HEAD
 			<div class="path">${(name)!}</div>
+=======
+			<div class="path">小说阅读</div>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			<div id="tabBox1" class="tabBox">
 				<div class="hd">
 					<h3></h3>
 					<ul>
+<<<<<<< HEAD
 					<#list booktheme as theme>
+=======
+						<#list booktheme as theme>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 						<li><a href="javascript:void(0)">${theme.name}</a></li>
 					</#list>
 					</ul>
@@ -74,7 +86,11 @@
 						<ul>
 						<#list booklist as book>
 						<#if book.theme=theme.id>
+<<<<<<< HEAD
 							<li><a href="${book.link}">
+=======
+							<li><a href="file/${book.link}">
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 								<div class="pic fl"><img src="${book.img}"/></div>
 								<div class="tro fr">
 									<div><h3>${book.name}</h3><span>${book.author}</span><span>[${book.typeName}]</span></div>

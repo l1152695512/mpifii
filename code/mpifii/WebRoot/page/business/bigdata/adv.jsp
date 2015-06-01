@@ -25,6 +25,7 @@
 				 	<div class="control-group">
 					  		<label class="control-label" for="focusedInput">开始日期：</label>
 							<div class="controls">
+<<<<<<< HEAD
 								<input type="text" id="starttime" name="starttime" readonly="readonly" class="input-xlarge datepicker" ">
 							</div>
 							<label class="control-label" for="focusedInput">结束日期：</label>
@@ -34,6 +35,34 @@
 					  	</div>
 					  	<div class="form-actions">
 							<button type="button" class="btn btn-primary" onclick="to_user_type()">查询</button>
+=======
+								<input type="text" name="userInfo.birthday" readonly="readonly" class="input-xlarge datepicker" ">
+							</div>
+							<label class="control-label" for="focusedInput">结束日期：</label>
+							<div class="controls">
+								<input type="text" name="userInfo.birthday" readonly="readonly" class="input-xlarge datepicker" ">
+							</div>
+							<label class="control-label" for="focusedInput">商铺：</label>
+							<div class="controls">
+							  	<select id="select1">
+							  		<option value="">--请选择商铺--</option>
+									<c:forEach var="shop" items="${shopList}">
+										<option value="${shop.id}">${shop.name}</option>
+									</c:forEach>
+								</select>
+								<input name="_query.shop_id.in" id="qShopId"  type="hidden" />
+							</div>
+							<label class="control-label" for="focusedInput">应用：</label>
+							<div class="controls">
+							  	<select id="select2" multiple="multiple" >
+							  		<option value="">--请先选择商铺--</option>
+								</select>
+								<input name="_query.shop_id.in" id="qShopId"  type="hidden" />
+							</div>
+					  	</div>
+					  	<div class="form-actions">
+							<button type="button" class="btn btn-primary" onclick="splitPage(1);">查询</button>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 							<button type="reset" class="btn">清除</button>
 					  	</div>
 				</fieldset>
@@ -59,13 +88,22 @@
 		var myChart = new FusionCharts('file/charts/MSColumn3D.swf', 'ad_chart_2014', "100%", 620);
 		myChart.setDataXML("<chart palette='5' caption='广告分析展示' numberprefix='' rotatevalues='1' placevaluesinside='1' legendshadow='0' legendborderalpha='0' legendbgcolor='FFFFFF' showborder='0'><categories><category label='2014/12/3' /><category label='2014/12/4' /><category label='2014/12/5' /><category label='2014/12/6' /></categories><dataset seriesname='广告一' color='836FFF' showvalues='1'><set value='24114' /><set value='18426' /><set value='774' /><set value='5542' /><set value='4426' /></dataset><dataset seriesname='广告二' color='0000EE' showvalues='1'><set value='12561' /><set value='8244' /><set value='14426' /><set value='4272' /><set value='9926' /></dataset><dataset seriesname='广告三' color='008B00' showvalues='1'><set value='24141' /><set value='426' /><set value='7426' /><set value='4242' /><set value='424426' /></dataset><dataset seriesname='广告四' color='8B2323' showvalues='1'><set value='12461' /><set value='14482' /><set value='14226' /><set value='14242' /><set value='42416' /></dataset></chart>");
 		myChart.render("chartdivv");
+<<<<<<< HEAD
 </script>
  -->
  
+=======
+</script> -->
+
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 <script type="text/javascript">
 		$(document).ready(function() {
 			getPFCharts();
 		});
+<<<<<<< HEAD
+=======
+		
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		function getPFCharts(){
 			var myChart = new FusionCharts('file/charts/MSColumn3D.swf', 'ad_chart_2014', "100%", 410);
 				$.ajax({

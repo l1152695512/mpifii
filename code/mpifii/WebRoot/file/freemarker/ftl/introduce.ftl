@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html>
 	<head>
+<<<<<<< HEAD
 		<title>${(name)!}</title>
+=======
+		<title>介绍</title>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no"/>
 		<meta name="MobileOptimized" content="320"/>
@@ -33,18 +37,31 @@
 	<body>
 		<div id="content">
 			<div class="path">
+<<<<<<< HEAD
 				<div class="name">${(introduce.name)!}介绍</div>
+=======
+				<div class="name">${introduce.name}介绍</div>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			</div>
 			<div class="line-jianbian"></div><!--渐变介绍-->
 			<div><!--vedio 视频播放开始-->
 				<video width="320" height="240" controls="controls" autoplay="autoplay">
+<<<<<<< HEAD
 					  <source id="videoSource" src="f/${(introduce.link)!}" type="video/mp4">
+=======
+					  <source id="videoSource" src="f/${introduce.link}" type="video/mp4">
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 						<span style="color:red;">你的浏览器不支持播放视频，请升级浏览器</span>
 				</video>
 			</div><!--视频播放结束-->
 			<div class="juji">
+<<<<<<< HEAD
 				<h3>关于${(introduce.name)!}</h3>
 				<div>${(introduce.des)!}</div>
+=======
+				<h3>关于${introduce.name}</h3>
+				<div>${introduce.des}</div>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			</div>
 		</div>
 		<script>

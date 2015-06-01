@@ -1,7 +1,10 @@
 <%@ page language="java" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="shiro" uri="http://shiro.apache.org/tags"%>
+<<<<<<< HEAD
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 <%@ include file="../../common/splitPage.jsp" %> 
 
 <style type="text/css">
@@ -41,6 +44,7 @@
 			<div class="box-header well" >
 				<h2><i class="icon-user"></i>平台列表</h2>
 				<div class="box-icon">
+<<<<<<< HEAD
 					<a href="javascript:void(0);" class="btn btn-round" title="添加用户" onclick="ajaxContent('/system/platform/addOrModify');"><i class="icon-plus-sign"></i></a>
 				</div>
 			</div>
@@ -83,6 +87,66 @@
 									<a class="btn btn-info" href="javascript:void(0);"> <i class="icon-edit icon-white"></i> 编辑</a>
 									<a class="btn btn-danger" href="javascript:void(0);"> <i class="icon-trash icon-white"></i>删除</a>
 									<a class="btn btn-default btn-sm" href="javascript:void(0);"> <i class="icon-wrench icon-black"></i> 分配盒子</a> 
+=======
+					<!-- <a href="javascript:void(0);" class="btn btn-round" title="查找"><i class="icon-search"></i></a> -->
+					<a href="javascript:void(0);" class="btn btn-round" title="添加用户" onclick="ajaxContent('/system/platform/addOrModify');"><i class="icon-plus-sign"></i></a>
+<!-- 					<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>  -->
+<!-- 					<a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a> -->
+				</div>
+			</div>
+			<div class="box-content">
+				<div class="search-content"><!-- 这里必须取名为search-content，否则搜索框离开焦点的点击事件不会触发搜索框的隐藏 -->
+					<fieldset><!-- 这下面搜索的字段要与数据库里表的字段对应 -->
+					  	<div class="control-group">
+							<label class="control-label" for="focusedInput">账号：</label>
+							<div class="controls">
+						  		<input class="input-xlarge focused" type="text" name="_query.name_like" value='${splitPage.queryParam.name_like}' maxlength="20" >
+							</div>
+					  	</div>
+					  
+					  	<div class="control-group">
+							<label class="control-label">邮箱：</label>
+							<div class="controls">
+						  		<input class="input-xlarge" type="text" name="_query.email_like" value='${splitPage.queryParam.email_like}' maxlength="40" >
+							</div>
+					  	</div>
+					
+					  	<div class="form-actions">
+							<button type="button" class="btn btn-primary" onclick="splitPage(1);">查询</button>
+							<button type="reset" class="btn">清除</button>
+					  	</div>
+					</fieldset>
+				</div>
+				<table class="table table-striped table-bordered bootstrap-datatable ">
+					<thead>
+						<tr>
+							<th onclick="orderbyFun('name')">平台名称</th>
+							<th onclick="orderbyFun('down_url')">下载地址</th>
+							<th onclick="orderbyFun('auth_url')">认证地址</th>
+							<th onclick="orderbyFun('log_ip')">登录ip</th>
+							<th onclick="orderbyFun('log_port')">登录端口</th>
+							<th onclick="orderbyFun('home_url')">主页地址</th>
+							<th onclick="orderbyFun('create_date')">创建时间</th>
+							<th width="300">操作</th>
+						</tr>
+					</thead>
+					<tbody>
+						<c:forEach var="user" items="${splitPage.page.list}" >
+							<tr>
+								<td>${user.get("name")}</td>
+								<td class="center">${user.get("down_url")}</td>
+								<td class="center">${user.get("auth_url")}</td>
+								<td class="center">${user.get("log_ip")}</td>
+								<td class="center">${user.get("log_port")}</td>
+								<td class="center">${user.get("home_url")}</td>
+								<td class="center">${user.get("create_date")}</td>
+								<td class="center" data-id='${user.get("id")}'>
+									<a class="btn btn-info" href="javascript:void(0);"> <i class="icon-edit icon-white"></i> 编辑</a>
+									<a class="btn btn-danger" href="javascript:void(0);"> <i class="icon-trash icon-white"></i>删除</a>
+									<a class="btn btn-default btn-sm" href="javascript:void(0);"> <i class="icon-wrench icon-black"></i> 分配盒子</a> 
+									
+
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 								</td>
 							</tr>
 						</c:forEach>
@@ -124,13 +188,36 @@
 			});
 		});
 	});
+<<<<<<< HEAD
+=======
+// 	$("#splitPage .box-content tbody .icon-wrench").parent().click(function(){
+// 		var id = $(this).parent().data("id");
+// 		ajaxDiaLog('/system/user/configDevice',{id:id});
+// 	});
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	$("#splitPage .box-content tbody .icon-zoom-in").parent().click(function(){
 		var id = $(this).parent().data("id");
 		ajaxContent('/system/platform/view',{id:id});
 	});
 	$("#splitPage .box-content tbody .icon-wrench").parent().click(function(){
+<<<<<<< HEAD
 		var platNo = $(this).parent().data("id");
 		var url ="/system/platform/checkOwner?id="+id;
+=======
+		var id = $(this).parent().data("id");
+		var url ="/system/platform/checkOwner?id="+id;
+/* 		$.ajax({
+			type : 'POST',
+			dataType : "json",
+			url :encodeURI(encodeURI(cxt + url)),
+			success : function(data) {
+				{
+					
+				}
+			}
+		}); */
+		
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		
 		$.fn.SimpleModal({
 			title: '盒子分配',
@@ -165,8 +252,12 @@
 	    		classe:'btn secondary'
 	    	}],
 			param: {
+<<<<<<< HEAD
 				url: 'system/platform/configDevice?id='+id,
 				data:{"platNo":platNo}
+=======
+				url: 'system/platform/configDevice?id='+id
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			}
 		}).showModal();
 	});	

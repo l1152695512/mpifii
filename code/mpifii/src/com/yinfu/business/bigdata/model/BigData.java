@@ -1,17 +1,23 @@
 
 package com.yinfu.business.bigdata.model;
 
+<<<<<<< HEAD
 import java.sql.Struct;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+=======
+import java.util.ArrayList;
+import java.util.Calendar;
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import com.jfinal.ext.plugin.tablebind.TableBind;
+<<<<<<< HEAD
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.yinfu.business.util.ColorUtil;
@@ -20,6 +26,10 @@ import com.yinfu.common.ContextUtil;
 import com.yinfu.jbase.jfinal.ext.Model;
 import com.yinfu.jbase.util.DateUtil;
 import com.yinfu.jbase.util.DbUtil;
+=======
+import com.yinfu.business.util.ColorUtil;
+import com.yinfu.jbase.jfinal.ext.Model;
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.yinfu.model.SplitPage.SplitPage;
 /**
  * 设备实体
@@ -36,6 +46,7 @@ public class BigData extends Model<BigData> {
 	private static final long serialVersionUID = 1L;
 	public static BigData dao = new BigData();
 	
+<<<<<<< HEAD
 	
 	public List<BigData> tobin(String tab,String typename,String starttime,String  endtime,String shopid) {
 		StringBuilder sb=new StringBuilder();
@@ -85,12 +96,15 @@ public class BigData extends Model<BigData> {
 		formSqlSb.append("  and  bb.phone is not null  and  bb.phone !=''  ");
 		formSqlSb.append(" and bb.startime  <= '"+endDate+ " 23:59:59' and  bb.startime >='"+ startDate+" 00:00:00' ");
 	}
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	/**
 	 * 用户信息查询
 	 * 
 	 * @param tab
 	 * @return
 	 */
+<<<<<<< HEAD
 	public List<BigData> toUserTypes(String tab,String days,String typename,String shopid) {
 		StringBuilder sb=new StringBuilder();
 		sb.append("select IFNULL(t.typename,'"+typename+"') as typename,b.startime,t.typenum,count(b.phone) as renshu,b.phone,DATE_FORMAT(startime,'%Y%m%d') as  dat from bg_sys_user_type t left join ");
@@ -153,10 +167,36 @@ public class BigData extends Model<BigData> {
 				}
 			}
 			sb.append( "</dataset>");
+=======
+	public List<BigData> toUserTypes(String tab,String starttime,String endtime) {
+		StringBuilder sb=new StringBuilder();
+		sb.append("select t.typename,b.counttime,IFNULL(b.count,0) as count,IFNULL(b.visit_time,now()) as visit_time,b.phone,b.sn,b.keyword, DATE_FORMAT(visit_time,'%Y%m%d') days from bg_sys_user_type t left join "+tab+" b on t.typenum = b.typenum where 1=1 ");
+//			if(starttime.trim().length()>0&&starttime!=null)
+//				sb.append("and b.visit_time <'' and b.visit_time>'' ");
+		sb.append(" group by t.typename,days ");
+		System.out.println(sb.toString()+"");
+		return dao.find(sb.toString());
+	}
+	
+	public String  split(String tabname,String starttime,String endtime){
+		StringBuilder sb=new StringBuilder();
+		sb.append("<chart palette='5' caption='类别访问量' numberprefix='' rotatevalues='1' placevaluesinside='1' legendshadow='0' legendborderalpha='0' legendbgcolor='FFFFFF' showborder='0'>");
+		if(tabname.trim().length()<0&&tabname==null)return null;
+		List<BigData> bd=toUserTypes(tabname,starttime,endtime);
+//		sb.append("<categories><category label='2014-12-08' /><category label='2014-12-09' /><category label='2014-12-10' />");
+		sb.append("<categories>");
+		for(int i=0;i<bd.size();i++){
+			sb.append("<category label='2014-12-08' />");
+		}
+		sb.append("</categories>");
+		for(int i=0;i<bd.size();i++){
+			sb.append("<dataset seriesname='"+bd.get(i).getStr("typename")+"' color='"+ColorUtil.getRandColorCode()+"' showvalues='1'><set value='"+bd.get(i).getLong("count")+"' /></dataset>");
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		}
 		sb.append("</chart>");
 		return sb.toString();
 	}
+<<<<<<< HEAD
 	public List<BigData> toadvdays(String tab) {
 			StringBuilder sb=new StringBuilder();
 			sb.append("SELECT bt.counttime,bt.count   from  "+tab+" bt  left join  bg_sys_user_type bsut on bsut.typenum = bt.typenum  where 1=1 GROUP BY counttime");
@@ -251,4 +291,44 @@ public class BigData extends Model<BigData> {
 				sb.append(" and  b.businessid in ("+ shopid+")      ");
 		return  dao.find(sb.toString());
 	}
+=======
+	
+/*	public String  function(String tabname,String starttime,String endtime){
+		StringBuilder sb=new StringBuilder();
+		sb.append("<chart palette='5' caption='类别访问量' numberprefix='' rotatevalues='1' placevaluesinside='1' legendshadow='0' legendborderalpha='0' legendbgcolor='FFFFFF' showborder='0'>");
+		if(tabname.trim().length()<0&&tabname==null) return null;
+		List<BigData> bd=toUserTypes(tabname);
+		sb.append("<categories><category label='2014-12-08' /><category label='2014-12-09' /><category label='2014-12-10' /></categories>");
+		for(int i=0;i<bd.size();i++){
+			sb.append("<dataset seriesname='"+bd.get(i).getStr("typename")+"' color='"+ColorUtil.getRandColorCode()+"' showvalues='1'><set value='"+bd.get(i).getLong("count")+"' /></dataset>");
+		}
+		sb.append("</chart>");
+		return sb.toString();
+	}*/
+	/*public String  flow(String tabname,String starttime,String endtime){
+		StringBuilder sb=new StringBuilder();
+		sb.append("<chart palette='5' caption='类别访问量' numberprefix='' rotatevalues='1' placevaluesinside='1' legendshadow='0' legendborderalpha='0' legendbgcolor='FFFFFF' showborder='0'>");
+		if(tabname.trim().length()<0&&tabname==null)return null;
+		List<BigData> bd=toUserTypes(tabname);
+		sb.append("<categories><category label='2014-12-08' /><category label='2014-12-09' /><category label='2014-12-10' /></categories>");
+		for(int i=0;i<bd.size();i++){
+			sb.append("<dataset seriesname='"+bd.get(i).getStr("typename")+"' color='"+ColorUtil.getRandColorCode()+"' showvalues='1'><set value='"+bd.get(i).getLong("count")+"' /></dataset>");
+		}
+		sb.append("</chart>");
+		return sb.toString();
+	}*/
+	/*public String  adv(String tabname,String starttime,String endtime){
+		StringBuilder sb=new StringBuilder();
+		sb.append("<chart palette='5' caption='类别访问量' numberprefix='' rotatevalues='1' placevaluesinside='1' legendshadow='0' legendborderalpha='0' legendbgcolor='FFFFFF' showborder='0'>");
+		if(tabname.trim().length()<0&&tabname==null)return null;
+		List<BigData> bd=toUserTypes(tabname);
+		sb.append("<categories><category label='2014-12-08' /><category label='2014-12-09' /><category label='2014-12-10' /></categories>");
+		for(int i=0;i<bd.size();i++){
+			sb.append("<dataset seriesname='"+bd.get(i).getStr("typename")+"' color='"+ColorUtil.getRandColorCode()+"' showvalues='1'><set value='"+bd.get(i).getLong("count")+"' /></dataset>");
+		}
+		sb.append("</chart>");
+		return sb.toString();
+	}*/
+	
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 }

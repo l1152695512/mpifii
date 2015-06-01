@@ -54,6 +54,7 @@
 						</div>
 					</div>
 				</c:if>
+<<<<<<< HEAD
 				<c:if test="${empty userInfo.id}">
 					<div class="control-group">
 						<label class="control-label">组织</label>
@@ -70,6 +71,14 @@
 						<div class="controls">
 							<input type="hidden" id="roleId" name="roleId" value="${userInfo.roleId}"/>
 							<input type="text" id="roleName" name="roleName" value="${userInfo.roleName}" 
+=======
+				<c:if test="${empty userInfo.id && not empty userType}">
+					<div class="control-group">
+						<label class="control-label">角色</label>
+						<div class="controls">
+							<input type="hidden" id="roleId" name="roleId" value="${roleId}"/>
+							<input type="text" id="roleName" name="roleName value="${roleName}" 
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 								class="input-xlarge" readonly="readonly" maxlength="100" vMin="1" vType="length" onblur="onblurVali(this);">
 							<button class="btn" type="button" onclick="roleRadioDiaLog('roleId', 'roleName','${roleId}');">选择</button>
 							<span class="help-inline"></span>
@@ -123,6 +132,19 @@
 		if(errorCount != 0){
 			return;
 		}
+<<<<<<< HEAD
+=======
+// 		var pass1Id = $("#pass1Id").val();
+// 		var pass2Id = $("#pass2Id").val();
+// 		if (pass1Id != pass2Id) {
+// 			hiddenInputColor($("#pass2Id"));
+// 			showInputColor($("#pass2Id"), "error");
+// 			$("#pass2Id").next("help-inline").text("两次密码输入不一致！");
+// // 			setInputError($("#pass2Id"),"两次密码输入不一致！")
+// 			return;
+// 		}
+// 		ajaxForm("editForm");
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		$("#editForm").ajaxSubmit({
 			success : function(resp) {
 				if("userNameRepeat"==resp.error){
@@ -147,5 +169,8 @@
 			};
 		}
 	});
+<<<<<<< HEAD
 			
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 </script>

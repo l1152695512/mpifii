@@ -21,9 +21,15 @@
         links: "numeric", // blank || title
         startPage: 1,
         perPage: 10,
+<<<<<<< HEAD
         midRange: 3,
         startRange: 2,
         endRange: 2,
+=======
+        midRange: 5,
+        startRange: 1,
+        endRange: 1,
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
         keyBrowse: false,//键盘左右翻页事件
         scrollBrowse: false,//滚轴翻页事件
         pause: 0,//自动翻页的时间间隔
@@ -62,10 +68,14 @@
     this._itemsHiding = $([]);
 	
     if(this.options.realPagination){
+<<<<<<< HEAD
     	this._numPages = 1;
     	if(this.options.serverParams.totalPage > 0){
     		this._numPages = this.options.serverParams.totalPage;
     	}
+=======
+    	this._numPages = this.options.serverParams.totalPage;
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
     }else{
     	this._numPages = Math.ceil(this._items.length / this.options.perPage);
     }
@@ -574,7 +584,11 @@
 			        url:arg.serverParams.url,
 			        data:data,
 			        success: function(result) {
+<<<<<<< HEAD
 			        	data.startRowNum = ((arg.startPage-1)*(arg.perPage) || 0)+1;//当前页第一行数据对应的行数
+=======
+			        	data.startRowNum = ((arg.startPage-1)*(arg.perPage) || 0)+1;
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			        	arg.serverParams.generDataHtml(result.list,data);
 			        	if(arg.realPagination){
 				        	arg.serverParams.totalPage = result.totalPage;

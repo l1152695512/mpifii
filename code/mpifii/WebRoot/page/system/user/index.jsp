@@ -56,12 +56,21 @@
 							</div>
 					  	</div>
 					  
+<<<<<<< HEAD
 <!-- 					  	<div class="control-group"> -->
 <!-- 							<label class="control-label">邮箱：</label> -->
 <!-- 							<div class="controls"> -->
 <%-- 						  		<input class="input-xlarge" type="text" name="_query.email_like" value='${splitPage.queryParam.email_like}' maxlength="40" > --%>
 <!-- 							</div> -->
 <!-- 					  	</div> -->
+=======
+					  	<div class="control-group">
+							<label class="control-label">邮箱：</label>
+							<div class="controls">
+						  		<input class="input-xlarge" type="text" name="_query.email_like" value='${splitPage.queryParam.email_like}' maxlength="40" >
+							</div>
+					  	</div>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 					
 					  	<div class="form-actions">
 							<button type="button" class="btn btn-primary" onclick="splitPage(1);">查询</button>
@@ -72,6 +81,7 @@
 				<table class="table table-striped table-bordered bootstrap-datatable ">
 					<thead>
 						<tr>
+<<<<<<< HEAD
 							<th>用户名</th>
 <!-- 							<th onclick="orderbyFun('email')">邮箱</th> -->
 <!-- 							<th>描述</th> -->
@@ -79,6 +89,15 @@
 							<th>所属角色</th>
 							<th>状态</th>
 							<th>创建时间</th>
+=======
+							<th onclick="orderbyFun('name')">用户名</th>
+							<th onclick="orderbyFun('email')">邮箱</th>
+							<th onclick="orderbyFun('des')">描述</th>
+							<th onclick="orderbyFun('roleName')">所属角色</th>
+							<th onclick="orderbyFun('status')">状态</th>
+							<th onclick="orderbyFun('device_num')">盒子数量</th>
+							<th onclick="orderbyFun('date')">创建时间</th>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 							<th width="300">操作</th>
 						</tr>
 					</thead>
@@ -86,11 +105,19 @@
 						<c:forEach var="user" items="${splitPage.page.list}" >
 							<tr>
 								<td>${user.get("name")}</td>
+<<<<<<< HEAD
 <%-- 								<td class="center">${user.get("email")}</td> --%>
 <%-- 								<td class="center">${user.get("des")}</td> --%>
 								<td class="center">${user.get("orgName")}</td>
 								<td class="center">${user.get("roleName")}</td>
 								<td class="center">${user.get("status")==1?'正常':'冻结'}</td>
+=======
+								<td class="center">${user.get("email")}</td>
+								<td class="center">${user.get("des")}</td>
+								<td class="center">${user.get("roleName")}</td>
+								<td class="center">${user.get("status")==1?'正常':'冻结'}</td>
+								<td class="center">${user.get("device_num")}</td>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 								<td class="center">${user.get("date")}</td>
 								<td class="center" data-id='${user.get("id")}'>
 									<a class="btn btn-info" href="javascript:void(0);"> <i class="icon-edit icon-white"></i> 编辑</a>

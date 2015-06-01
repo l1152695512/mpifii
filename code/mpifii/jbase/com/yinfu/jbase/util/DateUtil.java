@@ -1,11 +1,18 @@
  package com.yinfu.jbase.util;
  
  import java.text.DateFormat;
+<<<<<<< HEAD
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+=======
+ import java.text.ParseException;
+ import java.text.SimpleDateFormat;
+ import java.util.Calendar;
+ import java.util.Date;
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
  
  public class DateUtil
  {
@@ -290,6 +297,7 @@ import java.util.Date;
    {
      return Calendar.getInstance().get(7) - 1;
    }
+<<<<<<< HEAD
  //@formatter:off 
  	/**
  	 * Title: getQuot
@@ -494,5 +502,7 @@ import java.util.Date;
     	return dateFormat.format(cal.getTime());
     }
     
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
  }
 

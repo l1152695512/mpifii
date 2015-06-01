@@ -3,6 +3,7 @@ package com.yinfu.business.util;
 import java.util.Random;
 
 public class ColorUtil {
+<<<<<<< HEAD
 	
 	/**
 	 * 
@@ -27,6 +28,12 @@ public class ColorUtil {
 	   
 	 * @since  CodingExample　Ver(编码范例查看) 1.1
 	 */
+=======
+	/**
+     * 获取十六进制的颜色代码.例如  "#6E36B4" , For HTML ,
+     * @return String
+     */
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 public static String getRandColorCode(){
   String r,g,b;
   Random random = new Random();
@@ -40,5 +47,8 @@ public static String getRandColorCode(){
   
   return r+g+b;
  }
+<<<<<<< HEAD
 	
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 }

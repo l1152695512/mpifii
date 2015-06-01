@@ -60,9 +60,14 @@ public class SynAllUtil {
     public boolean synAllData(String sn){
     	boolean bool = false;
 		try {
+<<<<<<< HEAD
 			//不再打包了
 //			PackageAll packageAll = new PackageAll();
 //			packageAll.start();//采用多线程打包
+=======
+			PackageAll packageAll = new PackageAll();
+			packageAll.start();//采用多线程打包
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			
 			String sql = "select a.shop_id,ifnull(b.is_publish,'0') is_publish from bp_device a left join bp_shop_page b on a.shop_id=b.shop_id where a.router_sn=?";
 			Record rd = Db.findFirst(sql, new Object[]{sn});
@@ -148,6 +153,7 @@ public class SynAllUtil {
     }
     
     private void synAdv(){
+<<<<<<< HEAD
     	StringBuffer sql = new StringBuffer();
 		sql.append("select distinct bac.img image ");
 		sql.append("from bp_adv_shop bas ");
@@ -158,6 +164,10 @@ public class SynAllUtil {
 		List<Record> list = Db.find(sql.toString(), new Object[]{PageUtil.getTemplateId(shopId),shopId});
 //    	String sql = "select image from bp_adv where shop_id=? and template_id=? and delete_date is null";
 //    	List<Record> list = Db.find(sql, new Object[]{this.shopId,PageUtil.getTemplateId(shopId)});
+=======
+    	String sql = "select image from bp_adv where shop_id=? and delete_date is null";
+    	List<Record> list = Db.find(sql, new Object[]{this.shopId});
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		for(Record rd : list) {
 			 sqlList.add(this.cmdSql+"',1,'"+rd.getStr("image")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
 		}
@@ -166,6 +176,7 @@ public class SynAllUtil {
     private void synOtherAdv(){//同步其他广告，如底部广告、过渡页广告
     	//同步图片
     	StringBuffer sql = new StringBuffer();
+<<<<<<< HEAD
     	sql.append("select distinct basp.adv_type,bac.img image ");
     	sql.append("from bp_adv_shop bas ");
     	sql.append("join bp_adv_content bac on (bas.content_id=bac.id) ");
@@ -175,6 +186,15 @@ public class SynAllUtil {
 		List<Record> list = Db.find(sql.toString(),new Object[]{shopId});
     	
     	boolean synGotoHtml = false;
+=======
+    	sql.append("select bat.adv_type,ifnull(sgr.image,'') image ");
+    	sql.append("from bp_adv_type bat ");
+    	sql.append("left join bp_shop_group_role sgr on (sgr.adv_type_id=bat.id) ");
+    	sql.append("left join bp_shop s on (s.id=? and sgr.shop_group_id=s.group_id) ");
+    	sql.append("where bat.adv_type='adv_start' or bat.adv_type='adv_bottom' ");
+    	boolean synGotoHtml = false;
+    	List<Record> list = Db.find(sql.toString(), new Object[]{this.shopId});
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
     	for(Record rd : list) {
     		String image = rd.getStr("image");
     		String downloadDir = PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo");
@@ -215,6 +235,7 @@ public class SynAllUtil {
     }
     
     private void synApp(){
+<<<<<<< HEAD
 //    	String sql = "select c.icon from bp_shop_page_app a left join bp_shop_page b on a.page_id=b.id left join bp_app c on a.app_id=c.id where b.shop_id=?";
     	StringBuffer sql = new StringBuffer();
     	sql.append("select distinct ifnull(sac.icon,ifnull(tai.icon,a.icon)) icon ");
@@ -225,6 +246,10 @@ public class SynAllUtil {
     	sql.append("left join bp_shop_app_custom sac on (sac.shop_id=? and sp.template_id=sac.template_id and sac.app_id=a.id) ");
     	sql.append("where spa.id is not null ");
     	List<Record> list = Db.find(sql.toString(), new Object[]{PageUtil.getPageIdByShopId(shopId),shopId});
+=======
+    	String sql = "select c.icon from bp_shop_page_app a left join bp_shop_page b on a.page_id=b.id left join bp_app c on a.app_id=c.id where b.shop_id=?";
+    	List<Record> list = Db.find(sql, new Object[]{this.shopId});
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		for(Record rd : list) {
 			 sqlList.add(this.cmdSql+"',1,'"+rd.getStr("icon")+"','"+PropertyUtils.getProperty("downdir.indexApp","/storageroot/Data/mb/logo")+"')");//图片
 		}

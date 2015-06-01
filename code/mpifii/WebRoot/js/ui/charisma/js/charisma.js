@@ -1,7 +1,11 @@
 $(document).ready(function(){
 	//themes, change CSS with JS
 	//default theme(CSS) is cerulean, change it if needed
+<<<<<<< HEAD
 	var current_theme = $.cookie('current_theme')==null ? my_theme :$.cookie('current_theme');
+=======
+	var current_theme = $.cookie('current_theme')==null ? 'united' :$.cookie('current_theme');
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	switch_theme(current_theme);
 	
 	$('#themes a[data-value="'+current_theme+'"]').find('i').addClass('icon-ok');
@@ -113,6 +117,7 @@ function docReady(){
 	//rich text editor
 	$('.cleditor').cleditor();
 	
+<<<<<<< HEAD
 	/*//datepicker
 	$('.datepicker').datepicker({ dateFormat: 'yy-mm-dd' }); */
 	$.datepicker.regional['zh-CN'] = {  
@@ -135,6 +140,11 @@ function docReady(){
 	        yearSuffix: '年'};  
 	$.datepicker.setDefaults($.datepicker.regional['zh-CN']);  
 	$('.datepicker').datepicker();
+=======
+	//datepicker
+	$('.datepicker').datepicker();
+	
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	//notifications
 	$('.noty').click(function(e){
 		e.preventDefault();
@@ -142,8 +152,14 @@ function docReady(){
 		noty(options);
 	});
 
+<<<<<<< HEAD
 	//uniform - styler for checkbox, radio and file input 
 	//$("input:checkbox, input:radio, input:file").not('[data-no-uniform="true"],#uniform-is-ajax').uniform();
+=======
+
+	//uniform - styler for checkbox, radio and file input
+	$("input:checkbox, input:radio, input:file").not('[data-no-uniform="true"],#uniform-is-ajax').uniform();
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 
 	//chosen - improves select
 	$('[data-rel="chosen"],[rel="chosen"]').chosen();

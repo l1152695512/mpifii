@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html>
 	<head>
+<<<<<<< HEAD
 		<title>${(name)!}</title>
+=======
+		<title>潮机推荐</title>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0;" />
 		<meta name="apple-touch-fullscreen" content="yes"/>
@@ -26,7 +30,11 @@
 		<div id="content">
 			<div class="scroll">
 				<div class="animate-block animate0 fadeInDown row_con">
+<<<<<<< HEAD
 					<h2 class="animate-block animate1 fadeInDown">${(name)!}</h2>
+=======
+					<h2 class="animate-block animate1 fadeInDown">潮机推荐</h2>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				</div>	
 				<div class="slide_01" id="slide_01">
 					<div>

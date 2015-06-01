@@ -66,6 +66,12 @@ public class UserController extends Controller<User> {
 	 */
 	//@formatter:on
 	public void addOrModify() {
+<<<<<<< HEAD
+=======
+		if (ContextUtil.isAdmin()) {
+			setAttr("userType", 1);
+		}
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		if (StringUtils.isNotBlank(getPara("id"))) {
 			User user = User.dao.findInfoById(getPara("id"));
 			setAttr("userInfo", user);
@@ -155,9 +161,12 @@ public class UserController extends Controller<User> {
 		} catch (Exception e) {
 		}
 		final User user = getModel();
+<<<<<<< HEAD
 		if(getPara("orgId") != null){
 			user.set("org_id", getPara("orgId"));
 		}
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		if (StringUtils.isNotBlank(icon)) {
 			user.set("icon", icon);
 		}
@@ -171,7 +180,11 @@ public class UserController extends Controller<User> {
 		} else {
 			if (checkUserName(user.getName())) {// 用户名重复
 				renderJson("error", "userNameRepeat");
+<<<<<<< HEAD
 			}else if(StringUtils.isBlank(roleId)){
+=======
+			}else if(ContextUtil.isAdmin() && StringUtils.isBlank(roleId)){
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				renderJson("error", "choiceRole");
 				return;
 			}else {
@@ -181,15 +194,41 @@ public class UserController extends Controller<User> {
 						boolean insertStatus = user.set("pwd", Sec.md5(password)).saveAndDate();
 						if(insertStatus){
 							User addUser =User.dao.findByName(user.getName());
+<<<<<<< HEAD
 							User.dao.updateUserRole(roleId, addUser.getId(), 0);
 							return true;
+=======
+							if(ContextUtil.isAdmin()){
+								User.dao.updateUserRole(roleId, addUser.getId(), 0);
+								String shopGroupId = UUID.randomUUID().toString();
+								//管理员创建的用户（代理商、商户）会默认添加一个商铺分组
+								int changeRows = Db.update("insert into bp_shop_group(id,user_id,name,access_delete,create_date) values(?,?,'默认分组',0,now())",new Object[]{shopGroupId,addUser.getId()});
+								return changeRows > 0;
+							}else{
+								int changeRows = Db.update("INSERT INTO system_user_role (`user_id`, `role_id`) VALUES (?, ?) ",new Object[] { addUser.getId(), "2" });//除管理员外其他用户创建的用户的角色默认为商户，这里用了固定值角色id，需注意
+								return changeRows > 0;
+							}
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 						}else {
 							return false;
 						}
 					}
 				});
+<<<<<<< HEAD
 			}
 			renderJsonResult(success);
+=======
+				if (success) {//用于在添加商户时
+					User rec = User.dao.findByName(user.getName());
+					Map<String, Object> returnData = new HashMap<String, Object>();
+					returnData.put("name", rec.getName());
+					returnData.put("id", rec.getId());
+					renderJson(returnData);
+				} else {
+					renderJsonResult(false);
+				}
+			}
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		}
 	}
 	

@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html>
 	<head>
+<<<<<<< HEAD
 		<title>${(name)!}</title>
+=======
+		<title>热门应用</title>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no"/>
 		<meta name="MobileOptimized" content="320"/>
@@ -56,7 +60,11 @@
 	</head>
 	<body>
 		<div id="content">
+<<<<<<< HEAD
 			<div class="path">${(name)!}</div>
+=======
+			<div class="path">热门应用</div>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			<!-- 本例主要代码 Start ======================= -->
 			<!-- Tab切换（高度自适应示范） -->
 			<div id="tabBox1" class="tabBox">
@@ -74,7 +82,11 @@
 						<ul>
 						<#list applist as app>
 						<#if app.theme=theme.id>
+<<<<<<< HEAD
 							<li><a href="${app.link}">
+=======
+							<li><a href="f/${app.link}">
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 								<div class="pic fl"><img src="${app.icon}"/></div>
 								<div class="tro fr">
 									<h3>${app.name}</h3>

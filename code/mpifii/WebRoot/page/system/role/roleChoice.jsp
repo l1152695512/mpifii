@@ -198,11 +198,19 @@
 		checkedNodeName = treeNode.name;
 	}
 	
+<<<<<<< HEAD
 	/* function setCheckValue(){
 		$("#roleId").val(checkedNodeIds);
 		$("#roleName").val(checkedNodeName);
 		onblurVali($("#roleName"));
 	} */
+=======
+	function setCheckValue(){
+		$("#roleId").val(checkedNodeIds);
+		$("#roleName").val(checkedNodeName);
+		onblurVali($("#roleName"));
+	}
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	
 	//////////////////初始化////////////////////
 
@@ -219,6 +227,7 @@
 	}, 500);
 </script>
 
+<<<<<<< HEAD
 <div class="modal-body">
 	<ul id="zTreeContent" class="ztree"></ul>
 </div>
@@ -226,3 +235,16 @@
 	<a href="#" class="btn" data-dismiss="modal">关闭</a>
 	<a href="#" class="btn btn-primary" data-dismiss="modal" onclick="setCheckValue();">确定</a>
 </div> -->
+=======
+<div class="modal-header">
+	<button type="button" class="close" data-dismiss="modal">×</button>
+	<h3>角色单选</h3>
+</div>
+<div class="modal-body">
+	<ul id="zTreeContent" class="ztree"></ul>
+</div>
+<div class="modal-footer">
+	<a href="#" class="btn" data-dismiss="modal">关闭</a>
+	<a href="#" class="btn btn-primary" data-dismiss="modal" onclick="setCheckValue();">确定</a>
+</div>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901

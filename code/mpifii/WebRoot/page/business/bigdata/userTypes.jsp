@@ -1,9 +1,14 @@
 <%@ page language="java" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="shiro" uri="http://shiro.apache.org/tags"%>
+<<<<<<< HEAD
 <%-- <%@ include file="../../common/splitPage.jsp" %> 
  --%>
  <style type="text/css">
+=======
+
+<style type="text/css">
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 </style>
 <form id="splitPage" class="form-horizontal" action="${pageContext.request.contextPath}/business/bigdata/toUserTypes" method="POST">
 	<div>
@@ -14,6 +19,7 @@
 			</li>
 		</ul>
 	</div>
+<<<<<<< HEAD
 		<div class="row-fluid">
 		<div class="box span12">
 			<div class="box-header well" >
@@ -26,10 +32,17 @@
 		<div class="box span12">
 			<div class="box-header well" data-original-title>
 				<h2><i class="icon-edit"></i>数据查询</h2>
+=======
+		<div class="row-fluid sortable">
+		<div class="box span12">
+			<div class="box-header well" data-original-title>
+				<h2><i class="icon-edit"></i> 应用查询</h2>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				<div class="box-icon">
 					<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-down"></i></a>
 				</div>
 			</div>
+<<<<<<< HEAD
 			<div class="box-content" style="display:none;" >
 				<fieldset>
 				 	<div class="control-group">
@@ -62,10 +75,29 @@
 						<button type="button" class="btn btn-primary" onclick="getPFCharts();getPFxml();">查询</button>
 						<button type="reset" class="btn">清除</button>
 				  	</div>
+=======
+			<div class="box-content" style="display: none;" >
+				<fieldset>
+				 	<div class="control-group">
+					  		<label class="control-label" for="focusedInput">开始日期：</label>
+							<div class="controls">
+								<input type="text" id="starttime" name="starttime" readonly="readonly" class="input-xlarge datepicker" ">
+							</div>
+							<label class="control-label" for="focusedInput">结束日期：</label>
+							<div class="controls">
+								<input type="text" name="endtime" readonly="readonly" class="input-xlarge datepicker" ">
+							</div>
+					  	</div>
+					  	<div class="form-actions">
+							<button type="button" class="btn btn-primary" onclick="to_user_type()">查询</button>
+							<button type="reset" class="btn">清除</button>
+					  	</div>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				</fieldset>
 			</div>
 		</div><!--/span-->
 	</div><!--/row-->
+<<<<<<< HEAD
 		<div class="row-fluid sortable">
 		<div class="box span12">
 			<div class="box-header well" data-original-title>
@@ -84,13 +116,27 @@
 			</div>
 		</div><!--/span-->
 	</div><!--/row-->
+=======
+		<div class="row-fluid">
+		<div class="box span12">
+			<div class="box-header well" >
+				<h2><i class="icon-user"></i>用户偏好分析</h2>
+				<div class="box-icon">
+				</div>
+			</div>
+			
+			
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			<div class="box-content">
 				<div >
 					<div id="chartdivv"></div>
 				</div>
 			</div>
+<<<<<<< HEAD
 			<div class="row-fluid sortable">
 	</div>
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		</div>
 	</div>
 </form>
@@ -105,6 +151,7 @@
 <script type="text/javascript">
 		$(document).ready(function() {
 			getPFCharts();
+<<<<<<< HEAD
 			getPFxml();
 		});
 		function getPFCharts(){
@@ -117,6 +164,31 @@
 		    		type: "POST",
 		    		dataType: 'text',
 		    		data:{starttime:starttime,endtime:endtime,qOrgId:qOrgId,qShopId:qShopId},
+=======
+		});
+		function to_user_type(){
+			var starttime=$("#starttime").val();
+			var endtime=$("#endtime").val();
+			console.log(starttime);
+				$.ajax({
+		    		type: "GET",
+		    		dataType: 'text',
+		    		data:{},
+		    		url: "business/bigdata/to_user_type?starttime="+starttime+"&endtime="+endtime,
+		    		success: function(data,status,xhr){
+		    			if(status == "success"){
+		    				
+		    			}
+		    		}
+		    	});
+		};
+		function getPFCharts(){
+			var myChart = new FusionCharts('file/charts/MSColumn3D.swf', 'ad_chart_2014', "100%", 410);
+				$.ajax({
+		    		type: "POST",
+		    		dataType: 'text',
+		    		data:{},
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		    		url: "business/bigdata/to_user_type",
 		    		success: function(data,status,xhr){
 		    			if(status == "success"){
@@ -126,6 +198,7 @@
 		    		}
 		    	});
 		};
+<<<<<<< HEAD
 		
 		$('#select_org').multiselect({
 			enableFiltering: true,
@@ -172,4 +245,6 @@ function getPFxml(){
     	});
 };
 
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 </script>

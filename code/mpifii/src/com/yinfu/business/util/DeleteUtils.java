@@ -72,8 +72,12 @@ public class DeleteUtils {
 			deviceIds.add(rowData.get("id"));
 		}
 		deleteDevice(deviceIds,sqls,false);//初始化该商铺下所有的设备（将以前产生的数据清除）
+<<<<<<< HEAD
 //		deleteShopResourcesSql(sqlInString,"bp_adv","image","shop_id",sqls,deleteResources);//删除商铺对应的广告数据
 		sqls.add("delete from bp_adv_shop where shop_id in ("+sqlInString+")");//删除商铺对应的广告数据
+=======
+		deleteShopResourcesSql(sqlInString,"bp_adv","image","shop_id",sqls,deleteResources);//删除商铺对应的广告数据
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		deleteShopResourcesSql(sqlInString,"bp_flow_pack","pic","shop_id",sqls,deleteResources);//删除流量包应用数据
 		deleteShopResourcesSql(sqlInString,"bp_funny","img","shop_id",sqls,deleteResources);//删除节操段子应用数据
 		deleteShopResourcesSql(sqlInString,"bp_introduce","file_path","shop_id",sqls,deleteResources);//删除商铺介绍应用数据
@@ -83,9 +87,15 @@ public class DeleteUtils {
 		deleteTableAssociated(sqlInString,sqls,"bp_survey","bp_survey_option","survey_id");//删除调查问卷数据
 		deleteShopResourcesSql(sqlInString,"bp_tide","img","shop_id",sqls,deleteResources);//删除潮机推荐应用数据
 		deleteTableAssociated(sqlInString,sqls,"bp_shop_page","bp_shop_page_app","page_id");//删除商铺potal页面信息
+<<<<<<< HEAD
 		deleteShopResourcesSql(sqlInString,"bp_shop","icon","id",sqls,deleteResources);//删除商铺信息
 		sqls.add("update bp_device set shop_id = null where shop_id in ("+sqlInString+")");//解绑该商铺下的所有盒子
 		sqls.add("delete from bp_auth_setting where shop_id in ("+sqlInString+")");//删除商铺配置的认证方式
+=======
+		
+		deleteShopResourcesSql(sqlInString,"bp_shop","icon","id",sqls,deleteResources);//删除商铺信息
+		sqls.add("update bp_device set shop_id = null where shop_id in ("+sqlInString+")");//解绑该商铺下的所有盒子
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		return deleteResources;
 	}
 	
@@ -93,11 +103,19 @@ public class DeleteUtils {
 	 * 删除已删除记录中包含的资源文件
 	 * @param resources
 	 */
+<<<<<<< HEAD
 	public static void deleteShopResources(Set<String> resources){
 		Iterator<String> ite = resources.iterator();
 		while(ite.hasNext()){
 			String relativePath = ite.next();
 			if(null!=relativePath && relativePath.startsWith("upload")){//仅删除上传的图片，默认的图片不会被删除
+=======
+	public void deleteShopResources(Set<String> resources){
+		Iterator<String> ite = resources.iterator();
+		while(ite.hasNext()){
+			String relativePath = ite.next();
+			if(relativePath.startsWith("upload")){//仅删除上传的图片，默认的图片不会被删除
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				File resource = new File(PathKit.getWebRootPath() + File.separator + relativePath);
 				if(resource.exists()){
 					resource.delete();
@@ -131,7 +149,11 @@ public class DeleteUtils {
 	
 	/**
 	 * 删除盒子，需要级联删除的数据表包含（以后可能会有增加）：
+<<<<<<< HEAD
 	 * bp_auth、bp_res_task、bp_page_operate、bp_feedback、bp_pass_list、
+=======
+	 * bp_auth、bp_cmd、bp_task（关联bp_cmd）、bp_page_operate、bp_feedback、bp_pass_list、
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	 * bp_report、bp_route_food_order_tbl、bp_route_food_tbl（关联bp_route_food_order_tbl）、
 	 * bp_router_queue、bp_router_rom、bp_statistics、bp_statistics_all、bp_statistics_pf、
 	 * bp_survey_result、
@@ -142,9 +164,14 @@ public class DeleteUtils {
 	public void deleteDevice(List<Object> deviceIds,List<String> sqls,boolean deleteDevice){
 		String sqlInString = listToSqlInStr(deviceIds);
 		sqls.add("delete from bp_auth where router_sn in ("+sqlInString+")");//删除认证信息
+<<<<<<< HEAD
 //		addTaskAndCmdSql(sqlInString,sqls);//删除同步任务
 		sqls.add("delete from bp_res_task where (left(task_type,4) != 'lua_' && left(task_type,5) != 'data_') && router_sn in ("+sqlInString+")");//删除同步任务展示
 //		sqls.add("delete from bp_page_operate where router_sn in ("+sqlInString+")");//删除同步任务展示
+=======
+		addTaskAndCmdSql(sqlInString,sqls);//删除同步任务
+		sqls.add("delete from bp_page_operate where router_sn in ("+sqlInString+")");//删除同步任务展示
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		sqls.add("delete from bp_feedback where router_sn in ("+sqlInString+")");//删除意见反馈数据
 		sqls.add("delete from bp_pass_list where sn in ("+sqlInString+")");//删除白名单
 		sqls.add("delete from bp_report where sn in ("+sqlInString+")");//删除上报数据
@@ -168,7 +195,10 @@ public class DeleteUtils {
 	public void changeDeviceAssign(List<Object> ids,List<String> sqls){
 		String sqlInString = listToSqlInStr(ids);
 		addTaskAndCmdSql(sqlInString,sqls);//删除同步任务
+<<<<<<< HEAD
 		sqls.add("delete from bp_res_task where (left(task_type,4) != 'lua_' && left(task_type,5) != 'data_') && router_sn in ("+sqlInString+")");//删除同步任务展示
+=======
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		sqls.add("delete from bp_page_operate where router_sn in ("+sqlInString+")");//删除同步任务展示
 	}
 	

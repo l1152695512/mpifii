@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html manifest="">
 	<head>
+<<<<<<< HEAD
 		<title>${(name)!}</title>
+=======
+		<title>包子铺</title>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"/>
 		<meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -17,7 +21,11 @@
 		<div class="container">
 			<header id="header" class="lge page-header">
 				<article class="row pd_small">
+<<<<<<< HEAD
 					<h1 class="tc f_24 se-f">${(name)!}<a href="javascript:void(1);" class="fl re-back">返回</a></h1>
+=======
+					<h1 class="tc f_24 se-f">流量包<a href="javascript:void(1);" class="fl re-back">返回</a></h1>
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 					<a href="javascript:void(1);" id="mune" class="fr title_cd"></a>
 				</article>
 			</header>

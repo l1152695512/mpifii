@@ -1,5 +1,9 @@
 eclipse.preferences.version=1
 encoding//WebRoot/css/business/favorable.css=UTF-8
 encoding//WebRoot/js/jsFile/charisma/common.js=UTF-8
+<<<<<<< HEAD
+=======
+encoding//WebRoot/page/business/bigdata/userTypes.jsp=UTF-8
+>>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 encoding//WebRoot/page/system/user/userIndex.jsp=UTF-8
 encoding/<project>=UTF-8
