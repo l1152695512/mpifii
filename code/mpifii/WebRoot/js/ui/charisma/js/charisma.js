@@ -1,11 +1,7 @@
 $(document).ready(function(){
 	//themes, change CSS with JS
 	//default theme(CSS) is cerulean, change it if needed
-<<<<<<< HEAD
 	var current_theme = $.cookie('current_theme')==null ? my_theme :$.cookie('current_theme');
-=======
-	var current_theme = $.cookie('current_theme')==null ? 'united' :$.cookie('current_theme');
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	switch_theme(current_theme);
 	
 	$('#themes a[data-value="'+current_theme+'"]').find('i').addClass('icon-ok');
@@ -117,14 +113,13 @@ function docReady(){
 	//rich text editor
 	$('.cleditor').cleditor();
 	
-<<<<<<< HEAD
 	/*//datepicker
 	$('.datepicker').datepicker({ dateFormat: 'yy-mm-dd' }); */
 	$.datepicker.regional['zh-CN'] = {  
-	        closeText: '关闭',  
+	        closeText: '确定',  
 	        prevText: '<上月',  
 	        nextText: '下月>',  
-	        currentText: '今天',  
+	        currentText: '当前',  
 	        monthNames: ['一月','二月','三月','四月','五月','六月',  
 	        '七月','八月','九月','十月','十一月','十二月'],  
 	        monthNamesShort: ['一','二','三','四','五','六',  
@@ -140,11 +135,6 @@ function docReady(){
 	        yearSuffix: '年'};  
 	$.datepicker.setDefaults($.datepicker.regional['zh-CN']);  
 	$('.datepicker').datepicker();
-=======
-	//datepicker
-	$('.datepicker').datepicker();
-	
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	//notifications
 	$('.noty').click(function(e){
 		e.preventDefault();
@@ -152,14 +142,8 @@ function docReady(){
 		noty(options);
 	});
 
-<<<<<<< HEAD
 	//uniform - styler for checkbox, radio and file input 
 	//$("input:checkbox, input:radio, input:file").not('[data-no-uniform="true"],#uniform-is-ajax').uniform();
-=======
-
-	//uniform - styler for checkbox, radio and file input
-	$("input:checkbox, input:radio, input:file").not('[data-no-uniform="true"],#uniform-is-ajax').uniform();
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 
 	//chosen - improves select
 	$('[data-rel="chosen"],[rel="chosen"]').chosen();

@@ -19,10 +19,7 @@ import com.yinfu.business.freemarker.PreferentialMarker;
 import com.yinfu.business.freemarker.RestaurantMarker;
 import com.yinfu.business.freemarker.TideMarker;
 import com.yinfu.business.freemarker.VideoMarker;
-<<<<<<< HEAD
 import com.yinfu.business.util.PageUtil;
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.yinfu.jbase.util.PropertyUtils;
  
   
@@ -53,21 +50,12 @@ import com.yinfu.jbase.util.PropertyUtils;
    {
 	   boolean bool = false;
 	   
-<<<<<<< HEAD
 	   String sql = "select a.router_sn,ifnull(b.is_publish,0) is_publish from bp_device a left join bp_shop_page b on a.shop_id=b.shop_id where a.type=1 ";
 	   if(shopId != null){
 		   if(shopId.equals("0")){
 			   sql += "and a.shop_id<>?";
 		   }else{
 			   sql += "and a.shop_id=?";
-=======
-	   String sql = "select a.router_sn,ifnull(b.is_publish,0) is_publish from bp_device a left join bp_shop_page b on a.shop_id=b.shop_id ";
-	   if(shopId != null){
-		   if(shopId.equals("0")){
-			   sql += "where a.shop_id<>?";
-		   }else{
-			   sql += "where a.shop_id=?";
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		   }
 	   }
 	   List<Record> list = Db.find(sql,new Object[]{shopId});
@@ -101,7 +89,6 @@ import com.yinfu.jbase.util.PropertyUtils;
 	   delList.add("delete from bp_cmd where type<>2 and uid='"+uid+"'");
 	   Db.batch(delList, delList.size());
 	   if("index_app".equals(taskType)){
-<<<<<<< HEAD
 		   StringBuffer sqlApp = new StringBuffer();
 		   sqlApp.append("select ifnull(sac.icon,ifnull(tai.icon,a.icon)) icon ");
 		   sqlApp.append("from bp_app a left join bp_shop_page_app spa on (a.id=spa.app_id and spa.page_id=?) ");
@@ -110,9 +97,6 @@ import com.yinfu.jbase.util.PropertyUtils;
 		   sqlApp.append("left join bp_shop_app_custom sac on (sac.shop_id=? and sp.template_id=sac.template_id and sac.app_id=a.id) ");
 		   sqlApp.append("where a.id=? ");
 		   Record rd = Db.findFirst(sqlApp.toString(), new Object[]{PageUtil.getPageIdByShopId(shopId),shopId,keyId});
-=======
-		   Record rd = Db.findById("bp_app", keyId);
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		   if(rd != null){
 			   if("1".equals(cmdType)){//增加、修改
 				   sqlList.add(sql+"',1,'"+rd.getStr("icon")+"','"+PropertyUtils.getProperty("downdir.indexApp","/storageroot/Data/mb/logo")+"')");//图片
@@ -134,21 +118,12 @@ import com.yinfu.jbase.util.PropertyUtils;
 			   }
 		   }
 	   }else if("index_adv".equals(taskType)){
-<<<<<<< HEAD
 		   Record rd = Db.findById("bp_adv_content", keyId);
 		   if(rd != null){
 			   if("1".equals(cmdType)){//增加、修改
 				   sqlList.add(sql+"',1,'"+rd.getStr("img")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
 			   }else if("2".equals(cmdType)){//删除
 				   sqlList.add(sql+"',2,'"+rd.getStr("img")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
-=======
-		   Record rd = Db.findById("bp_adv", keyId);
-		   if(rd != null){
-			   if("1".equals(cmdType)){//增加、修改
-				   sqlList.add(sql+"',1,'"+rd.getStr("image")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
-			   }else if("2".equals(cmdType)){//删除
-				   sqlList.add(sql+"',2,'"+rd.getStr("image")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			   }
 			   String link = "file/freemarker/html/"+shopId+"/mb/index.html";
 			   String linkPc = "file/freemarker/html/"+shopId+"/pc/indexPc.html";
@@ -380,17 +355,10 @@ import com.yinfu.jbase.util.PropertyUtils;
 				   bool = Db.batch(sqlList, sqlList.size()).length>0;
 			   }
 		   }
-<<<<<<< HEAD
 	   }else if("index_adv_bottom".equals(taskType)){//这个没有使用了
 		   Record rd = Db.findById("bp_adv_content", keyId);
 		   if(rd != null && null != rd.get("img")){
 			   sqlList.add(sql+"',1,'"+rd.getStr("img")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
-=======
-	   }else if("index_adv_bottom".equals(taskType)){
-		   Record rd = Db.findById("bp_shop_group_role", keyId);
-		   if(rd != null){
-			   sqlList.add(sql+"',1,'"+rd.getStr("image")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			   String link = "file/freemarker/html/"+shopId+"/mb/index.html";
 			   if(addHtml(routersn,link)){
 				   sqlList.add(sql+"',1,'"+link+"','"+PropertyUtils.getProperty("downdir.index","/storageroot/Data/mb")+"')");//html
@@ -401,7 +369,6 @@ import com.yinfu.jbase.util.PropertyUtils;
 				   bool = Db.batch(sqlList, sqlList.size()).length>0;
 			   }
 		   }
-<<<<<<< HEAD
 	   }else if("index_adv_start".equals(taskType) || "index_temp".equals(taskType)){
 		   if("index_adv_start".equals(taskType)){
 			   Record rd = Db.findById("bp_adv_content", keyId);
@@ -417,21 +384,6 @@ import com.yinfu.jbase.util.PropertyUtils;
 		   GotoMarker im = GotoMarker.getInstance();
 		   if(im.createHtml(shopId) && sqlList.size() > 0){
 			   bool = Db.batch(sqlList, sqlList.size()).length>0;
-=======
-	   }else if("index_adv_start".equals(taskType)){
-		   Record rd = Db.findById("bp_shop_group_role", keyId);
-		   if(rd != null){
-			   sqlList.add(sql+"',1,'"+rd.getStr("image")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
-			   String link = "file/freemarker/html/"+shopId+"/mb/goto.html";
-			   if(addHtml(routersn,link)){
-				   sqlList.add(sql+"',1,'"+link+"','"+PropertyUtils.getProperty("downdir.index","/storageroot/Data/mb")+"')");//html
-			   }
-			   //生成html
-			   GotoMarker im = GotoMarker.getInstance();
-			   if(im.createHtml(shopId)){
-				   bool = Db.batch(sqlList, sqlList.size()).length>0;
-			   }
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		   }
 	   }
 	   
@@ -446,7 +398,6 @@ import com.yinfu.jbase.util.PropertyUtils;
 	   String sql = "insert into bp_cmd(uid,type,url,dir) values('"+uid;
 	   sqlList.add("insert into bp_task(router_sn,type,key_id,create_date,uid,is_publish) values('"+routersn+"','"+taskType+"','"+keyId+"',now(),'"+uid+"',"+isPublish+")");
 	   if("index_app".equals(taskType)){
-<<<<<<< HEAD
 		   StringBuffer sqlApp = new StringBuffer();
 		   sqlApp.append("select ifnull(sac.icon,ifnull(tai.icon,a.icon)) icon ");
 		   sqlApp.append("from bp_app a left join bp_shop_page_app spa on (a.id=spa.app_id and spa.page_id=?) ");
@@ -455,9 +406,6 @@ import com.yinfu.jbase.util.PropertyUtils;
 		   sqlApp.append("left join bp_shop_app_custom sac on (sac.shop_id=? and sp.template_id=sac.template_id and sac.app_id=a.id) ");
 		   sqlApp.append("where a.id=? ");
 		   Record rd = Db.findFirst(sqlApp.toString(), new Object[]{PageUtil.getPageIdByShopId(shopId),shopId,keyId});
-=======
-		   Record rd = Db.findById("bp_app", keyId);
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		   if(rd != null){
 			   if("1".equals(cmdType)){//增加、修改
 				   sqlList.add(sql+"',1,'"+rd.getStr("icon")+"','"+PropertyUtils.getProperty("downdir.indexApp","/storageroot/Data/mb/logo")+"')");//图片
@@ -479,21 +427,12 @@ import com.yinfu.jbase.util.PropertyUtils;
 			   }
 		   }
 	   }else if("index_adv".equals(taskType)){
-<<<<<<< HEAD
 		   Record rd = Db.findById("bp_adv_content", keyId);
 		   if(rd != null){
 			   if("1".equals(cmdType)){//增加、修改
 				   sqlList.add(sql+"',1,'"+rd.getStr("img")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
 			   }else if("2".equals(cmdType)){//删除
 				   sqlList.add(sql+"',2,'"+rd.getStr("img")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
-=======
-		   Record rd = Db.findById("bp_adv", keyId);
-		   if(rd != null){
-			   if("1".equals(cmdType)){//增加、修改
-				   sqlList.add(sql+"',1,'"+rd.getStr("image")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
-			   }else if("2".equals(cmdType)){//删除
-				   sqlList.add(sql+"',2,'"+rd.getStr("image")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			   }
 			   String link = "file/freemarker/html/"+shopId+"/mb/index.html";
 			   String linkPc = "file/freemarker/html/"+shopId+"/pc/indexPc.html";
@@ -725,15 +664,9 @@ import com.yinfu.jbase.util.PropertyUtils;
 			   }
 		   }
 	   }else if("index_adv_bottom".equals(taskType)){
-<<<<<<< HEAD
 		   Record rd = Db.findById("bp_adv_content", keyId);
 		   if(rd != null && null != rd.get("img")){
 			   sqlList.add(sql+"',1,'"+rd.getStr("img")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
-=======
-		   Record rd = Db.findById("bp_shop_group_role", keyId);
-		   if(rd != null){
-			   sqlList.add(sql+"',1,'"+rd.getStr("image")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			   String link = "file/freemarker/html/"+shopId+"/mb/index.html";
 			   if(addHtml(routersn,link)){
 				   sqlList.add(sql+"',1,'"+link+"','"+PropertyUtils.getProperty("downdir.index","/storageroot/Data/mb")+"')");//html
@@ -744,7 +677,6 @@ import com.yinfu.jbase.util.PropertyUtils;
 				   bool = Db.batch(sqlList, sqlList.size()).length>0;
 			   }
 		   }
-<<<<<<< HEAD
 	   }else if("index_adv_start".equals(taskType) || "index_temp".equals(taskType)){
 		   if("index_adv_start".equals(taskType)){
 			   Record rd = Db.findById("bp_adv_content", keyId);
@@ -760,21 +692,6 @@ import com.yinfu.jbase.util.PropertyUtils;
 		   GotoMarker im = GotoMarker.getInstance();
 		   if(im.createHtml(shopId) && sqlList.size() > 0){
 			   bool = Db.batch(sqlList, sqlList.size()).length>0;
-=======
-	   }else if("index_adv_start".equals(taskType)){
-		   Record rd = Db.findById("bp_shop_group_role", keyId);
-		   if(rd != null){
-			   sqlList.add(sql+"',1,'"+rd.getStr("image")+"','"+PropertyUtils.getProperty("downdir.indexAdv","/storageroot/Data/mb/logo")+"')");//图片
-			   String link = "file/freemarker/html/"+shopId+"/mb/goto.html";
-			   if(addHtml(routersn,link)){
-				   sqlList.add(sql+"',1,'"+link+"','"+PropertyUtils.getProperty("downdir.index","/storageroot/Data/mb")+"')");//html
-			   }
-			   //生成html
-			   GotoMarker im = GotoMarker.getInstance();
-			   if(im.createHtml(shopId)){
-				   bool = Db.batch(sqlList, sqlList.size()).length>0;
-			   }
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		   }
 	   }
 	   return bool;

@@ -66,11 +66,7 @@
 					<div class="controls">
 						<input type="text" name="device.time_out" value="${deviceInfo.time_out}" class="input-xlarge"
 							maxlength="5" vMin="0" vType="numberZ" placeholder='120分钟' onblur="onblurVali(this);">
-<<<<<<< HEAD
 						<span class="help-inline">5-1600</span>
-=======
-						<span class="help-inline"></span>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 					</div>
 				</div>
 <!-- 				<div class="control-group"> -->
@@ -115,7 +111,6 @@
 		if(errorCount != 0){
 			return;
 		}
-<<<<<<< HEAD
 		
 		var timeoutObj = $("#editForm input[name='device.time_out']");
 		if(timeoutObj.val() != ""){
@@ -127,8 +122,6 @@
 				return;
 			}
 		}
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 // 		if('${deviceInfo.id}'== ''){
 // 			var snObject = $("#editForm input[name='device.router_sn']");
 // 			var sn = snObject.val();

@@ -1,11 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-<<<<<<< HEAD
 		<title>${(name)!}</title>
-=======
-		<title>本地电台</title>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no"/>
 		<meta name="MobileOptimized" content="320"/>
@@ -48,25 +44,15 @@
 	</head>
 	<body>
 		<div id="content">
-<<<<<<< HEAD
 			<div class="path">${(name)!}</div>
-=======
-			<div class="path">本地电台</div>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			<div class="line-jianbian"></div><!--渐变介绍-->
 			<ul class="tro">
 			
 			<#list audiolist as audio>
 				<li>
-<<<<<<< HEAD
 					<a href="detail.html?name=${audio.name}&link=${audio.link}" class="pic"><img src="${audio.icon}"/></a>
 					<div class="bantouming">${audio.name}</div>
 					<a href="detail.html?name=${audio.name}&link=${audio.link}"><div class="bofang"></div></a>
-=======
-					<a href="detail.html?name=${audio.link}" class="pic"><img src="${audio.icon}"/></a>
-					<div class="bantouming">${audio.name}</div>
-					<a href="detail.html?name=${audio.link}&rid=${audio.id}"><div class="bofang"></div></a>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				</li>
 			</#list>
 			

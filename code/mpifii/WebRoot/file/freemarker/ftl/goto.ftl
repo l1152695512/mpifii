@@ -1,55 +1,90 @@
-﻿<!DOCTYPE html>
+<!doctype html>
 <html>
-	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no"/>
-		<meta name="MobileOptimized" content="320"/>
-        <link type="text/css" href="index/css/jquery.mobile-1.4.2.min.css" rel="stylesheet" />
-        <link type="text/css" href="index/css/mama_style.css" rel="stylesheet" />
-		<script type="text/javascript" src="../commonjs/jquery-1.8.3.min.js"></script>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+        <meta name="apple-touch-fullscreen" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <link type="text/css" rel="stylesheet" href="index/css/common.css" />
+        <link type="text/css" rel="stylesheet" href="index/css/ad_page.css" />
+        <script type="text/javascript" src="../commonjs/jquery-1.8.3.min.js"></script>
 		<script src="../commonjs/jquery.cookie.js" type="text/javascript"></script>
 		<script src="../commonjs/commons.js" type="text/javascript"></script>
-<<<<<<< HEAD
 		<title>${(title)!}</title>
-=======
-		<title>尊贵的商户</title>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
-        <style type="text/css">
-       		.result{
-				display:none;
-				position:absolute;
-				width:100%;
-				height:100%;
-			}
-        </style>
-        <script type="text/javascript">
-			$(document).ready(function(){
-				//$("body").hide();
-				$(".result").fadeIn(3000);
-				$(".result").fadeOut(2000);
+		
+		<script type="text/javascript">
+	       
+        	$(function(){
+				var w = $(window).width() || document.documentElement.clientWidth;
+				var h = $(window).height() || document.documentElement.clientHeight;
+				$(".ad_pic").css({"width":w + "px","height":h + "px"});
+				$(".ad_pic ul li").css({"width":w + "px","height":h + "px"});
+				//显示每张广告的URL
+				var url = new Array();
+				var pic = new Array();
+				
+				<#list advs as ad>
+					url[${ad_index}] = '${(ad.link)!}';
+					pic[${ad_index}] = '${(ad.image)!}';
+				</#list>
+				
+				var enter = 500;
+				$(".ad_pic").hide();
+				$(".ad_pic").fadeIn(enter);
+				document.getElementById("time").innerHTML = 10;//倒计时时间为10秒
+				$("#time").css("display","none");
+				function auto(){
+					function run(){
+						var s = document.getElementById("time");
+						if(s.innerHTML == 0){
+								window.location.href = "${(gotoUrl)!}?mac="+mac+"&routersn="+routersn+"&"+randomString(10);
+							return false;
+						}
+						s.innerHTML = s.innerHTML * 1 - 1;//s.innerHTML -= 1;
+					}
+					window.setInterval(run,1000);
+				}
+				function imgURL(){
+					var sum;
+					for(sum in pic){
+						$(".ad_pic ul li").children("img")[sum].src = pic[sum];
+					}
+				}
+				imgURL();
+				
+				//广告淡隐淡现
+				var defaultOpts ={ interval:3000, fadeInTime:3000, fadeOutTime:2500};
+				var len = $(".ad_pic ul > li");
+				var current = 0;
+				function showPic(index){
+					index = current;//等号两边互换的话,index值没定义初始值
+					len.eq(index).siblings(".ad_pic ul > li").stop().animate({opacity:0},defaultOpts.fadeOutTime);
+					len.eq(index).stop().animate({opacity:1},defaultOpts.fadeInTime);
+				}
+				function autorun(){
+					current++;
+					$(".ad_btn").children("a").attr({"href":url[current]});
+					if(current == len.length){
+						//current = 0;
+						$("#time").css("display","block");
+						auto();//调用倒计时方法
+					}
+					showPic();
+				}
+				
+				window.setInterval(autorun,defaultOpts.interval);
 			});
         </script>
-	</head>
-	<body>
-<<<<<<< HEAD
-		<a href="javascript:void(0)"><img class="result" src="${(gotoAdv.image)!}"/></a>
-=======
-		<a href="${(gotoAdv.link)!}"><img class="result" src="${(gotoAdv.image)!}"/></a>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
-    	<noscript>
-			该浏览器不能执行javascript！请检查是否有禁用浏览器！
-		</noscript>
-		<script type="text/javascript" defer>
-			$(function(){
-				setInterval(goto,4000);
-			});
-			function goto(){
-<<<<<<< HEAD
-				window.location.href = "${(gotoAdv.indexUrl)!}?mac="+mac+"&routersn="+routersn+"&"+randomString(10);
-=======
-				window.location.href = "index.html?mac="+mac+"&routersn="+routersn;
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
-			}
-        </script>
-	</body>
+    </head>
+    <body>
+        <div class="ad_pic">
+            <ul>
+            	<#list advs as adv>
+            		<li><img src="" alt=""></li>
+            	</#list>
+            </ul>
+        </div>
+        <div class="ad_btn"><a href="">了解更多</a></div>
+        <span id="time" style="display:none;"></span>
+    </body>
 </html>

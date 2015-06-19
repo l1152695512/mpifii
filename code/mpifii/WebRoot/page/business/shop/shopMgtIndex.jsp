@@ -38,10 +38,7 @@
 				<div class="box-icon">
 					<a href="javascript:void(0);" class="btn btn-round" title="查找"><i class="icon-search"></i></a>
 					<a href="javascript:void(0);" class="btn btn-round" title="添加商铺" onclick="ajaxContent('/business/shop/add');"><i class="icon-plus-sign"></i></a>
-<<<<<<< HEAD
 					<a href="javascript:void(0);" class="btn btn-round" title="导入商铺" onclick="importShop()"><i class="icon-random"></i></a>
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				</div>
 			</div>
 			<div class="box-content">
@@ -62,7 +59,6 @@
 				<table class="table table-striped table-bordered bootstrap-datatable ">
 					<thead>
 						<tr>
-<<<<<<< HEAD
 							<th>编号</th>
 							<th>商铺名称</th>
 							<th>商铺位置</th>
@@ -70,12 +66,6 @@
 						    <th>所属客户</th>
 							<th>所属商户</th>
 							<th>所属组织</th>
-=======
-							<th>商铺名称</th>
-							<th>商铺位置</th>
-							<th>联系方式</th>
-							<th>所属商户</th>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 <!-- 							<th>所属组</th> -->
 							<th>设备数</th>
 							<th width="320">操作</th>
@@ -84,7 +74,6 @@
 					<tbody>
 						<c:forEach var="shop" items="${splitPage.page.list}" >
 							<tr>
-<<<<<<< HEAD
 								<td>${shop.get("sn")}</td>
 								<td>${shop.get("name")}</td>
 								<td class="center">${shop.get("location")}</td>
@@ -92,12 +81,6 @@
 								<td>${shop.get("customer")}</td>
 								<td class="center">${shop.get("username")}</td>
 								<td class="center">${shop.get("orgName")}</td>
-=======
-								<td>${shop.get("name")}</td>
-								<td class="center">${shop.get("location")}</td>
-								<td  class="center">${shop.get("tel")}</td>
-								<td class="center">${shop.get("username")}</td>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 <%-- 								<td class="center">${shop.get("groupName")}</td> --%>
 								<td class="center">${shop.get("sbs")}</td>
 								<td class="center" data-id='${shop.get("id")}', data-user='${shop.get("userid")}'>
@@ -174,11 +157,7 @@
 				}else{
 					$.fn.SimpleModal({
 						title: '盒子管理',
-<<<<<<< HEAD
 // 						width: 750,
-=======
-						width: 750,
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				        keyEsc:true,
 						buttons: [{
 				    		text:'确定',
@@ -218,7 +197,6 @@
 			}
 		});
 	});
-<<<<<<< HEAD
 	/***
 	盒子导入
 	**/
@@ -273,8 +251,6 @@
 		}).showModal();
 	}
 	
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	$("#splitPage .box-content tbody .icon-zoom-in").parent().click(function(){
 		var id = $(this).parent().data("id");
 		var userid = $(this).parent().data("user");

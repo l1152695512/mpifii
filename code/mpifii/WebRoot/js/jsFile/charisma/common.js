@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 /***
  * 全局禁止回车事件
  */
@@ -9,8 +8,6 @@ window.onload = function (){
 			}
 		}
 };
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 /**
  * 分页输出
  * @param totalRow
@@ -56,11 +53,7 @@ function splitPageOut(totalRow, pageSize, pageNumber, totalPages, isSelectPage, 
 	}
 	
 	if(isSelectPage == true){
-<<<<<<< HEAD
 		splitStr += '&nbsp;&nbsp;<li><select id="pageNumberId" name="pageNumber" onChange="splitPage(this.value);" style="width: 130px; height:35px;">';
-=======
-		splitStr += '&nbsp;&nbsp;<li><select id="pageNumberId" name="pageNumber" onChange="splitPage(this.value);" style="width: 110px; height:35px;">';
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		for (var i = 1; i <= totalPages; i++) {
 			if (i == pageNumber) {
 				splitStr += '<option selected value="' + i + '">跳转到第' + i + '页</option>';
@@ -207,13 +200,8 @@ function ajaxContent(url, data ,callback){
 		data : data,
 		dataType : "html",
 		contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-<<<<<<< HEAD
 //		async: false,
 //		cache: false,
-=======
-		async: false,
-		cache: false,
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		success:function(returnData){
 //			if(undefined != rememberHistory && rememberHistory && 
 			if(undefined != callback){
@@ -332,20 +320,34 @@ function moduleRadioDiaLog(moduleId, moduleName, checkedIds){
 		}
 	});
 }
-
-<<<<<<< HEAD
-
+/**
+ * 组织选择
+ */
+function selectOrg() {
+	$("#orgSelect_Div").load(encodeURI(encodeURI(cxt+"/page/system/org/orgSelect.jsp")),function(){
+		var orgObj = $("#org_id");
+		var orgOffset = $("#org_id").offset();
+		$("#orgContent").css({left:orgOffset.left + "px", top:orgOffset.top + orgObj.outerHeight() + "px"}).slideDown("fast");
+		$("body").bind("mousedown", onBodyDown);
+	});
+}
+/**
+ * 商铺选择
+ */
+function selectShop() {
+	$("#orgSelect_Div").load(encodeURI(encodeURI(cxt+"/page/system/org/orgSelect.jsp")),function(){
+		var orgObj = $("#org_id");
+		var orgOffset = $("#org_id").offset();
+		$("#orgContent").css({left:orgOffset.left + "px", top:orgOffset.top + orgObj.outerHeight() + "px"}).slideDown("fast");
+		$("body").bind("mousedown", onBodyDown);
+	});
+}
 /**
  * 组织单选
-=======
-/**
- * 角色单选
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
  * @param stationId
  * @param stationName
  * @param checkedIds
  */
-<<<<<<< HEAD
 function orgRadioDiaLog(orgId, orgName, checkedId){
 	$.fn.SimpleModal({
 		title: '组织单选',
@@ -373,30 +375,10 @@ function orgRadioDiaLog(orgId, orgName, checkedId){
 
 /**
  * 角色单选
-=======
-function roleRadioDiaLog(roleId, roleName, checkedId){
-	$.ajax({
-		type : "post",
-		url : cxt+ "/system/role/roleChoice",
-		data : {"id" : checkedId, "roleId" : roleId, "roleName" : roleName },
-		dataType : "html",
-		contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-		async: false,
-		success:function(data){
-			$('#myModal').html(data);
-			$('#myModal').modal('show');
-		}
-	});
-}
-
-/**
- * 商铺多选
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
  * @param stationId
  * @param stationName
  * @param checkedIds
  */
-<<<<<<< HEAD
 function roleRadioDiaLog(roleId, roleName, checkedId){
 	$.fn.SimpleModal({
 		title: '角色单选',
@@ -421,96 +403,6 @@ function roleRadioDiaLog(roleId, roleName, checkedId){
 		}
 	}).showModal();
 }
-/**
- * 组织多选
- */
-function OrgCheckboxDiaLog(orgId, orgName, checkedIds){
-	$.ajax({
-		type : "post",
-		url : cxt + "/jf/platform/module/toUrl",
-		data : {"id" : checkedIds, "orgId" : orgId, "orgName" : orgName},
-=======
-function shopCheckboxDiaLog(shopId, shopName, checkedIds){
-	$.ajax({
-		type : "post",
-		url : '${pageContext.request.contextPath}' + "/jf/station/toUrl",
-		data : { "toUrl" : "/pingtai/station/checkbox.html", "ids" : checkedIds, "shopId" : shopId, "shopName" : shopName },
-		dataType : "html",
-		contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-		async: false,
-		success:function(data){
-			$('#myModal').html(data);
-			$('#myModal').modal('show');
-		}
-	});
-}
-
-/**************************************		功能定制函数	start	***************************************************/
-
-/**
- * 部门负责人设置
- * @param deptId
- */
-function setDeptPrincipalDiaLog(deptId){
-	$.ajax({
-		type : "post",
-		url : '${pageContext.request.contextPath}' + "/jf/dept/toUrl",
-		data : { "toUrl" : "/pingtai/department/userTree.html", "ids" : deptId },
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
-		dataType : "html",
-		contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-		async: false,
-		success:function(data){
-			$('#myModal').html(data);
-			$('#myModal').modal('show');
-<<<<<<< HEAD
-	    	$('#loading').remove();
-			$('#content').fadeIn();
-		}
-	});
-}
-/**
- * 商铺多选
- * @param stationId
- * @param stationName
- * @param checkedIds
- */
-function shopCheckboxDiaLog(shopId, shopName, checkedIds){
-	$.ajax({
-		type : "post",
-		url : '${pageContext.request.contextPath}' + "/jf/station/toUrl",
-		data : { "toUrl" : "/pingtai/station/checkbox.html", "ids" : checkedIds, "shopId" : shopId, "shopName" : shopName },
-=======
-		}
-	});
-}
-
-/**
- * 菜单功能设置
- * @param menuIds
- */
-function setMenuOperatorDiaLog(menuIds){
-	$.ajax({
-		type : "post",
-		url : '${pageContext.request.contextPath}' + "/jf/operator/toUrl",
-		data : { "toUrl" : "/pingtai/menu/operatorTree.html", "ids" : menuIds },
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
-		dataType : "html",
-		contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-		async: false,
-		success:function(data){
-			$('#myModal').html(data);
-			$('#myModal').modal('show');
-		}
-	});
-}
-<<<<<<< HEAD
-/**
- * 商铺单选
- */
-function shopRadioDiaLog(){
-	
-}
 function generRandomCharacters(characterLength){
 	characterLength = characterLength || 5;
 	var chars = ['0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
@@ -521,83 +413,4 @@ function generRandomCharacters(characterLength){
     }
     return randomCharacters;
 }
-=======
-
-/**
- * 角色功能设置
- * @param roleIds
- */
-function roleGrant(roleIds){
-	$.ajax({
-		type : "post",
-		url :  cxt+ "/system/role/roleGrant",
-		data : { "id" : roleIds},
-		dataType : "html",
-		contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-		async: false,
-		success:function(data){
-			$('#myModal').html(data);
-			$('#myModal').modal('show');
-		}
-	});
-}
-
-/**
- * 岗位功能设置
- * @param stationIds
- */
-function setStationOperatorDiaLog(stationIds){
-	$.ajax({
-		type : "post",
-		url : '${pageContext.request.contextPath}' + "/jf/operator/toUrl",
-		data : { "toUrl" : "/pingtai/station/operatorTree.html", "ids" : stationIds},
-		dataType : "html",
-		contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-		async: false,
-		success:function(data){
-			$('#myModal').html(data);
-			$('#myModal').modal('show');
-		}
-	});
-}
-
-/**
- * 用户的分组设置
- * @param userIds
- */
-function groupSelectDialog(userIds){
-	$.ajax({
-		type : "post",
-		url : '${pageContext.request.contextPath}' + "/jf/group/select",
-		data : { "ids" : userIds},
-		dataType : "html",
-		contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-		async: false,
-		success:function(data){
-			$('#myModal').html(data);
-			$('#myModal').modal('show');
-		}
-	});
-}
-
-/**
- * 分组的角色设置
- * @param groupIds
- */
-function roleSelectDialog(groupIds){
-	$.ajax({
-		type : "post",
-		url : '${pageContext.request.contextPath}' + "/jf/role/select",
-		data : { "ids" : groupIds},
-		dataType : "html",
-		contentType: "application/x-www-form-urlencoded; charset=UTF-8",
-		async: false,
-		success:function(data){
-			$('#myModal').html(data);
-			$('#myModal').modal('show');
-		}
-	});
-}
-
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 /**************************************		功能定制函数	end	***************************************************/

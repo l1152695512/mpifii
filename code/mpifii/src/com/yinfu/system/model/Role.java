@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-<<<<<<< HEAD
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -12,12 +11,6 @@ import com.jfinal.ext.plugin.tablebind.TableBind;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
 import com.yinfu.common.ContextUtil;
-=======
-import javax.servlet.http.HttpServletRequest;
-import com.jfinal.ext.plugin.tablebind.TableBind;
-import com.jfinal.plugin.activerecord.Db;
-import com.jfinal.plugin.activerecord.Record;
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.yinfu.jbase.jfinal.ext.ListUtil;
 import com.yinfu.jbase.jfinal.ext.Model;
 import com.yinfu.jbase.util.DbUtil;
@@ -126,15 +119,10 @@ public class Role extends Model<Role>
 			sql = " select id, name, iconCls from system_role where pid = ? order by seq asc ";
 			list = Role.dao.find(sql, id);
 		}else{
-<<<<<<< HEAD
 			String userId = ContextUtil.getCurrentUserId();
 			Record rd = Db.findFirst("select role_id from system_user_role where user_id=?",new Object[]{userId});
 			sql = " select id, name, iconCls from system_role where id=? order by seq asc ";
 			list = Role.dao.find(sql,new Object[]{rd.getInt("role_id")});
-=======
-			sql = " select id, name, iconCls from system_role where pid is null order by seq asc ";
-			list = Role.dao.find(sql);
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		}
 		StringBuilder sb = new StringBuilder();
 		sb.append("[");

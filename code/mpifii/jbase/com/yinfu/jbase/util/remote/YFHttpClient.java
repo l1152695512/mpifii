@@ -4,10 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-<<<<<<< HEAD
 
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import org.apache.commons.httpclient.Cookie;
 import org.apache.commons.httpclient.DefaultHttpMethodRetryHandler;
 import org.apache.commons.httpclient.HttpClient;
@@ -18,15 +15,10 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.apache.commons.httpclient.protocol.Protocol;
-<<<<<<< HEAD
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.yinfu.jbase.util.PropertyUtils;
-=======
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 
 /**
  * 专门用于调用服务端接口的类 默认构造调用中转服务器地址
@@ -57,13 +49,10 @@ public class YFHttpClient extends HttpClient {
 	 * 是否输出请求返回的结果，默认为要输出
 	 */
 	private boolean showLog = true;
-<<<<<<< HEAD
 	
 	static{
 		HOST = PropertyUtils.getProperty("route.host", "https://a.witfii-backend.com/");
 	}
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 
 	public synchronized static YFHttpClient getInstance() {
 

@@ -4,15 +4,16 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import com.jfinal.ext.plugin.tablebind.TableBind;
+import com.jfinal.ext.render.excel.PoiRender;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import com.jfinal.render.Render;
 import com.yinfu.business.util.DataOrgUtil;
 import com.yinfu.common.ContextUtil;
 import com.yinfu.jbase.jfinal.ext.Model;
@@ -201,8 +202,8 @@ public class SmsFlow extends Model<SmsFlow>{
 		String endDate = queryParam.get("endDate");// 结束时间
 		String shopId = queryParam.get("shop_id");
 		String orgId = queryParam.get("org_id");
-		if(orgId==null || orgId==""){
-			orgId = getOrgIds();
+		if((shopId == null || shopId.equals("")) && !ContextUtil.isAdmin()  ){
+			shopId = ContextUtil.getShopByUser();
 		}
 		formSqlSb.append(" from sys_org org ");
 		formSqlSb.append(" inner join bp_shop s on s.org_id=org.id");
@@ -218,8 +219,17 @@ public class SmsFlow extends Model<SmsFlow>{
 		if(endDate!=null && !endDate.equals("")){
 			formSqlSb.append(" and DATE_FORMAT(f.send_time,'%Y-%m-%d')<='" +endDate +"'");
 		}
-		if(orgId!=null && !orgId.equals("")){
-			formSqlSb.append(" and org.id in("+orgId+")");
+		if (orgId != null && !orgId.equals("")) {
+			List<Record> orgList = new ArrayList<Record>();
+			for (String oid : orgId.split(",")) {
+				List<Record> resultList = DataOrgUtil.getChildrens(oid, true);
+				orgList.addAll(resultList);
+			}
+			HashSet h = new HashSet(orgList);
+			orgList.clear();
+			orgList.addAll(h);
+			String ordIds = DataOrgUtil.recordListToSqlIn(orgList, "id");
+			formSqlSb.append(" and org.id in("+ordIds+")");
 		}
 		formSqlSb.append(" group by org.name,s.name");
 	}
@@ -253,8 +263,59 @@ public class SmsFlow extends Model<SmsFlow>{
 		}
 		return relOrgIds;
 	}
-	
-	
-	
+
+	//@formatter:off 
+	/**
+	 * Title: downSmsFlowFile
+	 * Description:短信统计下载
+	 * Created On: 2015年6月12日 下午3:45:00
+	 * @author JiaYongChao
+	 * <p>
+	 * @param queryMap
+	 * @return 
+	 */
+	//@formatter:on
+	public Render downSmsFlowFile(Map<String, String> queryMap) {
+		String startDate = queryMap.get("startDate");// 开始时间
+		String endDate = queryMap.get("endDate");// 结束时间
+		String shopId = queryMap.get("shopId");
+		String orgId = queryMap.get("orgId");
+		if((shopId == null || shopId.equals("")) && !ContextUtil.isAdmin()  ){
+			shopId = ContextUtil.getShopByUser();
+		}
+		StringBuilder formSqlSb = new StringBuilder(" select org.name as orgname,s.name as shopname,count(f.id) as zs, date_format(ifnull(f.send_time,current_date()),'%Y-%m') as sendTime ");
+		formSqlSb.append(" from sys_org org ");
+		formSqlSb.append(" inner join bp_shop s on s.org_id=org.id");
+		formSqlSb.append(" left join bp_sms_flow f on f.shop_id=s.id");
+		formSqlSb.append(" where 1=1");
+		if(shopId!=null && !shopId.equals("")){
+			formSqlSb.append(" and s.id in("+shopId+")");
+		}
+		if(startDate!=null && !startDate.equals("")){
+			formSqlSb.append(" and DATE_FORMAT(f.send_time,'%Y-%m-%d')>='" +startDate +"'");
+		}
+		if(endDate!=null && !endDate.equals("")){
+			formSqlSb.append(" and DATE_FORMAT(f.send_time,'%Y-%m-%d')<='" +endDate +"'");
+		}
+		if (orgId != null && !orgId.equals("")) {
+			List<Record> orgList = new ArrayList<Record>();
+			for (String oid : orgId.split(",")) {
+				List<Record> resultList = DataOrgUtil.getChildrens(oid, true);
+				orgList.addAll(resultList);
+			}
+			HashSet h = new HashSet(orgList);
+			orgList.clear();
+			orgList.addAll(h);
+			String ordIds = DataOrgUtil.recordListToSqlIn(orgList, "id");
+			formSqlSb.append(" and org.id in("+ordIds+")");
+		}
+		formSqlSb.append(" group by org.name,s.name");
+		List list=Db.find(formSqlSb.toString());
+		PoiRender excel = new PoiRender(list); 
+		String[] columns = {"sendTime","orgname","shopname","zs"}; 
+		String[] heades = {"短信发送日期","组织名称","商铺名称","总数量"}; 
+		excel.sheetName("所有").headers(heades).columns(columns).fileName("smsInfo.xls");
+		return excel;
+	}
 
 }

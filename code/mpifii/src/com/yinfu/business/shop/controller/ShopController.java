@@ -1,26 +1,16 @@
 package com.yinfu.business.shop.controller;
 
-<<<<<<< HEAD
 import java.io.File;
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-<<<<<<< HEAD
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-=======
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import org.apache.commons.lang.StringUtils;
 import com.alibaba.fastjson.JSONObject;
 import com.jfinal.ext.DbExt;
@@ -29,7 +19,6 @@ import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.IAtom;
 import com.jfinal.plugin.activerecord.Page;
 import com.jfinal.plugin.activerecord.Record;
-<<<<<<< HEAD
 import com.jfinal.upload.UploadFile;
 import com.yinfu.business.device.model.Device;
 import com.yinfu.business.shop.model.Shop;
@@ -37,21 +26,12 @@ import com.yinfu.business.util.DeleteUtils;
 import com.yinfu.business.util.PageUtil;
 import com.yinfu.common.ContextUtil;
 import com.yinfu.common.Result;
-=======
-import com.yinfu.business.device.model.Device;
-import com.yinfu.business.shop.model.Shop;
-import com.yinfu.business.util.DeleteUtils;
-import com.yinfu.common.ContextUtil;
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.yinfu.jbase.jfinal.ext.Controller;
 import com.yinfu.jbase.util.PropertyUtils;
 import com.yinfu.jbase.util.remote.SynAllUtil;
 import com.yinfu.model.SplitPage.SplitPage;
-<<<<<<< HEAD
 import com.yinfu.routersyn.task.SynAllTask;
 import com.yinfu.routersyn.util.SynUtils;
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.yinfu.system.model.User;
 
 /**
@@ -96,10 +76,7 @@ public class ShopController extends Controller<Shop>{
 	 * Description:修改商铺信息
 	 * Created On: 2014年9月23日 下午9:02:11
 	 * @author JiaYongChao
-<<<<<<< HEAD
 	 * modify by dengwuhua 去掉商铺组关联 改为组织关联
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	 * <p> 
 	 */
 	//@formatter:on
@@ -108,15 +85,9 @@ public class ShopController extends Controller<Shop>{
 //		setAttr("userList", userList);
 		if(StringUtils.isNotBlank(getPara("id"))){
 			StringBuffer sql = new StringBuffer();
-<<<<<<< HEAD
 			sql.append("select s.customer,s.id,s.sn,s.name,s.location,s.lng,s.lat,s.owner,s.group_id,s.tel,s.des,u.name as owner_name,so.name orgName,s.org_id ");
 			sql.append("from bp_shop s join system_user u on (s.owner=u.id) ");
 			sql.append("left join sys_org so on (s.org_id=so.id) ");
-=======
-			sql.append("select s.id,s.name,s.location,s.lng,s.lat,s.owner,s.group_id,s.tel,s.des,u.name as owner_name,sg.name groupName ");
-			sql.append("from bp_shop s join system_user u on (s.owner=u.id) ");
-			sql.append("left join bp_shop_group sg on (s.group_id=sg.id) ");
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			sql.append("where s.id=? ");
 			Shop shop = Shop.dao.findFirst(sql.toString(), new Object[]{getPara("id")});
 			setAttr("shop", shop);
@@ -146,7 +117,6 @@ public class ShopController extends Controller<Shop>{
 				Object currentUserId = ContextUtil.getCurrentUserId();
 				success = shop.set("create_date",new Date()).set("create_user",currentUserId).save();
 				if(success){
-<<<<<<< HEAD
 					PageUtil.initShopData(shop.getId(),shop.get("org_id"));
 				}
 				
@@ -160,23 +130,14 @@ public class ShopController extends Controller<Shop>{
 				if(null != rec && null != rec.get("org_id") && !rec.get("org_id").toString().equals(shop.get("org_id").toString())){
 					PageUtil.insertShopOrgAdv(shop.getId(),shop.get("org_id"));
 				}
-=======
-					success = insertAdv(shop.get("owner"),shop.get("name"));
-				}
-			}else{//修改
-				shop.remove("owner");//不能修改商铺的拥有者
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				success = shop.update();
 			}
 			return success;
 		}});
 		renderJsonResult(success);
 	}
-<<<<<<< HEAD
 	
 	//管理平台广告编辑已做处理，这里不用插入也可以
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	private boolean insertAdv(Object owner,Object name){//添加商铺时要添加默认广告（4张），
 		Record shop = Db.findFirst("select id from bp_shop where owner=? and name=? order by create_date desc ", new Object[]{owner,name});
 		if(null != shop){
@@ -196,7 +157,6 @@ public class ShopController extends Controller<Shop>{
 	private Object[][] getDefaultAdvInfo(Object shopId){
 		String defaultImg = PropertyUtils.getProperty("adv.default.img", "images/business/ad-1.jpg");
 		Object[][] params = new Object[][]{
-<<<<<<< HEAD
 				new Object[]{shopId,1,defaultImg,"",""},
 				new Object[]{shopId,2,defaultImg,"",""},
 				new Object[]{shopId,3,defaultImg,"",""},
@@ -206,16 +166,6 @@ public class ShopController extends Controller<Shop>{
 		sql.append("from bp_shop_group_role sgr join bp_shop s on (s.id=? and s.group_id=sgr.shop_group_id) ");
 		sql.append("join bp_adv_type bat on (sgr.adv_type_id=bat.id) ");
 		sql.append("join bp_adv_spaces basp on (basp.adv_type='adv' and basp.id=bat.adv_spaces) ");
-=======
-				new Object[]{shopId,1,defaultImg,"#",""},
-				new Object[]{shopId,2,defaultImg,"#",""},
-				new Object[]{shopId,3,defaultImg,"#",""},
-				new Object[]{shopId,4,defaultImg,"#",""}};
-		StringBuffer sql = new StringBuffer();
-		sql.append("select bat.adv_index,ifnull(sgr.image,'') image,ifnull(sgr.link,'') link,ifnull(sgr.des,'') des ");
-		sql.append("from bp_shop_group_role sgr join bp_shop s on (s.id=? and s.group_id=sgr.shop_group_id) ");
-		sql.append("join bp_adv_type bat on (bat.adv_type='adv' and sgr.adv_type_id=bat.id) ");
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		List<Record> advInfos = Db.find(sql.toString(),new Object[]{shopId});
 		Iterator<Record> ite = advInfos.iterator();
 		while(ite.hasNext()){
@@ -235,16 +185,12 @@ public class ShopController extends Controller<Shop>{
 	 * 已做级联删除，会删除商铺的其他信息（真删除），具体可参考
 	 */
 	public void delete(){
-<<<<<<< HEAD
 		final Set<String> fileResources = new HashSet<String>();
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		boolean success = Db.tx(new IAtom(){public boolean run() throws SQLException {
 			DeleteUtils utils = new DeleteUtils();
 			List<Object> shopIds = new ArrayList<Object>();
 			shopIds.add(getPara("id"));
 			List<String> sqls = new ArrayList<String>();
-<<<<<<< HEAD
 			fileResources.addAll(utils.deleteShop(shopIds, sqls));
 			DbExt.batch(sqls);
 			return true;
@@ -252,13 +198,6 @@ public class ShopController extends Controller<Shop>{
 		if(success){
 			DeleteUtils.deleteShopResources(fileResources);
 		}
-=======
-			Set<String> fileResources = utils.deleteShop(shopIds, sqls);
-			DbExt.batch(sqls);
-			utils.deleteShopResources(fileResources);
-			return true;
-		}});
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		renderJsonResult(success);
 		
 //		String id = getPara("id");//主键ID
@@ -285,7 +224,6 @@ public class ShopController extends Controller<Shop>{
 		String shopId = getPara("id");
 //		String userid = getPara("userid");//用户id
 //		List<Device> deviceList = Device.dao.findNoShopDeviceInfo(userid);
-<<<<<<< HEAD
 //		List<Record> deviceList = Device.dao.findDeviceWidthShopOrNoAssign(shopId);
 		setAttr("infoid", shopId);
 //		setAttr("type", "shop");
@@ -297,14 +235,6 @@ public class ShopController extends Controller<Shop>{
 		renderJson("list", deviceList);
 	}
 	
-=======
-		List<Record> deviceList = Device.dao.findDeviceWidthShopOrNoAssign(shopId);
-		setAttr("infoid", shopId);
-//		setAttr("type", "shop");
-		setAttr("deviceList", deviceList);
-		render("/page/business/device/deviceList.jsp");
-	}
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	
 	//@formatter:off 
 	/**
@@ -395,12 +325,8 @@ public class ShopController extends Controller<Shop>{
 		for(int i=0;i<deleteDevice.size();i++){
 			paramsDelete[i] = new Object[]{deleteDevice.get(i)};
 		}
-<<<<<<< HEAD
 		final Map<String,List<File>> deleteRes = new HashMap<String,List<File>>();
 		boolean isSuccess = Db.tx(new IAtom(){public boolean run() throws SQLException {
-=======
-		boolean success = Db.tx(new IAtom(){public boolean run() throws SQLException {
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			boolean success = true;
 			if(paramsAdd.length > 0){
 				int[] changAdd = DbExt.batch("update bp_device set shop_id=? where id =? and shop_id is null ", paramsAdd);
@@ -414,7 +340,6 @@ public class ShopController extends Controller<Shop>{
 				sqlIn = sqlIn.substring(1, sqlIn.length()-1);
 				sqlIn = sqlIn.replaceAll(",", "','");
 				List<Record> synList = Db.find("select router_sn from bp_device where id in('" + sqlIn + "')");
-<<<<<<< HEAD
 				List<String> sqls = new ArrayList<String>();
 				Record taskInfo = new Record().set("task_desc", "发布Portal页面");
 				Map<String,List<File>> res = SynAllTask.synRes(getPara("shopId"), sqls, taskInfo, null, synList);
@@ -427,8 +352,6 @@ public class ShopController extends Controller<Shop>{
 				}else{
 					success = false;
 				}
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				for(Record rd : synList){
 					try{
 						SynAllUtil synAll = SynAllUtil.getInstance();
@@ -465,17 +388,12 @@ public class ShopController extends Controller<Shop>{
 			}
 			return success;
 		}});
-<<<<<<< HEAD
 		if(isSuccess){
 			SynUtils.deleteRes(deleteRes.get("success"));
 		}else{
 			SynUtils.deleteRes(deleteRes.get("fail"));
 		}
 		renderJsonResult(isSuccess);
-=======
-		
-		renderJsonResult(success);
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	}
 	
 	//@formatter:off 
@@ -531,7 +449,6 @@ public class ShopController extends Controller<Shop>{
 		List<Shop> list = Shop.dao.findInfoByName(name);
 		renderJson(list);
 	}	
-<<<<<<< HEAD
 	//@formatter:off 
 	/**
 	 * Title: getShopByOrg
@@ -606,7 +523,4 @@ public class ShopController extends Controller<Shop>{
 		}
 		renderJson(result);
 	} 
-=======
-	
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 }

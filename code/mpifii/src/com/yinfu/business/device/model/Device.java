@@ -1,7 +1,6 @@
 
 package com.yinfu.business.device.model;
 
-<<<<<<< HEAD
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
@@ -34,16 +33,6 @@ import com.yinfu.jbase.util.PropertyUtils;
 import com.yinfu.jbase.util.remote.RouterHelper;
 import com.yinfu.jbase.util.remote.SynAllUtil;
 import com.yinfu.jbase.util.remote.YFHttpClient;
-=======
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import com.jfinal.ext.plugin.tablebind.TableBind;
-import com.jfinal.plugin.activerecord.Db;
-import com.jfinal.plugin.activerecord.Record;
-import com.yinfu.jbase.jfinal.ext.Model;
-import com.yinfu.jbase.util.remote.SynAllUtil;
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.yinfu.model.SplitPage.SplitPage;
 
 /**
@@ -65,11 +54,7 @@ public class Device extends Model<Device> {
 	protected void makeFilter(Map<String, String> queryParam, StringBuilder formSqlSb, List<Object> paramValue) {
 		formSqlSb.append("from bp_device d ");
 		formSqlSb.append("left join bp_shop s on (d.shop_id=s.id) ");
-<<<<<<< HEAD
 		formSqlSb.append("left join system_user u on (u.id=d.create_user) ");
-=======
-		formSqlSb.append("left join system_user u on (u.id=d.user_id) ");
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		formSqlSb.append("where d.delete_date is null  ");
 	}
 	
@@ -86,11 +71,7 @@ public class Device extends Model<Device> {
 		 */
 		//@formatter:on
 	public List<Device> findNoShopDeviceInfo(String userid) {
-<<<<<<< HEAD
 		String sql = " select * from bp_device t where 1=1 and t.delete_date is null  and t.shop_id is null and t.create_user=" + userid;
-=======
-		String sql = " select * from bp_device t where 1=1 and t.delete_date is null  and t.shop_id is null   and t.user_id=" + userid;
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		return dao.find(sql);
 	}
 	
@@ -105,7 +86,6 @@ public class Device extends Model<Device> {
 		 */
 		//@formatter:on
 	public List<Device> findNoUserDeviceInfo() {
-<<<<<<< HEAD
 		String sql = "  select * from bp_device t where 1=1 and t.delete_date is null and t.shop_id is null and t.create_user is null  ";
 		return dao.find(sql);
 	}
@@ -133,23 +113,6 @@ public class Device extends Model<Device> {
 		}
 		sql.append(")) order by if(d.shop_id=?,1,0) desc");
 		return Db.find(sql.toString(), new Object[] { shopId, shopId, shopId, shopId});
-=======
-		String sql = "  select * from bp_device t where 1=1 and t.delete_date is null and t.shop_id is null and t.user_id is null  ";
-		return dao.find(sql);
-	}
-	
-	public List<Record> findDeviceWidthShopOrNoAssign(String shopId) {
-		StringBuffer sql = new StringBuffer();
-		sql.append("select distinct if(d.shop_id=?,1,0) isMe,d.* ");
-		sql.append("from bp_device d left join system_user u on (d.user_id=u.id) left join bp_shop s on (s.id=? and s.`owner`=u.id) ");
-		sql.append("where d.delete_date is null and ");// 未删除的盒子
-		sql.append("(");
-		sql.append("(d.shop_id is null and d.user_id is null) ");// 未分配的盒子
-		sql.append("or d.shop_id=? ");// 当前商铺已分配的盒子（必须放在下面的条件前面）
-		sql.append("or (d.shop_id is null and s.id is not null) ");// 当前商铺对应的用户的所有盒子
-		sql.append(")");
-		return Db.find(sql.toString(), new Object[] { shopId, shopId, shopId });
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	}
 	
 	//@formatter:off 
@@ -179,11 +142,7 @@ public class Device extends Model<Device> {
 					synAll.synAllData(rd.getStr("router_sn"));
 				}
 			} else {
-<<<<<<< HEAD
 				String sql = " update bp_device t set t.create_user=" + id + "  where t.id in(" + ids + ")";
-=======
-				String sql = " update bp_device t set t.user_id=" + id + "  where t.id in(" + ids + ")";
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				sqlList.add(sql);
 				Db.batch(sqlList, sqlList.size());
 			}
@@ -229,30 +188,20 @@ public class Device extends Model<Device> {
 			sql.append(" FROM bp_device d ");
 			sql.append(" LEFT JOIN bp_shop s ON d.`shop_id` =s.`id` ");
 			sql.append(" WHERE d.`delete_date` IS NULL  ");
-<<<<<<< HEAD
 			sql.append(" and d.create_user=" + userid);
-=======
-			sql.append(" and d.user_id=" + userid);
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			return dao.find(sql.toString());
 		}
 		return new ArrayList<Device>();
 	}
 	
-<<<<<<< HEAD
 	public List<Device> findInfoByName(String name, String deviceType) {
 		String sql = "  SELECT t.`id`,t.`router_sn`,t.`name`,s.`name` AS sname FROM bp_device t  LEFT JOIN bp_shop s ON t.`shop_id` = s.`id` WHERE t.type="
 				+ deviceType + " and t.`delete_date` IS NULL ";
-=======
-	public List<Device> findInfoByName(String name,String deviceType) {
-		String sql = "  SELECT t.`id`,t.`router_sn`,t.`name`,s.`name` AS sname FROM bp_device t  LEFT JOIN bp_shop s ON t.`shop_id` = s.`id` WHERE t.type="+deviceType+" and t.`delete_date` IS NULL ";
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		if (name != null || !name.equals("")) {
 			sql += " AND t.router_sn LIKE '%" + name + "%' ";
 		}
 		return dao.find(sql);
 	}
-<<<<<<< HEAD
 	
 	//@formatter:off 
 	/**
@@ -522,7 +471,7 @@ public class Device extends Model<Device> {
 							if (result.get(0).toString().length() <16) {
 								sb.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;第" + (j + 1) + "行，第1列字符需大于16位<br>");
 							}
-							device.set("router_sn", result.get(0).toString());
+							device.set("router_sn", result.get(0).toString().trim());
 						} else {
 							sb.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;第" + (j + 1) + "行，第1列不允许为空<br>");
 						}
@@ -530,15 +479,15 @@ public class Device extends Model<Device> {
 							if (result.get(1).toString().length()!=1) {
 								sb.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;第" + (j + 1) + "行，第2列<br>");
 							}
-							device.set("type", Long.valueOf(result.get(1).toString()));
+							device.set("type", Long.valueOf(result.get(1).toString().trim()));
 						} else {
 							sb.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;第" + (j + 1) + "行，第2列不允许为空<br>");
 						}
 						if (result.get(2) != null) {//超时时间
-						/*	if (result.get(2).toString().length() >0) {
+							/*if (result.get(2).toString().length() >0) {
 								sb.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;第" + (j + 3) + "行，第3列<br>");
 							}*/
-							device.set("time_out", Long.valueOf(result.get(2).toString()));
+							device.set("time_out", Long.valueOf(result.get(2).toString().trim()));
 						} else {
 							sb.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;第" + (j + 1) + "行，第3列不允许为空<br>");
 						}
@@ -546,7 +495,7 @@ public class Device extends Model<Device> {
 							/*if (result.get(3).toString().length() >0) {
 								sb.append("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;第" + (j + 4) + "行，第4列<br>");
 							}*/
-							device.set("des", result.get(3).toString());
+							device.set("des", result.get(3).toString().trim());
 						} 
 						device.set("create_date", new Date());
 						//device.set("create_user", ContextUtil.getCurrentUser().get("id"));
@@ -554,7 +503,7 @@ public class Device extends Model<Device> {
 					}
 				}
 				String sns = "";
-				for (int i = 0; i < list.size(); i++) {
+				for (int i = list.size()-1; i >=0; i--) {
 					sns += list.get(i).get("router_sn") + ",";
 					Map<String, Boolean> resultMap = dao.checkRepetition(list.get(i).getStr("router_sn"));
 					Boolean repeat = resultMap.get("repeat");
@@ -654,6 +603,4 @@ public class Device extends Model<Device> {
 		return d;
 		
 	}
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 }

@@ -1,5 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<style>
+	.top_adv_putin_message{position: absolute;top: 0;width: 100%;height: 40px;}
+	.top_adv_putin_message .BreakingNewsController{text-align: center;height: 100%;color:white;}
+	.top_adv_putin_message .BreakingNewsController ul li a{color:rgb(216, 216, 216);}
+	.top_adv_putin_message .BreakingNewsController ul li a:hover{color:white;}
+</style>
+
 <!-- topbar starts -->
 <div class="navbar">
 	<div class="navbar-inner">
@@ -9,26 +16,18 @@
 				<span class="icon-bar"></span>
 				<span class="icon-bar"></span>
 			</a>
-<<<<<<< HEAD
 <!-- 			<a class="brand" href="#" onclick="ajaxContent('/content');">  -->
 			<a href="#" onclick="ajaxContent('/content');"> 
 				<img alt="Charisma Logo" src="${user_logo}" /> 
 <!-- 				<span>品派联盟</span> -->
-=======
-			<a class="brand" href="#" onclick="ajaxContent('/content');"> 
-				<img alt="Charisma Logo" src="${pageContext.request.contextPath}/js/ui/charisma/img/logo20.png" /> 
-				<span>品派联盟</span>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			</a>
-			
 			<!-- theme selector starts -->
-			<div class="btn-group pull-right theme-container" >
+			<div class="btn-group pull-right theme-container" style="z-index: 1;">
 				<a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
 					<i class="icon-tint"></i><span class="hidden-phone"> 切换皮肤</span>
 					<span class="caret"></span>
 				</a>
 				<ul class="dropdown-menu" id="themes">
-<<<<<<< HEAD
 					<li><a data-value="classic" href="#"><i class="icon-blank"></i>经典主题</a></li>
 					<li><a data-value="cerulean" href="#"><i class="icon-blank"></i>天蓝主题</a></li>
 					<li><a data-value="Turquoise" href="#"><i class="icon-blank"></i>深绿主题</a></li>
@@ -42,23 +41,8 @@
 				</ul>
 			</div>
 			<!-- theme selector ends -->
-=======
-					<li><a data-value="classic" href="#"><i class="icon-blank"></i> Classic</a></li>
-					<li><a data-value="cerulean" href="#"><i class="icon-blank"></i> Cerulean</a></li>
-					<li><a data-value="cyborg" href="#"><i class="icon-blank"></i> Cyborg</a></li>
-					<li><a data-value="redy" href="#"><i class="icon-blank"></i> Redy</a></li>
-					<li><a data-value="journal" href="#"><i class="icon-blank"></i> Journal</a></li>
-					<li><a data-value="simplex" href="#"><i class="icon-blank"></i> Simplex</a></li>
-					<li><a data-value="slate" href="#"><i class="icon-blank"></i> Slate</a></li>
-					<li><a data-value="spacelab" href="#"><i class="icon-blank"></i> Spacelab</a></li>
-					<li><a data-value="united" href="#"><i class="icon-blank"></i> United</a></li>
-				</ul>
-			</div>
-			<!-- theme selector ends -->
-			
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			<!-- user dropdown starts -->
-			<div class="btn-group pull-right" >
+			<div class="btn-group pull-right" style="z-index: 1;">
 				<!-- <a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
 					<i class="icon-th-large"></i><span class="hidden-phone"> 系统切换</span>
 					<span class="caret"></span>
@@ -73,7 +57,7 @@
 			<!-- user dropdown ends -->
 			
 			<!-- user dropdown starts -->
-			<div class="btn-group pull-right" >
+			<div class="btn-group pull-right" style="z-index: 1;">
 				<a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
 					<i class="icon-user"></i><span class="hidden-phone">个人中心</span>
 					<span class="caret"></span>
@@ -85,7 +69,7 @@
 					<li><a href="${pageContext.request.contextPath}/loginOut">退出系统</a></li>
 				</ul>
 			</div>
-			<div class="btn-group pull-right" >
+			<div class="btn-group pull-right" style="z-index: 1;">
 				<a class="btn dropdown-toggle" data-toggle="dropdown" href="#">
 					<i class="icon-bell blue"></i><span class="hidden-phone">帮助中心</span>
 					<span class="caret"></span>
@@ -95,6 +79,16 @@
 				</ul>
 			</div>
 		</div>
+	</div>
+</div>
+<div class="top_adv_putin_message">
+	<div class="BreakingNewsController easing" id="breakingNews1">
+<!-- 	<div class="bn-title"></div> -->
+	    <ul>
+<!-- 	        <li><a href="javascript:void(0);" onclick="ajaxContent('/business/oper/adv/putinMsg');">a</a></li> -->
+<!-- 	        <li><a href="javascript:void(0);" onclick="ajaxContent('/business/oper/adv/putinMsg');">b</a></li> -->
+	    </ul>
+<!-- 			    <div class="bn-arrows"><span class="bn-arrows-left"></span><span class="bn-arrows-right"></span></div>     -->
 	</div>
 </div>
 <!-- topbar ends -->
@@ -149,5 +143,34 @@
 				url: 'page/system/user/passChange.jsp'
 			}
 		}).showModal();
+	}
+	var checkUserTipsMessageTimerLength = 5000;
+	$('#breakingNews1').BreakingNews({
+		title: '消息',
+		timer:checkUserTipsMessageTimerLength
+	});
+	checkUserTipsMessageTimer();
+	function checkUserTipsMessageTimer(){
+		$.ajax({
+			type: "POST",
+			global:false,
+			url: "business/oper/adv/putinMsg/checkMsg",
+			success : function(data) {
+				var msgsHtml = '';
+				if(data.length > 0){
+					for(var i=0;i<data.length;i++){
+						var displayStyle=' style="display: list-item;"';
+						if(i!=0){
+							displayStyle=' style="display: none;"';
+						}
+						msgsHtml +='<li'+displayStyle+'><a href="javascript:void(0);" onclick="ajaxContent(\''+data[i].url+'\');">'+data[i].tip+'</a></li>';
+					}
+				}
+				$('.top_adv_putin_message .BreakingNewsController ul').html(msgsHtml);
+				if(data.length > 0){
+					setTimeout(checkUserTipsMessageTimer,checkUserTipsMessageTimerLength*data.length);
+				}
+			}
+		});
 	}
 </script>

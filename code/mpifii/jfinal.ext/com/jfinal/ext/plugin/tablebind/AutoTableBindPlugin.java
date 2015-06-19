@@ -16,17 +16,15 @@
 package com.jfinal.ext.plugin.tablebind;
 
 import java.util.List;
-
 import javax.sql.DataSource;
-
 import com.google.common.collect.Lists;
-import com.yinfu.jbase.util.L;
 import com.jfinal.ext.kit.ClassSearcher;
 import com.jfinal.kit.StringKit;
 import com.jfinal.log.Logger;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
 import com.jfinal.plugin.activerecord.IDataSourceProvider;
 import com.jfinal.plugin.activerecord.Model;
+import com.yinfu.jbase.util.L;
 
 public class AutoTableBindPlugin extends ActiveRecordPlugin {
 
@@ -56,7 +54,10 @@ public class AutoTableBindPlugin extends ActiveRecordPlugin {
         super(dataSourceProvider);
         this.nameStyle = nameStyle;
     }
-
+    public AutoTableBindPlugin(String dataSourceName, IDataSourceProvider dataSourceProvider, INameStyle nameStyle) {
+		super(dataSourceName, dataSourceProvider);
+		this.nameStyle = nameStyle;
+	}
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public AutoTableBindPlugin addExcludeClasses(Class<? extends Model>... clazzes) {
         for (Class<? extends Model> clazz : clazzes) {

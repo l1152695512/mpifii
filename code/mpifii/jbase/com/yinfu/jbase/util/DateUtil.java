@@ -1,18 +1,13 @@
  package com.yinfu.jbase.util;
  
  import java.text.DateFormat;
-<<<<<<< HEAD
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
-=======
- import java.text.ParseException;
- import java.text.SimpleDateFormat;
- import java.util.Calendar;
- import java.util.Date;
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
  
  public class DateUtil
  {
@@ -297,7 +292,6 @@ import java.util.Date;
    {
      return Calendar.getInstance().get(7) - 1;
    }
-<<<<<<< HEAD
  //@formatter:off 
  	/**
  	 * Title: getQuot
@@ -501,8 +495,87 @@ import java.util.Date;
     	cal.add(Calendar.MONTH, n);
     	return dateFormat.format(cal.getTime());
     }
+    //@formatter:off 
+    /**
+     * Title: getMonthBetween
+     * Description:获得两个日期之间的月份
+     * Created On: 2015年6月2日 下午5:32:35
+     * @author JiaYongChao
+     * <p>
+     * @param minDate 小时间
+     * @param maxDate 大时间
+     * @param format 格式
+     * @return 
+     */
+    //@formatter:on
+    public static List<String> getMonthBetween(String minDate, String maxDate,String format) {
+		ArrayList<String> result = new ArrayList<String>();
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM");// 格式化为年月
+		Calendar min = Calendar.getInstance();
+		Calendar max = Calendar.getInstance();
+		try {
+			min.setTime(sdf.parse(minDate));
+			min.set(min.get(Calendar.YEAR), min.get(Calendar.MONTH), 1);
+			max.setTime(sdf.parse(maxDate));
+			max.set(max.get(Calendar.YEAR), max.get(Calendar.MONTH), 2);
+			Calendar curr = min;
+			while (curr.before(max)) {
+				SimpleDateFormat formatter = new SimpleDateFormat(format);
+		        String dateString = formatter.format(curr.getTime());
+				result.add(dateString);
+				curr.add(Calendar.MONTH, 1);
+			}
+			return result;
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null ;
+	}
     
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
+    //@formatter:off 
+    /**
+     * Title: currentYearMonth
+     * Description:获得当前年月
+     * Created On: 2015年6月10日 下午1:58:40
+     * @author JiaYongChao
+     * <p>
+     * @return 
+     */
+    //@formatter:on
+    public static String  currentYearMonth(){
+    	/**
+         * 声明一个int变量year
+         */
+        int year;
+        /**
+         * 声明一个int变量month
+         */
+        int month;
+        /**
+         * 声明一个字符串变量date
+         */
+        String date;
+        /**
+         * 实例化一个对象calendar
+         */
+        Calendar calendar = Calendar.getInstance();
+        /**
+         * 获取年份
+         */
+        year = calendar.get(Calendar.YEAR);
+        /**
+         * 获取月份
+         */
+        month = calendar.get(Calendar.MONTH) + 1;
+        /**
+         * 拼接年份和月份
+         */
+        date = year + "_" + ( month<10 ? "0" + month : month);
+        /**
+         * 返回当前年月
+         */
+        return date;
+    }
  }
 

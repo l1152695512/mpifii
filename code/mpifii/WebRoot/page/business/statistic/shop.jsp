@@ -33,21 +33,20 @@
 							</div>
 							<label class="control-label" for="focusedInput">组织：</label>
 							<div class="controls">
-							  	<select id="select_org" multiple="multiple" >
-									<c:forEach var="org" items="${orgList}">
-										<option value="${org.id}" >${org.name}</option>
-									</c:forEach>
-								</select>
 								<input name="_query.org_id" id="qOrgId" value="${splitPage.queryParam.org_id}"  type="hidden" />
+								<input class="input-xlarge focused" style="width: 150PX" id="org_id" type="text" value="" onclick="selectOrg(this)"  />
+							</div>
+							<div id="orgSelect_Div">
 							</div>
 							<label class="control-label" for="focusedInput">商铺：</label>
 							<div class="controls">
-							  	<select id="select_shop" multiple="multiple" >
-									<option value="">--请先选择组织--</option>
+								<select id="select_shop" multiple="multiple" >
+									<c:forEach var="shop" items="${shopList}">
+										<option value="${shop.id}">${shop.name}</option>
+									</c:forEach>
 								</select>
-								<input name="_query.shop_id" id="qShopId" value="${splitPage.queryParam.shop_id}" type="hidden" />
+								<input class="input-xlarge focused" name="_query.shop_id" id="qShopId" type="hidden" value="${splitPage.queryParam.shop_id}"  />
 							</div>
-					  	</div>
 					  	<div class="form-actions">
 							<button type="button" class="btn btn-primary" onclick="splitPage(1);">查询</button>
 							<button type="button" class="btn btn-primary" onclick="resertForm();">重置</button>
@@ -60,21 +59,24 @@
 		<div class="box span12">
 			<div class="box-header well" data-original-title>
 				<h2><i class="icon-user"></i>商铺列表</h2>
+				<div class="box-icon">
+					<a href="javascript:down('${pageContext.request.contextPath}')" class="btn btn-round" title="导出"><i class="icon-download"></i></a>
+				</div>
 			</div>
 			<div class="box-content">
 				<table class="table table-striped table-bordered bootstrap-datatable ">
 					<thead>
 						<tr>
-							<th>日期</th>
-							<th>组织名称</th>
-							<th>商铺名称</th>
-							<th>客流</th>
-							<th>盒子式路由数量</th>
-							<th>吸顶式路由数量</th>
-							<th>广告展示次数</th>
-							<th>广告点击次数</th>
-							<th>人均广告展示次数</th>
-							<th>广告展示点击次数</th>
+							<th onclick="orderbyFun('days')">日期</th>
+							<th onclick="orderbyFun('orgname')">组织名称</th>
+							<th onclick="orderbyFun('shopname')">商铺名称</th>
+							<th onclick="orderbyFun('rs')">客流</th>
+							<th onclick="orderbyFun('router')">盒子式路由数量</th>
+							<th onclick="orderbyFun('ap')">吸顶式路由数量</th>
+							<th onclick="orderbyFun('zss')">广告展示次数</th>
+							<th onclick="orderbyFun('djs')">广告点击次数</th>
+							<th onclick="orderbyFun('zss')">人均广告展示次数</th>
+							<th onclick="orderbyFun('djs')">广告展示点击次数</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -89,7 +91,6 @@
 								<td class="center">${shop.get("zss")}</td>
 								<td class="center">${shop.get("djs")}</td>
 								<td class="center">
-							
 									<c:if test='${shop.get("zss")==0 || shop.get("rs")==0}'>0</c:if>
 									<c:if test='${shop.get("zss")!=0 && shop.get("rs")!=0}'>
 										 <fmt:formatNumber value='${shop.get("zss")/shop.get("rs")}'  pattern="##.##"   minFractionDigits="2" ></fmt:formatNumber>
@@ -113,58 +114,10 @@
 	<!--/row-->
 </form>
 <script type="text/javascript">
-$('#select_org').multiselect({
-	enableFiltering: true,
-	maxHeight: 150,
-	onChange: function(){
-		var checkId = $("#select_org").val();
-		$("#qOrgId").attr("value",checkId);
-		var url ="/business/shop/getShopByOrg?orgids="+checkId;
-		$.ajax({
-			type : 'POST',
-			dataType : "json",
-			url :encodeURI(encodeURI(cxt + url)),
-			success : function(data) {
-				$("#select_shop").multiselect('dataprovider',data);
-			}
-		});
-	}
-});
-$('#select_shop').multiselect({
-	enableFiltering: true,
-	maxHeight: 150,
-	onChange: function(){
-		var checkId = $("#select_shop").val();
-		$("#qShopId").attr("value",checkId);
-	}
-});
 
-var  checkedOrg = $("#qOrgId").val();
-if(checkedOrg.length>0){
-	var orgs = checkedOrg.split(",");
-	for(var i=0;i<orgs.length;i++){
-		 $('#select_org').multiselect('select', orgs[i]);
-	}
-}
-var  checkedShop = $("#qShopId").val();
-if(checkedOrg.length>0){
-	var url ="/business/shop/getShopByOrg?orgids="+checkedOrg;
-	$.ajax({
-		type : 'POST',
-		dataType : "json",
-		url :encodeURI(encodeURI(cxt + url)),
-		success : function(data) {
-			$("#select_shop").multiselect('dataprovider',data);
-			var shops = checkedShop.split(",");
-			for(var i=0;i<shops.length;i++){
-			   $("#select_shop").multiselect('select',shops[i]);
-			}
-		 
-		}
-	});
-}
 var dates = $("#startDate,#endDate");
 dates.datepicker({
+	format: "yyyy-mm",
 	maxDate:-1,
     onSelect: function(selectedDate){
        var option = this.id == "startDate"?"minDate" : "maxDate";
@@ -178,5 +131,21 @@ function resertForm(){
 	.removeAttr('checked')   
 	.removeAttr('selected');  
 	ajaxContent('/business/statistics/toShop');
+}
+$('#select_shop').multiselect({
+		enableFiltering: true,
+		maxHeight: 150,
+		onChange: function(){
+			var checkId = $("#select_shop").val();
+			$("#qShopId").attr("value",checkId);
+		}
+	});
+function down(ctx){
+	var startDate = $("#startDate").val();
+	var endDate = $("#endDate").val();
+	var orgId = $('#qOrgId').val();
+	var shopId = $('#qShopId').val();
+	var url=ctx+'/business/statistics/downShopStaFile?startDate='+startDate+'&endDate='+endDate+'&orgId='+orgId+"&shopId="+shopId;
+	window.location.href=url;
 }
 </script>

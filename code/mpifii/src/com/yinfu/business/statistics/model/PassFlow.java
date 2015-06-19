@@ -7,8 +7,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import com.jfinal.ext.render.excel.PoiRender;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import com.jfinal.render.Render;
 import com.yinfu.business.util.DataOrgUtil;
 import com.yinfu.common.ContextUtil;
 import com.yinfu.jbase.jfinal.ext.Model;
@@ -54,13 +56,10 @@ public class PassFlow extends Model<PassFlow> {
 		if ((shopId == null || shopId.equals("")) && !ContextUtil.isAdmin()) {
 			shopId = ContextUtil.getShopByUser();
 		}
-		formSqlSb.append(" from ( SELECT sd.`search_date` AS dates,s.`id`,SUBSTRING_INDEX(IFNULL(org.pathname,'暂未绑定'),'/',-3) AS orgname,s.`name` AS shopname,IFNULL(SUM(pf.`counts`),0) AS counts 	 FROM bp_shop s ");
-		formSqlSb.append(" LEFT JOIN sys_org_temp org ON s.`org_id` = org.`id`   ");
-		formSqlSb.append(" LEFT JOIN bp_device d ON s.`id` = d.`shop_id` ");
+		formSqlSb.append(" from ( SELECT sd.`search_date` AS dates,s.`id`,SUBSTRING_INDEX(IFNULL(org.pathname,'暂未绑定'),'/',-3) AS orgname,s.`name` AS shopname,IFNULL(pf.`counts`,0) AS counts  	 FROM bp_shop s ");
+		formSqlSb.append(" LEFT JOIN sys_org_temp org ON s.`org_id` = org.`id` ");
 		formSqlSb.append(" LEFT JOIN bp_search_day sd ON (sd.search_date>='" + startDate + "' AND sd.search_date<='" + endDate + "')   ");
-		formSqlSb
-				.append(" LEFT JOIN bp_statistics_pf pf ON pf.`date`= sd.`search_date` AND d.`router_sn` = pf.`router_sn` AND  DATE_FORMAT(pf.`date`,'%Y-%m-%d')>='"
-						+ startDate + "' AND DATE_FORMAT(pf.`date`,'%Y-%m-%d')<='" + endDate + "'  ");
+		formSqlSb.append(" LEFT JOIN bp_shop_pf pf ON pf.`date`= sd.`search_date` AND pf.`shop_id` = s.`id`  AND  pf.`date`>='"+ startDate + "' AND pf.`date`<='" + endDate + "'");
 		formSqlSb.append(" WHERE s.`delete_date` IS NULL  ");
 		if (shopId != null) {
 			formSqlSb.append(" and s.id IN (" + shopId + ")  ");
@@ -78,7 +77,7 @@ public class PassFlow extends Model<PassFlow> {
 			formSqlSb.append(" and org.id IN (" + ordIds + ")  ");
 		}
 		formSqlSb.append(" GROUP BY s.`id`,sd.`search_date`  ");
-		formSqlSb.append(" ORDER BY sd.search_date,org.id,SUM(pf.`counts`) DESC ) a ");
+		formSqlSb.append(" ORDER BY sd.search_date,org.id,pf.`counts` DESC ) a ");
 	}
 	
 	//@formatter:off 
@@ -108,13 +107,12 @@ public class PassFlow extends Model<PassFlow> {
 			shopId = ContextUtil.getShopByUser();
 		}
 		StringBuilder sql = new StringBuilder(" ");
-		sql.append(" SELECT org.id AS id,org.`pid` AS pid ,IFNULL(SUM(pf.`counts`),0) AS zs   ");
-		sql.append(" FROM bp_statistics_pf pf  ");
-		sql.append(" LEFT JOIN bp_device d ON d.`router_sn` = pf.`router_sn`   ");
-		sql.append(" LEFT JOIN  bp_shop s  ON  s.`id` = d.`shop_id`  ");
+		sql.append(" SELECT org.id AS id,org.`pid` AS pid,sum(IFNULL(pf.`counts`,0)) AS zs ");
+		sql.append(" FROM bp_shop_pf pf  ");
+		sql.append(" LEFT JOIN  bp_shop s  ON  pf.shop_id = s.`id`  ");
 		sql.append(" LEFT JOIN sys_org_temp org ON s.`org_id` = org.`id`   ");
 		sql.append(" WHERE  1=1 ");
-		sql.append(" AND  pf.`date`>='" + startDate + "' AND pf.`date`<='" + endDate + "' AND ORG.`id` IS NOT NULL  ");
+		sql.append(" AND  pf.`date`>='" + startDate + "' AND pf.`date`<='" + endDate + "' AND org.`id` IS NOT NULL  ");
 		if (shopId != null && !shopId.equals("")) {
 			sql.append(" and s.id in (" + shopId + ") ");
 		}
@@ -165,5 +163,61 @@ public class PassFlow extends Model<PassFlow> {
 		xmlData.append(" </dataset> ");
 		xmlData.append(" </chart>");
 		return xmlData.toString();
+	}
+
+	//@formatter:off 
+	/**
+	 * Title: downPassFlowFile
+	 * Description:
+	 * Created On: 2015年6月11日 下午4:00:05
+	 * @author JiaYongChao
+	 * <p>
+	 * @param queryMap
+	 * @return 
+	 */
+	//@formatter:on
+	public Render downPassFlowFile(Map<String, String> queryMap) {
+		String startDate = queryMap.get("startDate");// 开始时间
+		String endDate = queryMap.get("endDate");// 结束时间
+		String shopId = queryMap.get("shopId");
+		String orgId = queryMap.get("orgId");
+		if (endDate == null || endDate.equals("")) {
+			endDate = DateUtil.getSpecifiedDayBefore(DateUtil.getNow());
+		}	
+		if (startDate == null || startDate.equals("")) {
+			startDate = DateUtil.getSpecifiedDayBefore(DateUtil.getNow());
+		}
+		if((shopId == null || shopId.equals("")) && !ContextUtil.isAdmin()  ){
+			shopId = ContextUtil.getShopByUser();
+		}
+		StringBuilder formSqlSb = new StringBuilder(" select * ");
+		formSqlSb.append(" from ( SELECT sd.`search_date` AS dates,s.`id`,SUBSTRING_INDEX(IFNULL(org.pathname,'暂未绑定'),'/',-3) AS orgname,s.`name` AS shopname,IFNULL(pf.`counts`,0) AS counts  	 FROM bp_shop s ");
+		formSqlSb.append(" LEFT JOIN sys_org_temp org ON s.`org_id` = org.`id` ");
+		formSqlSb.append(" LEFT JOIN bp_search_day sd ON (sd.search_date>='" + startDate + "' AND sd.search_date<='" + endDate + "')   ");
+		formSqlSb.append(" LEFT JOIN bp_shop_pf pf ON pf.`date`= sd.`search_date` AND pf.`shop_id` = s.`id`  AND  pf.`date`>='"+ startDate + "' AND pf.`date`<='" + endDate + "'");
+		formSqlSb.append(" WHERE s.`delete_date` IS NULL  ");
+		if (shopId != null && !shopId.equals("")) {
+			formSqlSb.append(" and s.id IN (" + shopId + ")  ");
+		}
+		if (orgId != null && !orgId.equals("")) {
+			List<Record> orgList = new ArrayList<Record>();
+			for (String oid : orgId.split(",")) {
+				List<Record> resultList = DataOrgUtil.getChildrens(oid, true);
+				orgList.addAll(resultList);
+			}
+			HashSet h = new HashSet(orgList);
+			orgList.clear();
+			orgList.addAll(h);
+			String ordIds = DataOrgUtil.recordListToSqlIn(orgList, "id");
+			formSqlSb.append(" and org.id IN (" + ordIds + ")  ");
+		}
+		formSqlSb.append(" GROUP BY s.`id`,sd.`search_date`  ");
+		formSqlSb.append(" ORDER BY sd.search_date,org.id,pf.`counts` DESC ) a ");
+		List list=Db.find(formSqlSb.toString());
+		PoiRender excel = new PoiRender(list); 
+		String[] columns = {"dates","orgname","shopname","counts"}; 
+		String[] heades = {"日期","组织名称","商铺名称","人数"}; 
+		excel.sheetName("所有").headers(heades).columns(columns).fileName("passFlowInfo.xls");
+		return excel;
 	}
 }

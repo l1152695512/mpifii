@@ -268,4 +268,21 @@ public class DataOrgUtil {
 		}
 		return rd;
 	}
+	
+	/**
+	 * 获得当前用户的组织信息拼接字符串
+	 * @return
+	 */
+	public static String getOrgIds(){
+		String relOrgIds = "";
+		List<Record> list= ContextUtil.getOrgListByUser();
+		for(int i=0;i<list.size();i++){
+			if(i==list.size()-1){
+				relOrgIds += list.get(i).getInt("id")+"";
+			}else{
+				relOrgIds += list.get(i).getInt("id")+",";
+			}
+		}
+		return relOrgIds;
+	}
 }

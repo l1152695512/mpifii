@@ -15,11 +15,7 @@ import org.apache.commons.lang.StringUtils;
 import com.jfinal.kit.PathKit;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
-<<<<<<< HEAD
 import com.yinfu.business.util.PageUtil;
-=======
-import com.yinfu.InitDemoDbConfig;
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.yinfu.jbase.util.PropertyUtils;
 
 import freemarker.template.Configuration;
@@ -100,7 +96,6 @@ public class IndexMarker {
     }
     
     private List<Record> getAdv(){
-<<<<<<< HEAD
 //    	String sql = "select concat(?,'_',id) as id,REVERSE(LEFT(REVERSE(image),LOCATE('/',REVERSE(image))-1)) as src,ifnull(link,'#') as href,serial from bp_adv where shop_id=? and template_id=? and delete_date is null order by serial";
 //    	List<Record> list = Db.find(sql, new Object[]{PropertyUtils.getProperty("route.upload.type.adv"),shopId,PageUtil.getTemplateId(shopId)});
     	StringBuffer sql = new StringBuffer();
@@ -121,10 +116,6 @@ public class IndexMarker {
 //		sql.append("order by basp.adv_index ");
     	List<Record> list = Db.find(sql.toString(), new Object[]{PropertyUtils.getProperty("route.upload.type.adv"),
     		shopId,PageUtil.getTemplateId(shopId)});
-=======
-    	String sql = "select concat(?,'_',id) as id,REVERSE(LEFT(REVERSE(image),LOCATE('/',REVERSE(image))-1)) as src,ifnull(link,'#') as href,serial from bp_adv where shop_id=? and delete_date is null order by serial";
-    	List<Record> list = Db.find(sql, new Object[]{PropertyUtils.getProperty("route.upload.type.adv"),shopId});
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
     	return list;
     }
     
@@ -135,7 +126,6 @@ public class IndexMarker {
     }
     
     private List<Record> getApp(){
-<<<<<<< HEAD
     	StringBuffer sql = new StringBuffer();
 //    	sql.append("select concat(?,'_',c.id) as id,c.name,REVERSE(LEFT(REVERSE(c.icon),LOCATE('/',REVERSE(c.icon))-1)) as icon,ifnull(c.link,'#') as link ");
 //    	sql.append("from bp_shop_page_app a ");
@@ -155,22 +145,10 @@ public class IndexMarker {
     	sql.append("where spa.id is not null and a.template_id=? ");
     	List<Record> list = Db.find(sql.toString(), new Object[]{PropertyUtils.getProperty("route.upload.type.app"),
     		PageUtil.getPageIdByShopId(shopId),shopId,PageUtil.getTemplateId(shopId)});
-=======
-    	StringBuffer sql = new StringBuffer("select ");
-    	sql.append("concat(?,'_',c.id) as id,c.name,REVERSE(LEFT(REVERSE(c.icon),LOCATE('/',REVERSE(c.icon))-1)) as icon,ifnull(c.link,'#') as link ");
-    	sql.append("from bp_shop_page_app a ");
-    	sql.append("left join bp_shop_page b ");
-    	sql.append("on a.page_id = b.id ");
-    	sql.append("left join bp_app c ");
-    	sql.append("on a.app_id=c.id ");
-    	sql.append("where b.shop_id=?");
-    	List<Record> list = Db.find(sql.toString(), new Object[]{PropertyUtils.getProperty("route.upload.type.app"),shopId});
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
     	return list;
     }
    
     private Record getBottomAdv(){
-<<<<<<< HEAD
 //    	StringBuffer sql = new StringBuffer();
 //    	sql.append("select sgr.image,sgr.link ");
 //    	sql.append("from bp_shop s join bp_shop_group_role sgr on (s.id=? and s.group_id=sgr.shop_group_id) ");
@@ -186,23 +164,6 @@ public class IndexMarker {
 //    		rd.set("image", image);
 //    	}
     	return new Record();
-=======
-    	StringBuffer sql = new StringBuffer();
-    	sql.append("select sgr.image,sgr.link ");
-    	sql.append("from bp_shop s join bp_shop_group_role sgr on (s.id=? and s.group_id=sgr.shop_group_id) ");
-    	sql.append("join bp_adv_type bat on (bat.adv_type='adv_bottom' and sgr.adv_type_id=bat.id)");
-    	Record rd = Db.findFirst(sql.toString(),new Object[]{shopId});
-    	if(null != rd){
-    		String image = rd.getStr("image");
-    		if(StringUtils.isNotBlank(image)){
-    			image = "logo/"+image.substring(image.lastIndexOf("/")+1);
-    		}else{
-    			image = "index/img/ad.png";
-    		}
-    		rd.set("image", image);
-    	}
-    	return rd;
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
     }
     
     public static void main(String[] args)throws Exception{

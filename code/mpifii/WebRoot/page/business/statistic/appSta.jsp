@@ -95,7 +95,7 @@
 								<td class="center">${app.get("days")}</td>
 								<td class="center">${app.get("orgname")}</td>
 								<td class="center">${app.get("shopname")}</td>
-								<td class="center">${app.get("apname")}</td>
+								<td class="center">${app.get("apname")==null?'未绑定应用':app.get("apname")}</td>
 								<td class="center">
 									${app.get("num")}
 								</td>

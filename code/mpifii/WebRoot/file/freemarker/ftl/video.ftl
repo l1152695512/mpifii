@@ -1,11 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-<<<<<<< HEAD
 		<title>${(name)!}</title>
-=======
-		<title>笑死你</title>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no"/>
 		<meta name="MobileOptimized" content="320"/>
@@ -24,11 +20,7 @@
 			.fl{float:left}
 			.fr{float:right;}
 			.cl{clear:both;}
-<<<<<<< HEAD
 			h3{font-size:16px;text-align: center;color:#252525;width:100%;height:20px;line-height: 20px;text-indent: 2px;margin-bottom: 1%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-=======
-			h3{font-size:16px;color:#252525;width:100%;height:20px;line-height: 20px;text-indent: 2px;margin-bottom: 1%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			/* 头部 */
 			header{  background:#F5AB38; padding-bottom:10px; border-bottom:3px solid #CF7F21;  }
 			header .logo{ padding:10px 0 5px 10px;  color:#fff;  font-style:italic; font-weight:bold; text-shadow:1px 1px 1px #965e18; font-size:12px; }
@@ -56,11 +48,7 @@
 	</head>
 	<body>
 		<div id="content">
-<<<<<<< HEAD
 			<div class="path">${(name)!}</div>
-=======
-			<div class="path">笑死你</div>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			<div class="line-jianbian"></div>
 			<ul class="tro">
 				<#list videolist as video>

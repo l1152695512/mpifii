@@ -40,54 +40,31 @@
 			<div class="box-header well" >
 				<h2><i class="icon-user"></i>盒子列表</h2>
 				<div class="box-icon">
-<<<<<<< HEAD
 					<a href="javascript:void(0);" class="btn btn-round" title="查找"><i class="icon-search"></i></a>
 					<a href="javascript:void(0);" class="btn btn-round" title="添加盒子" onclick="ajaxContent('/business/device/addOrModify');"><i class="icon-plus-sign"></i></a>
 					<a href="javascript:void(0);" class="btn btn-round" title="导入盒子" onclick="importDevice()"><i class="icon-random"></i></a>
-=======
-<!-- 					<a href="javascript:void(0);" class="btn btn-round" title="查找"><i class="icon-search"></i></a> -->
-					<a href="javascript:void(0);" class="btn btn-round" title="添加盒子" onclick="ajaxContent('/business/device/addOrModify');"><i class="icon-plus-sign"></i></a>
-<!-- 					<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>  -->
-<!-- 					<a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a> -->
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				</div>
 			</div>
 			<div class="box-content">
 				<div class="search-content"><!-- 这里必须取名为search-content，否则搜索框离开焦点的点击事件不会触发搜索框的隐藏 -->
 					<fieldset><!-- 这下面搜索的字段要与数据库里表的字段对应 -->
 					  	<div class="control-group">
-<<<<<<< HEAD
 							<label class="control-label" for="focusedInput">SN：</label>
 							<div class="controls">
 						  		<input class="input-xlarge focused" type="text" id="routerSn" name="_query.router_sn_like" value='${splitPage.queryParam.router_sn_like}' maxlength="20" >
-=======
-							<label class="control-label" for="focusedInput">账号：</label>
-							<div class="controls">
-						  		<input class="input-xlarge focused" type="text" name="_query.name_like" value='${splitPage.queryParam.name_like}' maxlength="20" >
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 							</div>
 					  	</div>
 					  
 					  	<div class="control-group">
-<<<<<<< HEAD
 							<label class="control-label">商铺名称：</label>
 							<div class="controls">
 						  		<input class="input-xlarge" type="text" id="shopName" name="_query.name" value='${splitPage.queryParam.name}' maxlength="40" >
-=======
-							<label class="control-label">邮箱：</label>
-							<div class="controls">
-						  		<input class="input-xlarge" type="text" name="_query.email_like" value='${splitPage.queryParam.email_like}' maxlength="40" >
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 							</div>
 					  	</div>
 					
 					  	<div class="form-actions">
 							<button type="button" class="btn btn-primary" onclick="splitPage(1);">查询</button>
-<<<<<<< HEAD
 							<button type="reset" class="btn" onclick="clearform()">清除</button>
-=======
-							<button type="reset" class="btn">清除</button>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 					  	</div>
 					</fieldset>
 				</div>
@@ -101,11 +78,7 @@
 							<th>认证时长（分钟）</th>
 							<th>SN</th>
 							<th>注册时间</th>
-<<<<<<< HEAD
 							<th width="220">操作</th>
-=======
-							<th width="180">操作</th>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 						</tr>
 					</thead>
 					<tbody>
@@ -123,10 +96,7 @@
 								<td class="center" data-id='${device.get("id")}'>
 									<a class="btn btn-info" href="javascript:void(0);"> <i class="icon-edit icon-white"></i> 编辑</a>
 									<a class="btn btn-danger" href="javascript:void(0);"> <i class="icon-trash icon-white"></i> 删除</a>
-<<<<<<< HEAD
 									<a class="btn btn-default btn-sm"  href="javascript:void(0);"><i class="icon-wrench icon-black"></i> 升级</a>
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 								</td>
 							</tr>
 						</c:forEach>
@@ -168,7 +138,6 @@
 			});
 		});
 	});
-<<<<<<< HEAD
 	$("#splitPage .box-content tbody .icon-wrench").parent().click(function(){
 		var id = $(this).parent().data("id");
 		$.ajax({
@@ -239,7 +208,7 @@
 		  								closePop();
 		  							});
 	    	   	   		        }else if(data.state == "Onlyfail"){
-		    	   	   		      	myAlert("只能导入xls文件或dbf文件!",function(){
+		    	   	   		      	myAlert("只能导入xls文件!",function(){
 		  								closePop();
 		  							});
 	    	   	   		        }else if(data.state == "noComplete"){
@@ -269,6 +238,4 @@
 		$("#routerSn").val("");
 		$("#shopName").val("");
 	}
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 </script>

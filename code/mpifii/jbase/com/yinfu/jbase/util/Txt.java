@@ -523,8 +523,5 @@ public final class Txt
 		}
 		return uuid;
 	}
-<<<<<<< HEAD
 	
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 }

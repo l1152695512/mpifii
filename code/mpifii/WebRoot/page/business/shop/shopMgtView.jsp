@@ -16,13 +16,6 @@
 			<h2>
 				<i class="icon-edit"></i>查看详情
 			</h2>
-<<<<<<< HEAD
-=======
-			<div class="box-icon">
-				<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a> 
-				<a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a>
-			</div>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		</div>
 		
 		<div class="box-content">
@@ -71,11 +64,7 @@
 									<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-down"></i></a>
 								</div>
 							</div>
-<<<<<<< HEAD
 							<div class="box-content" >
-=======
-							<div class="box-content" style="display: none;">
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 								<fieldset>
 									<table class="table table-striped table-bordered bootstrap-datatable ">
 										<thead>

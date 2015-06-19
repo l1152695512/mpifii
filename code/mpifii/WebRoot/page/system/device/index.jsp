@@ -25,20 +25,12 @@
 		margin-bottom: 0px;
 	}
 </style>
-<<<<<<< HEAD
 <form id="splitPage" class="form-horizontal" action="${pageContext.request.contextPath}/system/warehouse" method="POST">
-=======
-<form id="splitPage" class="form-horizontal" action="${pageContext.request.contextPath}/business/device" method="POST">
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	<div>
 		<ul class="breadcrumb">
 			<li><a href="javascript:void(0);" onclick="ajaxContent('/content');">主页</a><span class="divider">/</span></li>
 			<li>
-<<<<<<< HEAD
 				<a href="javascript:void(0);" onclick="ajaxContent('/system/warehouse/index');">盒子分配</a>
-=======
-				<a href="javascript:void(0);" onclick="ajaxContent('/system/page/index');">盒子分配</a>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			</li>
 		</ul>
 	</div>
@@ -48,22 +40,14 @@
 			<div class="box-header well" >
 				<h2><i class="icon-user"></i>盒子列表</h2>
 				<div class="box-icon">
-<<<<<<< HEAD
 					<a href="javascript:void(0);" class="btn btn-round" title="查找"><i class="icon-search"></i></a>
 					<a href="javascript:void(0);" class="btn btn-round" title="添加盒子" onclick="ajaxContent('/system/warehouse/addOrModify');"><i class="icon-plus-sign"></i></a>
-=======
-<!-- 					<a href="javascript:void(0);" class="btn btn-round" title="查找"><i class="icon-search"></i></a> -->
-					<a href="javascript:void(0);" class="btn btn-round" title="添加盒子" onclick="ajaxContent('/system/page/addOrModify');"><i class="icon-plus-sign"></i></a>
-<!-- 					<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>  -->
-<!-- 					<a href="#" class="btn btn-close btn-round"><i class="icon-remove"></i></a> -->
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				</div>
 			</div>
 			<div class="box-content">
 				<div class="search-content"><!-- 这里必须取名为search-content，否则搜索框离开焦点的点击事件不会触发搜索框的隐藏 -->
 					<fieldset><!-- 这下面搜索的字段要与数据库里表的字段对应 -->
 					  	<div class="control-group">
-<<<<<<< HEAD
 							<label class="control-label" for="focusedInput">SN</label>
 							<div class="controls">
 						  		<input class="input-xlarge focused" type="text" name="_query.sn_like" id="sn_like" value='${splitPage.queryParam.sn_like}' maxlength="20" >
@@ -97,38 +81,15 @@
 					  	<div class="form-actions">
 							<button type="button" class="btn btn-primary" onclick="splitPage(1);">查询</button>
 							<button type="reset" class="btn" onclick="clearform()">清除</button>
-=======
-							<label class="control-label" for="focusedInput">账号：</label>
-							<div class="controls">
-						  		<input class="input-xlarge focused" type="text" name="_query.name_like" value='${splitPage.queryParam.name_like}' maxlength="20" >
-							</div>
-					  	</div>
-					  
-					  	<div class="control-group">
-							<label class="control-label">邮箱：</label>
-							<div class="controls">
-						  		<input class="input-xlarge" type="text" name="_query.email_like" value='${splitPage.queryParam.email_like}' maxlength="40" >
-							</div>
-					  	</div>
-					
-					  	<div class="form-actions">
-							<button type="button" class="btn btn-primary" onclick="splitPage(1);">查询</button>
-							<button type="reset" class="btn">清除</button>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 					  	</div>
 					</fieldset>
 				</div>
 				<table class="table table-striped table-bordered bootstrap-datatable ">
 					<thead>
 						<tr>
-<<<<<<< HEAD
 							<th>SN</th>
 							<th>类型</th>
 							<th>平台</th>
-=======
-							<th>类型</th>
-							<th>SN</th>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 							<th>注册时间</th>
 							<th width="180">操作</th>
 						</tr>
@@ -136,7 +97,6 @@
 					<tbody>
 						<c:forEach var="device" items="${splitPage.page.list}" >
 							<tr>
-<<<<<<< HEAD
 								<td class="center">${device.get("sn")}</td>
 								<td class="center">${device.get("type")==1?'route':'AP'}</td>
 								<c:choose>
@@ -148,10 +108,6 @@
 									</c:otherwise>
 								</c:choose>
 								
-=======
-								<td class="center">${device.get("palt_type")}</td>
-								<td class="center">${device.get("sn")}</td>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 								<td class="center">${device.get("create_date")}</td>
 								<td class="center" data-id='${device.get("id")}'>
 									<a class="btn btn-info" href="javascript:void(0);"> <i class="icon-edit icon-white"></i> 编辑</a>
@@ -182,39 +138,25 @@
 	});
 	$("#splitPage .box-content tbody .icon-edit").parent().click(function(){
 		var id = $(this).parent().data("id");
-<<<<<<< HEAD
 		ajaxContent('/system/warehouse/addOrModify',{id:id});
-=======
-		ajaxContent('/system/page/addOrModify',{id:id});
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	});
 	$("#splitPage .box-content tbody .icon-trash").parent().click(function(){
 		var id = $(this).parent().data("id");
 		myConfirm("确定要删除该数据？",function(){
 			$.ajax({
 				type: "POST",
-<<<<<<< HEAD
 				url: "system/warehouse/delete",
 				data: {id:id},
 				success: function(data,status,xhr){
 					ajaxContent('/system/warehouse');
-=======
-				url: "system/page/delete",
-				data: {id:id},
-				success: function(data,status,xhr){
-					ajaxContent('/system/page');
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				}
 			});
 		});
 	});
-<<<<<<< HEAD
 	
 	function clearform(){
 		$("#sn_like").val("");
 		$("#type").val("");
 		$("#plat_no").val("");
 	}
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 </script>

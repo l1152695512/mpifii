@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -14,6 +15,7 @@ import com.jfinal.ext.route.ControllerBind;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.IAtom;
 import com.jfinal.plugin.activerecord.Record;
+import com.yinfu.business.shop.model.Shop;
 import com.yinfu.business.util.DataOrgUtil;
 import com.yinfu.jbase.jfinal.ext.Controller;
 import com.yinfu.jbase.util.PropertyUtils;
@@ -85,20 +87,20 @@ public class OpenController extends Controller {
 					temporaryName = DataOrgUtil.getShopsForUserInTemporary(ContextUtil.getCurrentUserId());
 				}
 			}
-			if(StringUtils.isNotBlank(getPara("type"))){
-				if("todayPerson".equals(getPara("type"))){
+			if(1==1){
+//				if("todayPerson".equals(getPara("type"))){
 					StringBuffer todayPersonSql = new StringBuffer();
-					todayPersonSql.append("select count(distinct r.mac) person_num ");
+					todayPersonSql.append("select count(distinct r.client_mac) person_num ");
 					todayPersonSql.append("from bp_device d ");
 					if(StringUtils.isNotBlank(temporaryName)){
 						todayPersonSql.append("join "+temporaryName+" temp on (d.shop_id=temp.id)");
 					}
-					todayPersonSql.append("join bp_report r on (r.sn=d.router_sn and date(r.create_date)=date(now())) ");
+					todayPersonSql.append("join bp_session r on (r.sn=d.router_sn and date(r.stop_time)=date(now())) ");
 //				todayPersonSql.append("and d.shop_id in ("+shopSqlIn+")) ");
 					Record today = Db.findFirst(todayPersonSql.toString());
 					data.put("tNum", today.get("person_num"));
-				}
-			}else{
+//				}
+//			}else{
 				StringBuffer sql1 = new StringBuffer();
 				sql1.append("select count(distinct s.id) total_shop,");
 				sql1.append("count(distinct(if(d.id is null,null,s.id))) online_shop,");
@@ -133,11 +135,11 @@ public class OpenController extends Controller {
 				//		data.put("yNum", yestarday.get("person_num"));
 				
 				StringBuffer ynumSql = new StringBuffer("select ifnull(sum(counts),0) ynum ");
-				ynumSql.append("from bp_statistics_pf a join bp_device b on (date(a.date) = date(date_add(now(), interval -1 day)) and a.router_sn=b.router_sn) ");
+				ynumSql.append("from bp_shop_pf a ");
 				if(StringUtils.isNotBlank(temporaryName)){
-					ynumSql.append("join "+temporaryName+" temp on (b.shop_id=temp.id)");
+					ynumSql.append("join "+temporaryName+" temp on (a.shop_id=temp.id) ");
 				}
-//			ynumSql.append("where b.shop_id in("+shopSqlIn+")");
+				ynumSql.append("where date(a.date)= date_sub(curdate(),interval 1 day)");
 				Record ynumRd = Db.findFirst(ynumSql.toString());
 				data.put("yNum", ynumRd.get("ynum"));
 				
@@ -185,6 +187,16 @@ public class OpenController extends Controller {
 			return true;
 		}});
 		renderJson(data);
+	}
+	
+	
+	/**
+	 * 当前组织商铺信息
+	 */
+	public void getShop(){
+		String userid = ContextUtil.getCurrentUserId();
+		List<Shop> shopList = Shop.dao.findListByUserId(userid);
+		renderJson(shopList);
 	}
 }
 class OrgOnlineNum implements Comparator<Record>{

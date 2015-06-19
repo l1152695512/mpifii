@@ -7,11 +7,7 @@ $( document ).ajaxStart(function() {//用于弹出遮罩层显示加载中
 		closeButton: false,
 //		hideHeader: false,
 		keyEsc:true,
-<<<<<<< HEAD
 		animate:false
-=======
-		animate:false,
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 //		hideFooter: false
 	}).showModal();
 //}).ajaxSend(function( event, jqXHR, ajaxOptions) {//每次ajax调用之前会触发该事件
@@ -40,10 +36,6 @@ $( document ).ajaxStart(function() {//用于弹出遮罩层显示加载中
 }).ajaxStop(function() {//一批或者一个ajax调用完成后触发一次，用于所有请求完成后隐藏遮罩层
 	closePop();
 });
-<<<<<<< HEAD
-=======
-
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 function isLoginPage(responseText){
 	if(responseText.indexOf("html") != -1 && 
 			responseText.indexOf("this is mark for login page,do not delete it") != -1){

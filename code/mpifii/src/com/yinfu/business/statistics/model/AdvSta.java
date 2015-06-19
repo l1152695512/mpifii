@@ -9,8 +9,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import com.jfinal.ext.render.excel.PoiRender;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
+import com.jfinal.render.Render;
 import com.yinfu.business.util.DataOrgUtil;
 import com.yinfu.common.ContextUtil;
 import com.yinfu.jbase.jfinal.ext.Model;
@@ -74,7 +76,7 @@ public class AdvSta extends Model<AdvSta> {
 			formSqlSb.append(" and org.id IN (" + ordIds + ")  ");
 		}
 		formSqlSb.append("  GROUP BY adv.shopId,adv.dates ");
-		formSqlSb.append("  ORDER BY adv.zss desc,adv.dates,org.id,s.id,adv.advName ");
+		formSqlSb.append("   ");
 	}
 	
 	//@formatter:off 
@@ -332,5 +334,60 @@ public class AdvSta extends Model<AdvSta> {
 		xmlData.append(" </dataset> ");
 		xmlData.append(" </chart>");
 		return xmlData.toString();
+	}
+
+	//@formatter:off 
+	/**
+	 * Title: downAdvStaFile
+	 * Description:广告统计下载
+	 * Created On: 2015年6月11日 下午5:21:51
+	 * @author JiaYongChao
+	 * <p>
+	 * @param queryMap
+	 * @return 
+	 */
+	//@formatter:on
+	public Render downAdvStaFile(Map<String, String> queryMap) {
+		String startDate = queryMap.get("startDate");// 开始时间
+		String endDate = queryMap.get("endDate");// 结束时间
+		String shopId = queryMap.get("shopId");
+		String orgId = queryMap.get("orgId");
+		if (endDate == null || endDate.equals("")) {
+			endDate = DateUtil.getSpecifiedDayBefore(DateUtil.getNow());
+		}	
+		if (startDate == null || startDate.equals("")) {
+			startDate = DateUtil.getSpecifiedDayBefore(DateUtil.getNow());
+		}
+		if((shopId == null || shopId.equals("")) && !ContextUtil.isAdmin()  ){
+			shopId = ContextUtil.getShopByUser();
+		}
+		StringBuilder formSqlSb = new StringBuilder(" SELECT adv.`dates` AS dates,s.`name` AS shopname,SUBSTRING_INDEX(IFNULL(org.pathname,'暂未绑定'),'/',-3) AS orgname,IFNULL(adv.`zss`,0) AS zss,IFNULL(adv.`djs`,0) AS djs,IFNULL(ROUND(adv.`djs`/adv.`zss`,2),0) AS djl ");
+		formSqlSb.append(" FROM bp_statistics_adv adv  ");
+		formSqlSb.append(" LEFT JOIN bp_shop s ON  adv.`shopId` = s.`id` ");
+		formSqlSb.append(" LEFT JOIN sys_org_temp org ON s.`org_id` = org.`id`  ");
+		formSqlSb.append(" WHERE 1=1   ");
+		formSqlSb.append(" and adv.`dates`>='" + startDate + "' AND adv.`dates`<='" + endDate + " '");
+		if (shopId != null && !shopId.equals("")) {
+			formSqlSb.append(" and s.id IN (" + shopId + ")  ");
+		}
+		if (orgId != null && !orgId.equals("")) {
+			List<Record> orgList = new ArrayList<Record>();
+			for (String oid : orgId.split(",")) {
+				List<Record> resultList = DataOrgUtil.getChildrens(oid, true);
+				orgList.addAll(resultList);
+			}
+			HashSet h = new HashSet(orgList);
+			orgList.clear();
+			orgList.addAll(h);
+			String ordIds = DataOrgUtil.recordListToSqlIn(orgList, "id");
+			formSqlSb.append(" and org.id IN (" + ordIds + ")  ");
+		}
+		formSqlSb.append("  GROUP BY adv.shopId,adv.dates ");
+		List list=Db.find(formSqlSb.toString());
+		PoiRender excel = new PoiRender(list); 
+		String[] columns = {"dates","orgname","shopname","zss","djs","djl"}; 
+		String[] heades = {"日期","组织名称","商铺名称","展示次数","点击次数","点击率"}; 
+		excel.sheetName("所有").headers(heades).columns(columns).fileName("advInfo.xls");
+		return excel;
 	}
 }

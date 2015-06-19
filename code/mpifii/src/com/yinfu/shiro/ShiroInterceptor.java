@@ -31,15 +31,20 @@ public class ShiroInterceptor implements Interceptor {
 		
 		String url = ai.getActionKey();
 		try {
-			
-			if (url.contains("delete"))
+			//得到对应的action类的方法名称
+			String method=url.substring(url.lastIndexOf("/"));
+			if (method.contains("delete")|| method.contains("del"))
 				Log.dao.insert(ai.getController(), Log.EVENT_DELETE);
-			else if (url.contains("add"))
+			else if (method.contains("add") || method.contains("save"))
 				Log.dao.insert(ai.getController(), Log.EVENT_ADD);
-			else if (url.contains("edit"))
+			else if (method.contains("edit") || method.contains("update"))
 				Log.dao.insert(ai.getController(), Log.EVENT_UPDATE);
-			else if (url.contains("grant"))
+			else if (method.contains("grant"))
 				Log.dao.insert(ai.getController(), Log.EVENT_GRANT);
+			else if (method.contains("down")||method.contains("export"))//导出，或者下载
+				Log.dao.insert(ai.getController(), Log.EVENT_DOWN);
+			else if (method.contains("upload")||method.contains("import"))//上传或者导入
+				Log.dao.insert(ai.getController(), Log.EVENT_UPLOAD);
 			
 			if (urls.contains(url) && !ext.hasPermission(url))
 				ai.getController().renderError(401);

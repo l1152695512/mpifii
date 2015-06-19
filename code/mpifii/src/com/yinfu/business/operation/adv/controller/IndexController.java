@@ -17,11 +17,7 @@ import com.yinfu.common.ContextUtil;
 import com.yinfu.jbase.jfinal.ext.Controller;
 import com.yinfu.model.SplitPage.SplitPage;
 
-<<<<<<< HEAD
 @ControllerBind(controllerKey = "/business/oper/adv", viewPath = "/page/business/operation/adv/")
-=======
-@ControllerBind(controllerKey = "/business/operation/adv", viewPath = "/page/business/operation/adv/")
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 public class IndexController extends Controller<Device> {
 	public void index() {
 		SplitPage splitPages = Index.dao.findList(splitPage);

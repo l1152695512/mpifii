@@ -2,7 +2,6 @@
 package com.yinfu.business.statistics.model;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import com.jfinal.plugin.activerecord.Db;
@@ -10,7 +9,6 @@ import com.jfinal.plugin.activerecord.Record;
 import com.yinfu.common.ContextUtil;
 import com.yinfu.jbase.jfinal.ext.Model;
 import com.yinfu.jbase.util.DateUtil;
-import com.yinfu.jbase.util.DbUtil;
 import com.yinfu.model.SplitPage.SplitPage;
 
 public class AppSta extends Model<AppSta> {
@@ -29,7 +27,7 @@ public class AppSta extends Model<AppSta> {
 		 */
 		//@formatter:on
 	public SplitPage getAppStaList(SplitPage splitPage) {
-		String sql = "SELECT sd.search_date AS days,s.`name` AS shopname,IFNULL(org.`name`,'暂未绑定') AS orgname,IFNULL(a.name,'暂无应用') AS apname,IFNULL(sa.access_num,0) num   ";
+		String sql = "SELECT sd.search_date AS days,s.`name` AS shopname,IFNULL(org.`name`,'暂未绑定') AS orgname,if(sa.app_type='app',a.name,b.title) AS apname,IFNULL(sa.access_num,0) num   ";
 		splitPage = splitPageBase(splitPage, sql);
 		return splitPage;
 	}
@@ -48,13 +46,12 @@ public class AppSta extends Model<AppSta> {
 		if((shopId == null || shopId.equals("")) && !ContextUtil.isAdmin()  ){
 			shopId = ContextUtil.getShopByUser();
 		}
-		formSqlSb.append(" FROM bp_shop s   ");
-		formSqlSb.append(" LEFT JOIN sys_org org ON s.`org_id` = org.`id`   ");
-		formSqlSb.append("  JOIN bp_search_day sd ON (sd.search_date>='"+startDate+"' AND sd.search_date<='"+endDate+"')  ");
-		formSqlSb.append("  LEFT JOIN bp_shop_page sp ON ( sp.`shop_id` =s.`id`)   ");
-		formSqlSb.append("  LEFT JOIN  bp_shop_page_app spa ON (spa.page_id=sp.id) ");
-		formSqlSb.append("  LEFT  JOIN bp_app a ON (spa.app_id = a.id)       ");
-		formSqlSb.append("  LEFT JOIN bp_statistics_app sa ON ( sa.access_date>='"+startDate+"' AND sa.access_date<='"+endDate+"'  AND sa.app_id=a.id AND SA.`shop_id` = S.`id` AND sa.access_date=sd.search_date)  ");
+		formSqlSb.append(" FROM bp_shop s ");
+		formSqlSb.append(" LEFT JOIN sys_org org ON s.`org_id` = org.`id`");
+		formSqlSb.append(" JOIN bp_search_day sd ON (sd.search_date>='"+startDate+"' AND sd.search_date<='"+endDate+"')");
+		formSqlSb.append(" LEFT JOIN bp_statistics_app sa ON ( sa.access_date>='"+startDate+"' AND sa.access_date<='"+endDate+"' AND sa.`shop_id` = s.`id` AND sa.access_date=sd.search_date)");
+		formSqlSb.append(" LEFT  JOIN bp_app a ON (sa.app_id = a.id)");
+		formSqlSb.append(" LEFT  JOIN bp_nav b ON (sa.app_id = b.id)");
 		formSqlSb.append("  where 1=1 ");
 		if(shopId!=null){
 			formSqlSb.append(" and  S.id IN ("+shopId+")  ");
@@ -62,7 +59,7 @@ public class AppSta extends Model<AppSta> {
 		if(orgId!=null){
 			formSqlSb.append(" and org.id IN ("+orgId+")  ");
 		}
-		formSqlSb.append(" GROUP BY sd.search_date,s.id,sa.access_num desc ");
+		formSqlSb.append(" GROUP BY sd.search_date,s.id,s.`name`,org.`name`,sa.app_type desc ");
 	}
 	
 	//@formatter:off 

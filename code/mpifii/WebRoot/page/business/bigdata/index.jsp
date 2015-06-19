@@ -3,30 +3,8 @@
 <%@ taglib prefix="shiro" uri="http://shiro.apache.org/tags"%>
 <%@taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <%@ include file="../../common/splitPage.jsp" %> 
-
-<style type="text/css">
-	#splitPage .search-content{
-/* 		display: none; */
-		position: absolute;
-		width: 98%;
-		background-color: white;
-		border: 1px solid #DDDDDD;
-		-webkit-box-shadow: #666 0px 0px 10px;
-		-moz-box-shadow: #666 0px 0px 10px;
-		box-shadow: #666 0px 0px 10px;
-		padding-top: 20px;
-/* 		border-right: 1px solid #DDDDDD; */
-/* 		border-bottom: 1px solid #DDDDDD; */
-	}
-	#splitPage .box-content{
-		position: relative;
-	}
-	#splitPage .form-actions{
-		margin-top: 0px;
-		margin-bottom: 0px;
-	}
-</style><!--  -->
-<form id="splitPage" class="form-horizontal" action="${pageContext.request.contextPath}/business/realtrue/index" method="POST">
+<style type="text/css"> .ui-datepicker-calendar { display: none; } </style>
+<form id="splitPage" class="form-horizontal" action="${pageContext.request.contextPath}/business/bigdata/user_detail" method="POST">
 	<div>
 		<ul class="breadcrumb">
 			<li><a href="javascript:void(0);" onclick="ajaxContent('/content');">主页</a><span class="divider">/</span></li>
@@ -45,32 +23,28 @@
 					<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-down"></i></a>
 				</div>
 			</div>
-<div class="box-content" style="display:none;" >
+			<div class="box-content" style="display:none;" >
 				<fieldset>
 				 	<div class="control-group">
-					  		<label class="control-label" for="focusedInput">组织：</label>
-							<div class="controls">
-							  	<select id="select_org" multiple="multiple" >
-									<c:forEach var="org" items="${orgList}">
-										<option value="${org.id}">${org.name}</option>
-									</c:forEach>
-								</select>
-								<input name="_query.org_id" id="qOrgId" value="${splitPage.queryParam.org_id}"  type="hidden" />
-							</div>
+					  					<label class="control-label" for="focusedInput">组织：</label>
+								<div class="controls">
+									<input name="_query.org_id" id="qOrgId" value="${splitPage.queryParam.org_id}"  type="hidden" />
+									<input class="input-xlarge focused" style="width: 150PX" id="org_id" type="text" value="" onclick="selectOrg(this)"  />
+								</div>
+								<div id="orgSelect_Div">
+								</div>
 							<label class="control-label" for="focusedInput">商铺：</label>
-							<div class="controls">
-							  	<select id="select_shop" multiple="multiple" >
-									<option value="">--请先选择组织--</option>
-								</select>
-								<input name="_query.shop_id" id="qShopId" value="${splitPage.queryParam.shop_id}" type="hidden" />
-								</div>
-								<label class="control-label" for="focusedInput">开始日期：</label>
 								<div class="controls">
-									<input type="text" id="starttime" name="_query.startDate" value="${startDate}" readonly="readonly" class="input-xlarge datepicker" />
+									<select id="select_shop" multiple="multiple" >
+										<c:forEach var="shop" items="${shopList}">
+											<option value="${shop.id}">${shop.name}</option>
+										</c:forEach>
+									</select>
+									<input class="input-xlarge focused" name="_query.shop_id" id="qShopId" type="hidden" onclick="selectShop(this)" value="${splitPage.queryParam.shop_id}"  />
 								</div>
-								<label class="control-label"for="focusedInput">结束日期：</label>
+								<label class="control-label" for="focusedInput">日期：</label>
 								<div class="controls">
-									<input type="text"   id="endtime"  name="_query.endDate" value="${endDate}"  readonly="readonly" class="input-xlarge datepicker" />
+									<input type="text" id="selectDate" name="_query.date" value="${splitPage.queryParam.date}" readonly="readonly" class="input-xlarge datepicker" />
 								</div>
 							</div>
 				  	<div class="form-actions">
@@ -86,6 +60,9 @@
 				<h2><i class="icon-user"></i> 用户列表</h2>
 				<div class="box-icon">
 					<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a>
+				</div>
+				<div class="box-icon">
+					<a href="javascript:down('${pageContext.request.contextPath}')" class="btn btn-round" title="导出"><i class="icon-download"></i></a>
 				</div>
 				</div>
 				<div class="box-content" >
@@ -103,6 +80,7 @@
 							<th onclick="orderbyFun('phone')">手机号码</th>
 							<th onclick="orderbyFun('typename')">用户类型</th>
 							<th onclick="orderbyFun('name')">访问站点</th>
+							<th onclick="orderbyFun('name')">组织</th>
 							<th onclick="orderbyFun('startime')">访问时间</th>
 						</tr>
 					</thead>
@@ -113,8 +91,9 @@
 								${fn:substring(fn:substring(user.get("phone"),fn:length(user.get("phone"))-11,-1),0,6)}*****
 								</td>
 								<td class="center">${user.get("typename")}</td>
-								<td class="center">${user.get("name")}</td>
-								<td class="center">${user.get("startime")}</td>
+								<td class="center">${user.get("shopname")}</td>
+								<td class="center">${user.get("orgname")}</td>
+								<td class="center">${user.get("dates")}</td>
 							</tr>
 						</c:forEach>
 					</tbody>
@@ -127,73 +106,35 @@
 	<!--/row-->
 </form>
 <script type="text/javascript">
-/* 		$(document).ready(function() {
-			getPFCharts();
-		});
-function to_user_type(){
-		var myChart = new FusionCharts('file/charts/Line.swf?ChartNoDataText=无数据显示', 'ad_chart_1', "100%", 410);
-			var starttime=$("#starttime").val();
-			var endtime=$("#endtime").val();
-			var qOrgId=$("#qOrgId").val();
-			var qShopId=$("#qShopId").val();
-				$.ajax({
-		    		type: "POST",
-		    		dataType: 'text',
-		    		data:{starttime:starttime,endtime:endtime,qOrgId:qOrgId,qShopId:qShopId},
-		    		url: "business/realtrue/to_user_type?starttime="+starttime+"&endtime="+endtime,
-		    		success: function(data,status,xhr){
-		    			if(status == "success"){
-		    				console.log(data);
-		    				myChart.setDataXML(data);
-							myChart.render("chartdivv");
-		    			}
-		    		}
-		    	});
-};
-		function getPFCharts(){
-					var myChart = new FusionCharts('file/charts/ZoomLine.swf?ChartNoDataText=无数据显示', 'ad_chart_2014', "100%", 410);
-						$.ajax({
-				    		type: "POST",
-				    		dataType: 'text',
-				    		data:{},
-				    		url: "business/realtrue/to_user_type",
-				    		success: function(data,status,xhr){
-				    			if(status == "success"){
-				    				myChart.setDataXML(data);
-									myChart.render("chartdivv");
-				    			}
-				    		}
-				    	});
-	};
-	*/
-		$('#select_org').multiselect({
-			enableFiltering: true,
-			maxHeight: 150,
-			onChange: function(){
-				var checkId = $("#select_org").val();
-				$("#qOrgId").attr("value",checkId);
-				var url ="/business/shop/getShopByOrg?orgids="+checkId;
-				$.ajax({
-					type : 'POST',
-					dataType : "json",
-					url :encodeURI(encodeURI(cxt + url)),
-					success : function(data) {
-						$("#select_shop").multiselect('dataprovider',data);
-					}
-				});
-			}
-		});
-$('#select_shop').multiselect({
-			enableFiltering: true,
-			maxHeight: 150,
-			onChange: function(){
-				var checkId = $("#select_shop").val();
-				$("#qShopId").attr("value",checkId);
-			}
-		});
+var dates = $("#selectDate");
+dates.datepicker({
+	changeMonth: true, 
+    changeYear: true, 
+    showButtonPanel: true, 
+    dateFormat: 'yy_mm', 
+    onClose: function(dateText, inst) { 
+	     var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val(); 
+	     var year = $("#ui-datepicker-div .ui-datepicker-year :selected").val(); 
+	     $(this).datepicker('setDate', new Date(year, month, 1)); 
+    } 
+});
 var dataXml = $("#dataXml").val();
-console.log(dataXml);
 var myChart = new FusionCharts('file/charts/MSColumn3D.swf', 'ad_chart', "100%", 400);
 myChart.setDataXML(dataXml);
 myChart.render("chartdivv");
+$('#select_shop').multiselect({
+	enableFiltering: true,
+	maxHeight: 150,
+	onChange: function(){
+		var checkId = $("#select_shop").val();
+		$("#qShopId").attr("value",checkId);
+	}
+});
+function down(ctx){
+	var date = $("#selectDate").val();
+	var orgId = $('#qOrgId').val();
+	var shopId = $('#qShopId').val();
+	var url=ctx+'/business/bigdata/downDetailFile?date='+date+'&orgId='+orgId+"&shopId="+shopId;
+	window.location.href=url;
+}
 </script>

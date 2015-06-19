@@ -41,7 +41,6 @@ jQuery.fn.extend({
                     this.value = "";
                     return false
                 }
-<<<<<<< HEAD
                 for(var i=0;i<opts.Img.length;i++){
                 	var thisImg = $(opts.Img[i]);
                 	if ($.browser.msie) {
@@ -70,33 +69,6 @@ jQuery.fn.extend({
                     } else {
                         thisImg.attr('src', _self.getObjectURL(this.files[0]));
                     }
-=======
-                if ($.browser.msie) {
-                    try {
-                        opts.Img.attr('src', _self.getObjectURL(this.files[0]))
-                    } catch (e) {
-                        var src = "";
-                        var obj = opts.Img;
-                        var div = obj.parent("div")[0];
-                        _self.select();
-                        if (top != self) {
-                            window.parent.document.body.focus()
-                        } else {
-                            _self.blur()
-                        }
-                        src = document.selection.createRange().text;
-                        document.selection.empty();
-                        obj.hide();
-                        obj.parent("div").css({
-                            'filter': 'progid:DXImageTransform.Microsoft.AlphaImageLoader(sizingMethod=scale)'
-//                            'width': '100%',
-//                            'height': '100%'
-                        });
-                        div.filters.item("DXImageTransform.Microsoft.AlphaImageLoader").src = src;
-                    }
-                } else {
-                    opts.Img.attr('src', _self.getObjectURL(this.files[0]));
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
                 }
                 opts.Callback();
             }

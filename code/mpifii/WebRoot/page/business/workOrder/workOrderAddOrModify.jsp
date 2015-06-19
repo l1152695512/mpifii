@@ -70,7 +70,7 @@
 				<div class="control-group"  id="shopSelDiv" style="display:none;">
 				    <label class="control-label" >商铺</label>
 				    <div class="controls">
-						<select id="selectShops"  multiple="multiple" class="combox" onchange="loadShopData()">
+						<select id="selectShops"  multiple="multiple" onchange="loadShopData()">
 						   <c:forEach var="shop" items="${shopList}">
 							  <option value="${shop.id}">${shop.name}</option>
 						   </c:forEach>
@@ -188,8 +188,6 @@
 $('#shoptrdeSel option').each(function() {
   if ($(this).val() == $("#shoptrde").val()) {
 	  $(this).attr("selected","selected");
-  }else{
-	  $(this).removeAttr("selected");
   }
 });
     
@@ -206,13 +204,14 @@ if(document.getElementById("notradeRadio").checked==true){
 //新建工单
 if($("#owTypeSel").val()==1){
 	$("#shopSelDiv").hide();
-	remdisabled()
+	remdisabled();
 }
 
 //追加工单
 if($("#owTypeSel").val()==2){
 	$("#shopSelDiv").show("normal");
-	adddisabled()
+	loadshoplist();
+	adddisabled();
 
 }
 function adddisabled(){
@@ -241,6 +240,7 @@ function woTypeChange(){
 	}
 	if($("#owTypeSel").val()==2){
 		$("#shopSelDiv").show("normal");
+		loadshoplist();
 		adddisabled();
 	}
 }
@@ -345,15 +345,15 @@ function loadShopData(data){
 	}
 
 }
- $(document).ready(function() {
-	 
+function loadshoplist() {
 	var sel = $('#selectShops').multiselect({
 		 enableFiltering: true,
+		 maxHeight:200,
 		 onChange: function(option, checked) {
 			$("#shopId").attr("value",option.val());
 		    var values = [];
 		    $('#selectShops option').each(function() {
-				 if ($(this).val() !== option.val()) {
+				 if ($(this).val() != option.val()) {
 				     values.push($(this).val());
 				 }
 			});
@@ -364,16 +364,15 @@ function loadShopData(data){
 			return;
 		 }
 	 });
-   
-	$('#selectShops option').each(function() {
+	
+	/*$('#selectShops option').each(function() {
 		 if ($(this).val() != $("#shopId").val()) {
 			 $('#selectShops').multiselect('deselect', $(this).val());
 		 }
-	});
+	});*/
 	
     $('#selectShops').multiselect('select', $("#shopId").val())
-	 
- });
+ }
  
 	//---------------------
 	var setting = {
@@ -432,6 +431,7 @@ function loadShopData(data){
 		}
 
 		function showMenu() {
+			$.fn.zTree.init($("#treeOrgs"), setting);
 		 	var zTree = $.fn.zTree.getZTreeObj("treeOrgs");
 		    var selNodes = zTree.getSelectedNodes();
 			if(selNodes!=null && selNodes.length>0){
@@ -512,10 +512,10 @@ function loadShopData(data){
 			}
 		}
 		
-		$(document).ready(function(){
-			$.fn.zTree.init($("#treeOrgs"), setting);
+		/*$(document).ready(function(){
+			//$.fn.zTree.init($("#treeOrgs"), setting);
 			
-		});
+		});*/
 
 
 </script>

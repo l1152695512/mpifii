@@ -3,6 +3,7 @@ package com.yinfu.routersyn.task;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -86,8 +87,10 @@ public class GotoTask extends BaseTask {
 		sql.append("join bp_adv_type bat on (basp.id=bat.adv_spaces) ");
 		sql.append("join bp_adv_content bac on (bas.content_id=bac.id) ");
 		sql.append("join bp_adv_type_res batr on (batr.adv_type_id=bat.id and batr.content_id=bac.id) ");
-    	Record rd = Db.findFirst(sql.toString(),new Object[]{shopId});
-    	if(null != rd){
+    	List<Record> advs = Db.find(sql.toString(),new Object[]{shopId});
+    	Iterator<Record> ite = advs.iterator();
+    	while(ite.hasNext()){
+    		Record rd = ite.next();
     		File iconFile = new File(SynUtils.getResBaseFloder()+File.separator+(rd.getStr("img").replaceAll("/", File.separator+File.separator)));
 			try {
 				if(iconFile.exists()){

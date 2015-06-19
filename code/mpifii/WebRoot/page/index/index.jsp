@@ -14,11 +14,7 @@
 	<meta name="author" content="Muhammad Usman">
 
 	<!-- The styles -->
-<<<<<<< HEAD
 	<link id="bs-css" href="${pageContext.request.contextPath}/js/ui/charisma/css/bootstrap-${theme}.css" rel="stylesheet">
-=======
-	<link id="bs-css" href="${pageContext.request.contextPath}/js/ui/charisma/css/bootstrap-united.css" rel="stylesheet">
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	<style type="text/css">
 	  body {
 		padding-bottom: 40px;
@@ -46,11 +42,10 @@
 	<link href='${pageContext.request.contextPath}/js/ui/charisma/css/jquery.iphone.toggle.css' rel='stylesheet'>
 	<link href='${pageContext.request.contextPath}/js/ui/charisma/css/opa-icons.css' rel='stylesheet'>
 	<link href='${pageContext.request.contextPath}/js/ui/charisma/css/uploadify.css' rel='stylesheet'>
-<<<<<<< HEAD
 	<link href='${pageContext.request.contextPath}/js/ui/bootstrap/css/bootstrap-multiselect.css' rel='stylesheet'>
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
-	
+	<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
+	<link rel="stylesheet" href="js/BreakingNews/BreakingNews.css" type="text/css"></link>
+	<script type="text/javascript" src="js/BreakingNews/BreakingNews.js"></script>
 	<link rel="stylesheet" href="${pageContext.request.contextPath}/js/jsFile/zTree/css/zTreeStyle/zTreeStyle.css" type="text/css">
 	<style type="text/css">
 		#wapper{
@@ -73,13 +68,6 @@
 	
 	<link rel="stylesheet" href="${pageContext.request.contextPath}/js/jsFile/charisma/jquery-ui-timepicker-addon.css" type="text/css">
 	
-<<<<<<< HEAD
-=======
-	<!-- The HTML5 shim, for IE6-8............................ support of HTML5 elements -->
-	<!--[if lt IE 9]>
-	  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-	<![endif]-->
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 </head>
 <body >
 	<%@ include file="../layout/top.jsp" %> 
@@ -109,14 +97,9 @@
 	<!-- external javascript ================================================== -->
 	<!-- Placed at the end of the document so the pages load faster -->
 	<!-- jQuery -->
-<<<<<<< HEAD
 	<script type="text/javascript">
 		var my_theme = "${theme}";
 	</script>
-=======
-	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=XpGabbd4W3nxxzOi4WCu03yt"></script>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
-	<script type="text/javascript" src="js/jquery-1.8.3.min.js"></script>
 <%-- 	<script src="${pageContext.request.contextPath}/js/ui/charisma/js/jquery-1.7.2.min.js"></script> --%>
 	<!-- jQuery UI -->
 	<script src="${pageContext.request.contextPath}/js/ui/charisma/js/jquery-ui-1.8.21.custom.min.js"></script>
@@ -192,10 +175,7 @@
 	<script type="text/javascript" src="${pageContext.request.contextPath}/js/jsFile/zTree/js/jquery.ztree.exedit-3.5.js"></script>
 	<script type="text/javascript" src="${pageContext.request.contextPath}/js/jsFile/echarts/echarts-plain-map.js"></script>
 	<script type="text/javascript" src="${pageContext.request.contextPath}/js/jsFile/charisma/jquery-ui-timepicker-addon.js"></script>
-<<<<<<< HEAD
 	<script type="text/javascript" src="${pageContext.request.contextPath}/js/ui/bootstrap/js/bootstrap-multiselect.js"></script>
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	<link rel="stylesheet" href="js/jquery-simple-modal/assets/css/simplemodal.css" type="text/css" media="screen" title="no title" charset="utf-8">
 	<script src="js/jquery-simple-modal/simple-modal.js" type="text/javascript" charset="utf-8"></script>
 	<script src="js/common.js" type="text/javascript"></script>
@@ -207,10 +187,7 @@
 	<script type="text/javascript" src="js/fusionChartsJs/FusionCharts.js"></script>
 	<script type="text/javascript" src="js/fusionChartsJs/FusionChartsExportComponent.js"></script>
 	<script type="text/javascript" src="js/fusionChartsJs/FusionCharts.js"></script>
-<<<<<<< HEAD
 	<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=XpGabbd4W3nxxzOi4WCu03yt"></script>
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 	<script type="text/javascript">
 		$("body").click(function(){
 			$(".search-content").slideUp();//隐藏搜索框

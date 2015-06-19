@@ -149,7 +149,8 @@ public class WorkOrder extends Model<WorkOrder>{
 					User shopUser =new User();
 					shopUser.set("phone", phone);
 					shopUser.set("name", phone);
-					shopUser.set("pwd", Sec.md5("88888888"));
+					String pwd=phone.substring(phone.length()-6, phone.length());
+					shopUser.set("pwd", Sec.md5(pwd));
 					shopUser.set("org_id", shop.get("org_id"));
 					success=shopUser.save();
 					//更新商铺关联用户

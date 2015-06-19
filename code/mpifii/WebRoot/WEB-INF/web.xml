@@ -32,21 +32,4 @@
     <servlet-name>CaptchaServlet</servlet-name>
     <url-pattern>/servlet/captchaCode</url-pattern>
   </servlet-mapping>
-<<<<<<< HEAD
-=======
-  
-  	<!-- Druid 数据源查看 -->
-	<servlet>
-		<servlet-name>DruidStatView</servlet-name>
-		<servlet-class>com.alibaba.druid.support.http.StatViewServlet</servlet-class>
-		<init-param>
-			<param-name>resetEnable</param-name>
-			<param-value>false</param-value>
-		</init-param>
-	</servlet>
-	<servlet-mapping>
-		<servlet-name>DruidStatView</servlet-name>
-		<url-pattern>/druid/*</url-pattern>
-	</servlet-mapping>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 </web-app>

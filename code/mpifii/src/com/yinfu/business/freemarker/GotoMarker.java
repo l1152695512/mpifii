@@ -14,10 +14,6 @@ import org.apache.commons.lang.StringUtils;
 import com.jfinal.kit.PathKit;
 import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.activerecord.Record;
-<<<<<<< HEAD
-=======
-import com.yinfu.InitDemoDbConfig;
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 import com.yinfu.jbase.util.PropertyUtils;
 
 import freemarker.template.Configuration;
@@ -81,7 +77,6 @@ public class GotoMarker {
    
     private Record getGotoAdv(){
     	StringBuffer sql = new StringBuffer();
-<<<<<<< HEAD
     	sql.append("select distinct batr.res_url image ");
     	sql.append("from bp_adv_shop bas join bp_adv_spaces basp on (bas.shop_id =? and basp.adv_type='adv_start' and basp.id=bas.adv_spaces) ");
     	sql.append("join bp_adv_type bat on (basp.id=bat.adv_spaces) ");
@@ -94,18 +89,11 @@ public class GotoMarker {
 //		sql.append("where bas.shop_id =? ");
     	Record rd = Db.findFirst(sql.toString(),new Object[]{shopId});
     	String defaultImg = "index/img/transition.png";
-=======
-    	sql.append("select sgr.image,sgr.link ");
-    	sql.append("from bp_shop s join bp_shop_group_role sgr on (s.id=? and s.group_id=sgr.shop_group_id) ");
-    	sql.append("join bp_adv_type bat on (bat.adv_type='adv_start' and sgr.adv_type_id=bat.id)");
-    	Record rd = Db.findFirst(sql.toString(),new Object[]{shopId});
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
     	if(null != rd){
     		String image = rd.getStr("image");
     		if(StringUtils.isNotBlank(image)){
     			image = "logo/"+image.substring(image.lastIndexOf("/")+1);
     		}else{
-<<<<<<< HEAD
     			image = defaultImg;
     		}
     		rd.set("image", image);
@@ -123,11 +111,6 @@ public class GotoMarker {
     		String authServerPath = PropertyUtils.getProperty("router.auth.url");
         	authServerPath = authServerPath.substring(0, authServerPath.lastIndexOf("/"));
     		rd.set("indexUrl", authServerPath+"/portal/mb/index");
-=======
-    			image = "index/img/transition.png";
-    		}
-    		rd.set("image", image);
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
     	}
     	return rd;
     }

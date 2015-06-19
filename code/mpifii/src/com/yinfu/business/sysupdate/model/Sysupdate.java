@@ -40,11 +40,7 @@ public class Sysupdate extends Model<Sysupdate> {
 		JSONObject returnData = new JSONObject();
 		String sql = " select * from router_script_version where version=" + number + " and file_type='"+fileType+"'";
 		Sysupdate s = dao.findFirst(sql);
-<<<<<<< HEAD
 		if(s!=null ){
-=======
-		if(s!=null){
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			returnData.put("state", "error");
 			returnData.put("msg", "此版本号已存在");
 			return returnData;

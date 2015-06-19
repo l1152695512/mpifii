@@ -117,9 +117,17 @@
 				changALink();
 				changHref();//检查跳转的页面是否存在
 			});
-			function changALink(){//将mac和routersn放到每个href后
+						function changALink(){//将mac和routersn放到每个href后
+	 			var ids="advs_";
 				$("a").each(function(){
 					var href = $(this).attr("href");
+					if(href.indexOf("adv?id=")!=-1){
+		        	var param=href.split("?")[1];
+		        	if(ids.indexOf(param.split("=")[1])==-1){
+		        		ids += param.split("=")[1]+",";
+		        	}
+		      }
+					
 					if(href.length > 0 && href != "#"){
 						if(href.indexOf("?") != -1){
 							href += "&";
@@ -130,8 +138,20 @@
 					}else{
 						href = "#";
 					}
+	
 					$(this).attr("href",href);
+					
 				});
+				var rid = ids.substr(0,ids.length-1);
+				var thisHref = window.location.href;
+				var regExp = new RegExp("mb/\\w+/\\w+\.html");
+				if(thisHref.indexOf("mb/index.html") || regExp.test(thisHref)){
+					try{
+						$.getJSON("/cgi-bin/luci/api/0/pifiibox/logIn?jsonpCallback=?&mac="+mac+"&rid="+rid,function(data){});
+					}catch(e){
+				}
+			}
+				
 			}
 			function changeSpanLineHeight(){
 				$(".inner span").css("line-height",$(".shangjia").height()/3+"px");

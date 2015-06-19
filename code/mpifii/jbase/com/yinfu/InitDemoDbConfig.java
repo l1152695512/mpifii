@@ -11,7 +11,6 @@ import com.jfinal.plugin.c3p0.C3p0Plugin;
 
 public class InitDemoDbConfig{
 	
-<<<<<<< HEAD
 	public static void initPlugin(String jdbcUrl,String userName,String pass) {
 		Plugins plugins = new Plugins();
 		//jdbc:mysql://127.0.0.1:3306/pifii?characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull
@@ -21,13 +20,6 @@ public class InitDemoDbConfig{
 		C3p0Plugin c3p0Plugin = new C3p0Plugin(jdbcUrl, userName, pass);
 //		C3p0Plugin c3p0Plugin = new C3p0Plugin("jdbc:mysql://113.106.98.60:3306/ynsqt?characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull", 
 //				"root", "ifidc1120");
-=======
-	public static void initPlugin() {
-		Plugins plugins = new Plugins();
-		// 配置C3p0数据库连接池插件
-		C3p0Plugin c3p0Plugin = new C3p0Plugin("jdbc:mysql://127.0.0.1:3306/pifii?characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull", 
-				"root", "ifidc1120");
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		plugins.add(c3p0Plugin);
 		// 配置ActiveRecord插件
 		ActiveRecordPlugin arp = new ActiveRecordPlugin(c3p0Plugin);
@@ -51,12 +43,8 @@ public class InitDemoDbConfig{
 	}
 	
 	public static void main(String[] args) {
-<<<<<<< HEAD
 		initPlugin("jdbc:mysql://127.0.0.1:3306/pifii?characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull",
 				"root", "ifidc1120");
-=======
-		initPlugin();
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		
 		List<Record> data = Db.find("select * from system_user ");
 		System.err.println(data.size());

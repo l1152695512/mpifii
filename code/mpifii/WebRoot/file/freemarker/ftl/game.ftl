@@ -1,11 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-<<<<<<< HEAD
 		<title>${(name)!}</title>
-=======
-		<title>游戏列表页 </title>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0,user-scalable=no"/>
 		<meta name="MobileOptimized" content="320"/>
@@ -58,24 +54,15 @@
 	</head>
 	<body>
 		<div id="content">
-<<<<<<< HEAD
 			<div class="path">${(name)!}</div>
-=======
-			<div class="path">游戏</div>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			<div class="line-jianbian"></div>
 			<div id="tabBox1" class="tabBox">
 				<div class="bd"><!-- 添加id，js用到 -->
 					<div class="con"><!-- 高度自适应需添加外层 -->
 						<ul>
 						<#list gamelist as game>
-<<<<<<< HEAD
 							<li><a href="${game.link}">
 								<div class="pic fl"><img src="${game.icon}"/></div>
-=======
-							<li><a href="f/${game.link}">
-								<div class="pic fl"><img src="logo/${game.icon}"/></div>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 								<div class="tro fr">
 									<h3>${game.name}</h3>
 									<p>周围有${game.times}个人在玩</p>

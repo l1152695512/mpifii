@@ -1,11 +1,7 @@
 <!doctype html>
 <html lang="en">
 	<head>
-<<<<<<< HEAD
 		<title>${(name)!}</title>
-=======
-		<title>最新优惠</title>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 		<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 		<link rel="stylesheet" type="text/css" href="css/global.css"/>

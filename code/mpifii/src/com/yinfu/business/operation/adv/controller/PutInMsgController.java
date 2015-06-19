@@ -35,6 +35,16 @@ public class PutInMsgController extends Controller<Device> {
 		render("index.jsp");
 	}
 	
+	public void checkMsg(){
+		List<Record> userMsgs = new ArrayList<Record>();
+		List<Record> msgs = Db.find("select bapm.id from system_user su join bp_adv_putin_msg bapm on (su.id=? and bapm.`status`=0 and su.org_id=bapm.org_id) ",
+				new Object[]{ContextUtil.getCurrentUserId()});
+		if(msgs.size() > 0){
+			userMsgs.add(new Record().set("url", "/business/oper/adv/putinMsg").set("tip", "你有广告投放消息，请点击查看"));
+		}
+		renderJson(userMsgs);
+	}
+	
 	public void checkPutinError(){
 		renderJson(checkPutin(getPara("id"),null));
 	}

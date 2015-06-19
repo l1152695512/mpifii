@@ -33,36 +33,35 @@
 								<input type="text" id="endDate" name="_query.endDate" value="${splitPage.queryParam.endDate}"  readonly="readonly" class="input-xlarge datepicker" />
 							</div>
 							<label class="control-label" for="focusedInput">组织：</label>
-							<div class="controls">
-							  	<select id="select_org" multiple="multiple" >
-									<c:forEach var="org" items="${orgList}">
-										<option value="${org.id}">${org.name}</option>
-									</c:forEach>
-								</select>
-								<input name="_query.org_id" id="qOrgId" value="${splitPage.queryParam.org_id}"  type="hidden" />
-							</div>
+								<div class="controls">
+									<input name="_query.org_id" id="qOrgId" value="${splitPage.queryParam.org_id}"  type="hidden" />
+									<input class="input-xlarge focused" style="width: 150PX" id="org_id" type="text" value="" onclick="selectOrg(this)"  />
+								</div>
+								<div id="orgSelect_Div">
+								</div>
 							<label class="control-label" for="focusedInput">商铺：</label>
-							<div class="controls">
-							  	<select id="select_shop" multiple="multiple" >
-									<option value="">--请先选择组织--</option>
-								</select>
-								<input name="_query.shop_id" id="qShopId" value="${splitPage.queryParam.shop_id}" type="hidden" />
-							</div>
+								<div class="controls">
+									<select id="select_shop" multiple="multiple" >
+										<c:forEach var="shop" items="${shopList}">
+											<option value="${shop.id}">${shop.name}</option>
+										</c:forEach>
+									</select>
+									<input class="input-xlarge focused" name="_query.shop_id" id="qShopId" type="hidden" onclick="selectShop(this)" value="${splitPage.queryParam.shop_id}"  />
+								</div>
 							<label class="control-label" for="focusedInput">卡类型：</label>
 							<div class="controls">
 							  	<select id="select_type" name="_query.cardtype" >
 							  		<option value="">--请选择--</option>
-									<option value="移动">移动</option>
-									<option value="联通">联通</option>
-									<option value="电信">电信</option>
-									<option value="其他">其他</option>
+							  		<option value="移动" <c:if test="${splitPage.queryParam.cardtype == '移动'}">selected="selected"</c:if>>移动</option>
+							  		<option value="联通" <c:if test="${splitPage.queryParam.cardtype == '联通'}">selected="selected"</c:if>>联通</option>
+							  		<option value="电信" <c:if test="${splitPage.queryParam.cardtype == '电信'}">selected="selected"</c:if>>电信</option>
+							  		<option value="其他" <c:if test="${splitPage.queryParam.cardtype == '其他'}">selected="selected"</c:if>>其他</option>
 								</select>
 							</div>
 							<label class="control-label" for="focusedInput">手机号码</label>
 							<div class="controls">
-								<input  class="input-xlarge focused" type="text" name="_query.phone" value="${splitPage.queryParam.phone}" vMin="0" vType="phone" onchange="onblurVali(this);"/>
+								<input  class="input-xlarge focused" style="width: 150PX" type="text" name="_query.phone" value="${splitPage.queryParam.phone}" vMin="0" vType="phone" onchange="onblurVali(this);"/>
 								<span class="help-inline"></span>
-
 							</div>
 					  	</div>
 					  	<div class="form-actions">
@@ -95,21 +94,24 @@
 		<div class="box span12">
 			<div class="box-header well" data-original-title>
 				<h2><i class="icon-user"></i>客户信息列表</h2>
+				<div class="box-icon" style="display:${displayVal}">
+					<a href="javascript:down('${pageContext.request.contextPath}')" class="btn btn-round" title="导出"><i class="icon-download"></i></a>
+				</div>
 			</div>
 			<div class="box-content">
 				<table class="table table-striped table-bordered bootstrap-datatable ">
 					<thead>
 						<tr>
-							<th>序号</th>
-							<th>组织</th>
-							<th>商户</th>
-							<th>认证类型</th>
-							<th>用户</th>
-							<th>卡类型</th>
-							<th>归属地</th>
-							<th>mac地址</th>
-							<th>终端</th>
-							<th>认证时间</th>
+							<th >序号</th>
+							<th onclick="orderbyFun('orgname')">组织</th>
+							<th onclick="orderbyFun('shopname')">商户</th>
+							<th onclick="orderbyFun('auth_type')">认证类型</th>
+							<th onclick="orderbyFun('info')">用户</th>
+							<th onclick="orderbyFun('cardtype')">卡类型</th>
+							<th onclick="orderbyFun('address')">归属地</th>
+							<th onclick="orderbyFun('mac')">mac地址</th>
+							<th onclick="orderbyFun('ftutype')">终端</th>
+							<th onclick="orderbyFun('auth_date')">认证时间</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -118,20 +120,62 @@
 								<td class="center">${stat.count}</td>
 								<td class="center">${custo.get("orgname")}</td>
 								<td class="center">${custo.get("shopname")}</td>
-								<td class="center">${custo.get("auth_type")}</td>
 								<td class="center">
-								<%-- ${custo.get("info")} --%>
-								${fn:substring(fn:substring(custo.get("info"),fn:length(custo.get("info"))-11,-1),0,6)}*****
+									<c:choose>
+									    <c:when test="${custo.get('auth_type')=='phone'}">
+									        手机认证
+									    </c:when>
+									    <c:when test="${custo.get('auth_type')=='weixin'}}">
+									        微信认证
+									    </c:when>   
+									    <c:otherwise>
+									        一键认证
+									    </c:otherwise>  
+    								</c:choose>
 								</td>
 								<td class="center">
-								${custo.get("cardtype")}
+									<c:choose>
+									    <c:when test="${custo.get('auth_type')=='phone'}">
+									         ${fn:substring(fn:substring(custo.get("info"),fn:length(custo.get("info"))-11,-1),0,6)}*****
+									    </c:when>
+									    <c:otherwise>
+									        暂无
+									    </c:otherwise>  
+    								</c:choose>
 								</td>
-								<td class="center">${custo.get("address")}</td>
 								<td class="center">
-								<%-- ${custo.get("mac")} --%>
+									<c:choose>
+									    <c:when test="${custo.get('cardtype')==null}">
+									         未知
+									    </c:when>
+									    <c:otherwise>
+									        ${custo.get("cardtype")}
+									    </c:otherwise>  
+    								</c:choose>
+								</td>
+								<td class="center">
+									<c:choose>
+									    <c:when test="${custo.get('address')==null}">
+									         未知
+									    </c:when>
+									    <c:otherwise>
+									        ${custo.get("address")}
+									    </c:otherwise>  
+    								</c:choose>
+								</td>
+								<td class="center">
 								${fn:substring(custo.get("mac"),0,3)}****${fn:substring(custo.get("mac"),14,17)}
 								</td>
-								<td class="center">${custo.get("ftutype")}</td>
+								<td class="center">
+									<c:choose>
+									    <c:when test="${custo.get('ftutype')==null}">
+									         未知
+									    </c:when>
+									    <c:otherwise>
+									        ${custo.get("ftutype")}
+									    </c:otherwise>  
+    								</c:choose>
+								</td>
 								<td class="center">
 									<fmt:formatDate value='${custo.get("auth_date")}' pattern='yyyy-MM-dd HH:mm:ss' />
 								</td>
@@ -147,56 +191,14 @@
 	<!--/row-->
 </form>	
 <script type="text/javascript">
-$('#select_org').multiselect({
-	enableFiltering: true,
-	maxHeight: 150,
-	onChange: function(){
-		var checkId = $("#select_org").val();
-		$("#qOrgId").attr("value",checkId);
-		var url ="/business/shop/getShopByOrg?orgids="+checkId;
-		$.ajax({
-			type : 'POST',
-			dataType : "json",
-			url :encodeURI(encodeURI(cxt + url)),
-			success : function(data) {
-				$("#select_shop").multiselect('dataprovider',data);
-			}
-		});
-	}
-});
 $('#select_shop').multiselect({
-	enableFiltering: true,
-	maxHeight: 150,
-	onChange: function(){
-		var checkId = $("#select_shop").val();
-		$("#qShopId").attr("value",checkId);
-	}
-});
-
-var  checkedOrg = $("#qOrgId").val();
-if(checkedOrg.length>0){
-	var orgs = checkedOrg.split(",");
-	for(var i=0;i<orgs.length;i++){
-		 $('#select_org').multiselect('select', orgs[i]);
-	}
-}
-var  checkedShop = $("#qShopId").val();
-if(checkedOrg.length>0){
-	var url ="/business/shop/getShopByOrg?orgids="+checkedOrg;
-	$.ajax({
-		type : 'POST',
-		dataType : "json",
-		url :encodeURI(encodeURI(cxt + url)),
-		success : function(data) {
-			$("#select_shop").multiselect('dataprovider',data);
-			var shops = checkedShop.split(",");
-			for(var i=0;i<shops.length;i++){
-			   $("#select_shop").multiselect('select',shops[i]);
-			}
-		 
+		enableFiltering: true,
+		maxHeight: 150,
+		onChange: function(){
+			var checkId = $("#select_shop").val();
+			$("#qShopId").attr("value",checkId);
 		}
 	});
-}
  var dates = $("#startDate,#endDate");
 dates.datepicker({
 	maxDate:0,
@@ -216,5 +218,16 @@ dates.datepicker({
 		.removeAttr('checked')   
 		.removeAttr('selected');  
 		ajaxContent('/business/statistics/toCustomer');
+	}
+	
+	function down(ctx){
+		var startDate = $("#startDate").val();
+		var endDate = $("#endDate").val();
+		var orgId = $('#qOrgId').val();
+		var shopId = $('#qShopId').val();
+		var type = encodeURI($('#select_type').val());
+		var phone = $("input[name='_query.phone']").val();
+		var url=ctx+'/business/statistics/downCustStaFile?startDate='+startDate+'&endDate='+endDate+'&orgId='+orgId+"&shopId="+shopId+"&phone="+phone+"&type="+encodeURI(type);
+		window.location.href=url;
 	}
 </script>

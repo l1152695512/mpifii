@@ -14,15 +14,11 @@
 	<div class="box span12">
 		<div class="box-header well">
 			<h2>
-<<<<<<< HEAD
 				<i class="icon-edit"></i>
 				<c:choose>
 					<c:when test="${empty shop.id}">添加商铺</c:when>
 					<c:otherwise>修改商铺</c:otherwise>
 				</c:choose>
-=======
-				<i class="icon-edit"></i> 添加商铺
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 			</h2>
 <!-- 			<div class="box-icon"> -->
 <!-- 				<a href="#" class="btn btn-minimize btn-round"><i class="icon-chevron-up"></i></a> -->
@@ -33,7 +29,6 @@
 			<form class="form-horizontal" id="shop_add_from" action="${cxt}/business/shop/save" method="POST">
 				<input type="hidden" name="shop.id" value="${shop.id}">
 				<div class="control-group">
-<<<<<<< HEAD
 					<label class="control-label">所属客户</label>
 					<div class="controls">
 						<input type="text" name="shop.customer" value="${shop.customer}" class="input-xlarge"
@@ -51,8 +46,6 @@
 				</div>
 				
 				<div class="control-group">
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 					<label class="control-label">商铺名称</label>
 					<div class="controls">
 						<input type="text" name="shop.name" value="${shop.name}" class="input-xlarge"
@@ -95,11 +88,7 @@
 						<span class="help-inline"></span>
 					</div>
 				</div>
-<<<<<<< HEAD
 				<%-- <div class="control-group">
-=======
-				<div class="control-group">
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 					<label class="control-label">分组</label>
 					<div class="controls">
 						<input type="text" name="shopGroupName" readonly="readonly" value="${shop.groupName}" class="input-xlarge"
@@ -108,7 +97,6 @@
 						<input type="hidden" name="shop.group_id" value="${shop.group_id}" />
 						<span class="help-inline"></span>
 					</div>
-<<<<<<< HEAD
 				</div>--%>
 				
 				<div class="control-group">
@@ -127,18 +115,11 @@
 					</div>
 				</div>
 				
-=======
-				</div>
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 				<div class="control-group">
 					<label class="control-label">联系方式</label>
 					<div class="controls">
 						<input type="text" name="shop.tel" value="${shop.tel}" class="input-xlarge" 
-<<<<<<< HEAD
 							maxlength="30" vMin="0" onchange="onblurVali(this);" />
-=======
-							maxlength="30" vMin="0" vType="phone" onchange="onblurVali(this);" />
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 						<span class="help-inline">手机号码</span>
 					</div>
 				</div>
@@ -273,7 +254,6 @@
 			}
 		}).showModal();
 	}
-<<<<<<< HEAD
 	
 	
 	//---------------------
@@ -417,6 +397,4 @@
 			$.fn.zTree.init($("#treeOrgs"), setting);
 			
 		});
-=======
->>>>>>> b48516a961edf89e15d5b6cd3ea0be5952846901
 </script>
